@@ -1,0 +1,269 @@
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  background-color: #f5f5f5;
+}
+
+/* Page management */
+.page {
+  display: none;
+}
+
+.page.active {
+  display: block;
+}
+
+/* Login page styles */
+.login-container {
+  max-width: 400px;
+  margin: 50px auto;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Dashboard layout */
+.main-header {
+  background-color: #f8f8f8;
+  color: white;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 100;
+}
+
+.sidebar {
+  background-color: #fff;
+  width: 250px;
+  position: fixed;
+  height: 100%;
+  top: 60px;
+  left: 0;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.main-nav ul {
+  list-style: none;
+  padding: 20px 0;
+}
+
+.main-nav a {
+  display: block;
+  padding: 15px 20px;
+  color: #333;
+  text-decoration: none;
+  transition: background-color 0.3s;
+}
+
+.main-nav a:hover {
+  background-color: #e3f2fd;
+}
+
+/* Submenu styles */
+.has-submenu {
+  position: relative;
+}
+
+.has-submenu > a:after {
+  content: "▼";
+  font-size: 0.8em;
+  margin-left: 8px;
+}
+
+.submenu {
+  display: none;
+  background-color: #f8f9fa;
+  padding-left: 20px;
+}
+
+.has-submenu.active > .submenu {
+  display: block;
+}
+
+.submenu a {
+  padding: 10px 20px;
+  font-size: 0.95em;
+}
+
+.submenu a:hover {
+  background-color: #e3f2fd;
+}
+
+.main-content {
+  margin-left: 250px;
+  padding: 80px 20px 20px;
+}
+
+/* Form styles */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-row {
+  display: flex;
+  margin: 0 -0.5rem;
+  flex-wrap: wrap;
+}
+
+.form-row .form-group {
+  flex: 1;
+  min-width: 120px;
+  padding: 0 0.5rem;
+}
+
+.date-inputs {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.date-inputs .form-group {
+  margin-bottom: 0;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+button {
+  background-color: #2196f3;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #1976d2;
+}
+
+/* Content sections */
+.content-section {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.content-section h2 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+/* Table styles */
+.table-container {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+th,
+td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  background-color: #f5f5f5;
+  font-weight: 600;
+}
+
+/* Menu toggle button */
+#menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: white;
+  padding: 0.5rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .sidebar.active {
+    transform: translateX(0);
+  }
+
+  .main-content {
+    margin-left: 0;
+  }
+
+  #menu-toggle {
+    display: block;
+  }
+
+  .content-section {
+    padding: 15px;
+  }
+
+  .form-group {
+    margin-bottom: 0.75rem;
+  }
+}
+
+/* Utility classes */
+.hidden {
+  display: none;
+}
+
+.rekap-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.sync-status {
+  display: none;
+  padding: 4px 8px;
+  background-color: #ff9800;
+  color: white;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  margin-left: 1rem;
+}

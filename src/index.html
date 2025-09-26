@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistem Manajemen Percetakan</title>
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#2196F3" />
+  </head>
+  <body>
+    <div id="login-page" class="page active">
+      <main class="login-container">
+        <h1>Login</h1>
+        <form id="login-form" class="login-form">
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required />
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required />
+          </div>
+          <button type="submit">Login</button>
+        </form>
+      </main>
+    </div>
+
+    <div id="dashboard-page" class="page">
+      <aside class="sidebar">
+        <nav class="main-nav">
+          <ul>
+            <li class="has-submenu">
+              <a href="#" class="menu-toggle">Inventory Bahan Baku</a>
+              <ul class="submenu">
+                <li><a href="#" data-page="stock-banner">Stock Banner</a></li>
+                <li><a href="#" data-page="stock-digital">Stock Digital</a></li>
+                <li>
+                  <a href="#" data-page="stock-produksi">Stock Produksi</a>
+                </li>
+                <li><a href="#" data-page="in-banner">In Banner</a></li>
+                <li><a href="#" data-page="out-banner">Out Banner</a></li>
+                <li><a href="#" data-page="in-digital">In Digital</a></li>
+                <li><a href="#" data-page="out-digital">Out Digital</a></li>
+                <li><a href="#" data-page="in-produksi">In Produksi</a></li>
+                <li><a href="#" data-page="out-produksi">Out Produksi</a></li>
+              </ul>
+            </li>
+            <li>
+              <a href="#" data-page="daily-report">Daily Report Mesin Offset</a>
+            </li>
+            <li><a href="#" data-page="daily-report">Laporan Iridesse</a></li>
+            <li><a href="#" data-page="rekap">Rekap Laporan</a></li>
+            <li><a href="#" id="logout-btn">Logout</a></li>
+          </ul>
+        </nav>
+      </aside>
+
+      <main class="main-content">
+        <section id="stock-banner-section" class="content-section">
+          <h2>List Stock Bahan Baku Banner</h2>
+          <!-- Form akan ditambahkan nanti -->
+        </section>
+
+        <section id="stock-digital-section" class="content-section">
+          <h2>List Stock Bahan Baku Digital</h2>
+          <!-- Form akan ditambahkan nanti -->
+        </section>
+
+        <section id="stock-produksi-section" class="content-section">
+          <h2>List Stock Bahan Baku Produksi</h2>
+          <!-- Form akan ditambahkan nanti -->
+        </section>
+
+        <section id="in-banner-section" class="content-section">
+          <h2>INCOMING RAW MATERIAL BANNER</h2>
+          <!-- Form akan ditambahkan nanti -->
+        </section>
+
+        <section id="out-banner-section" class="content-section">
+          <h2>RAW MATERIALS BANNER OUT</h2>
+          <!-- Form akan ditambahkan nanti -->
+        </section>
+
+        <section id="in-digital-section" class="content-section">
+          <h2>Input Digital</h2>
+          <!-- Form akan ditambahkan nanti -->
+        </section>
+
+        <section id="out-digital-section" class="content-section">
+          <h2>Output Digital</h2>
+          <!-- Form akan ditambahkan nanti -->
+        </section>
+
+        <section id="in-produksi-section" class="content-section">
+          <h2>INCOMING RAW MATERIAL PRODUKSI</h2>
+          <!-- Form akan ditambahkan nanti -->
+        </section>
+
+        <section id="out-produksi-section" class="content-section">
+          <h2>Output Produksi</h2>
+          <!-- Form akan ditambahkan nanti -->
+        </section>
+
+        <section id="daily-report-section" class="content-section">
+          <h2>Input Daily Report Mesin</h2>
+          <form id="daily-report-form">
+            <div class="form-group">
+              <label for="tanggal">Tanggal</label>
+              <input type="date" id="tanggal" name="tanggal" required />
+            </div>
+            <div class="form-group">
+              <label for="shift">Shift</label>
+              <select id="shift" name="shift" required>
+                <option value="1">Shift 1</option>
+                <option value="2">Shift 2</option>
+                <option value="3">Shift 3</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="jam-jalan">Jam Jalan</label>
+              <input
+                type="number"
+                id="jam-jalan"
+                name="jam-jalan"
+                min="0"
+                max="24"
+                step="0.5"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="jam-berhenti">Jam Berhenti</label>
+              <input
+                type="number"
+                id="jam-berhenti"
+                name="jam-berhenti"
+                min="0"
+                max="24"
+                step="0.5"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="hasil-produksi">Hasil Produksi</label>
+              <input
+                type="number"
+                id="hasil-produksi"
+                name="hasil-produksi"
+                min="0"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="catatan">Catatan Downtime</label>
+              <textarea id="catatan" name="catatan" rows="4"></textarea>
+            </div>
+            <button type="submit">Simpan</button>
+          </form>
+        </section>
+
+        <section id="rekap-section" class="content-section">
+          <h2>Rekap Laporan</h2>
+          <div class="rekap-controls">
+            <div class="form-group">
+              <label for="rekap-tipe">Tipe Laporan</label>
+              <select id="rekap-tipe">
+                <option value="bahan-baku">Bahan Baku</option>
+                <option value="daily-report">Daily Report Mesin</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="rekap-periode">Periode</label>
+              <input type="month" id="rekap-periode" />
+            </div>
+            <button id="generate-rekap">Generate Laporan</button>
+          </div>
+          <div class="table-container">
+            <!-- Table will be dynamically generated here -->
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
