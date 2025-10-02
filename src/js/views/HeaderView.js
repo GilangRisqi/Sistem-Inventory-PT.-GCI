@@ -14,11 +14,18 @@ export class HeaderView {
     const header = document.createElement("header");
     header.className = "main-header";
     header.innerHTML = `
-      <img src="images/logoheader.png" alt="Logo" style="height:60px; vertical-align:middle; margin-right:10px;">
-      <nav>
-        <button id="menu-toggle" aria-label="Toggle menu">☰</button>
-        <div id="sync-status" class="sync-status"></div>
-      </nav>
+      <div class="d-flex align-items-center">
+        <img src="images/logoheader.png" alt="Logo" style="height:60px; margin-right:10px;">
+        <nav class="d-flex align-items-center">
+          <button id="menu-toggle" class="btn btn-link" aria-label="Toggle menu">
+            <i class="bi bi-list fs-4"></i>
+          </button>
+          <div id="sync-status" class="sync-status d-flex align-items-center">
+            <i class="bi bi-cloud-check fs-5 me-2"></i>
+            <span></span>
+          </div>
+        </nav>
+      </div>
     `;
 
     // Insert header at the beginning of dashboard page

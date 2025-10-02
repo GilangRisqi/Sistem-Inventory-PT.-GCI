@@ -21,26 +21,50 @@ export class NavigationView {
 
     this.sidebar = document.querySelector(".sidebar");
     this.logoutBtn = document.getElementById("logout-btn");
+
+    this.bindEvents();
+    this.setupSubmenuToggle();
+    this.currentPage = null;
   }
 
-  bindNavigation(handler) {
+  bindEvents() {
+    // Handle navigation links
+    document.querySelectorAll("a[data-page]").forEach((link) => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        const page = e.target.dataset.page;
+        if (page) {
+          this.showPage(page);
+          this.updateActiveState(e.target);
+        }
+      });
+    });
+  }
+
+  setupSubmenuToggle() {
     // Handle submenu toggles
     document.querySelectorAll(".menu-toggle").forEach((toggle) => {
       toggle.addEventListener("click", (e) => {
         e.preventDefault();
-        const menuItem = e.currentTarget.parentElement;
-        menuItem.classList.toggle("active");
-      });
-    });
+        e.stopPropagation(); // Prevent event bubbling
 
-    // Handle navigation for pages
-    document.querySelectorAll(".main-nav a[data-page]").forEach((link) => {
-      link.addEventListener("click", (e) => {
-        e.preventDefault();
-        const page = e.currentTarget.dataset.page;
-        if (page) {
-          // Only handle if it's a page link
-          handler(page);
+        const menuItem = toggle.closest(".has-submenu");
+        if (menuItem) {
+          // Close other open submenus
+          document.querySelectorAll(".has-submenu").forEach((item) => {
+            if (item !== menuItem && item.classList.contains("active")) {
+              item.classList.remove("active");
+              const submenu = item.querySelector(".submenu");
+              if (submenu) submenu.classList.remove("active");
+            }
+          });
+
+          // Toggle current submenu
+          menuItem.classList.toggle("active");
+          const submenu = menuItem.querySelector(".submenu");
+          if (submenu) {
+            submenu.classList.toggle("active");
+          }
         }
       });
     });
@@ -60,10 +84,37 @@ export class NavigationView {
   }
 
   showPage(pageId) {
-    Object.values(this.pages).forEach((page) =>
-      page.classList.remove("active")
-    );
-    this.pages[pageId].classList.add("active");
+    // Hide all sections first
+    document.querySelectorAll(".content-section").forEach((section) => {
+      section.style.display = "none";
+    });
+
+    // Show the selected section
+    const section = document.getElementById(`${pageId}-section`);
+    if (section) {
+      section.style.display = "block";
+      this.currentPage = pageId;
+    }
+  }
+
+  updateActiveState(clickedLink) {
+    // Remove active class from all links
+    document.querySelectorAll(".main-nav a").forEach((link) => {
+      link.classList.remove("active");
+    });
+
+    // Add active class to clicked link
+    clickedLink.classList.add("active");
+
+    // If it's a submenu item, make sure the parent menu is expanded
+    const submenu = clickedLink.closest(".submenu");
+    if (submenu) {
+      const parentMenu = submenu.closest(".has-submenu");
+      if (parentMenu) {
+        parentMenu.classList.add("active");
+        submenu.classList.add("active");
+      }
+    }
   }
 
   showSection(sectionId) {
