@@ -15,10 +15,16 @@ export class NavigationPresenter {
   }
 
   showPage(pageId) {
+    console.log("NavigationPresenter: showPage called with:", pageId);
     this.view.showPage(pageId);
+    console.log("NavigationPresenter: showPage completed");
   }
 
   showDefaultSection() {
-    this.view.showSection("bahan-baku");
+    console.log("NavigationPresenter: showDefaultSection called");
+    // Show stock-banner as default section after login
+    // Make sure we're on dashboard page first
+    this.view.showSection("stock-banner");
+    console.log("NavigationPresenter: showDefaultSection completed");
   }
 }

@@ -8,6 +8,36 @@ module.exports = {
   entry: {
     app: "./src/js/app.js",
   },
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: {
+          loader: "babel-loader",
+          options: {
+            presets: [
+              [
+                "@babel/preset-env",
+                {
+                  targets: {
+                    browsers: ["last 2 versions", "not dead"],
+                  },
+                  useBuiltIns: "usage",
+                  corejs: 3,
+                },
+              ],
+            ],
+            plugins: [
+              "@babel/plugin-transform-runtime",
+              "@babel/plugin-transform-classes",
+              "@babel/plugin-transform-async-to-generator",
+            ],
+          },
+        },
+      },
+    ],
+  },
   devtool: "inline-source-map",
   devServer: {
     static: {

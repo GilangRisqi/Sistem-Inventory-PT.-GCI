@@ -5,16 +5,73 @@ export const DB_STORES = {
   dailyReport: "daily_report",
 };
 
+let db = null;
+
+// Force database recreation (for debugging)
+export const recreateDB = () => {
+  return new Promise((resolve, reject) => {
+    if (db) {
+      db.close();
+      db = null;
+    }
+
+    const deleteRequest = indexedDB.deleteDatabase("InventoryDB");
+    deleteRequest.onsuccess = () => {
+      console.log("Database deleted successfully, recreating...");
+      openDB().then(resolve).catch(reject);
+    };
+    deleteRequest.onerror = (event) => {
+      console.error("Error deleting database:", event.target.error);
+      reject(event.target.error);
+    };
+  });
+};
+
 // Open database connection
 export const openDB = () => {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open("PrintingDB", 1);
+    if (db) {
+      return resolve(db);
+    }
 
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
+    console.log("Opening database connection...");
+    const request = indexedDB.open("PrintingDB", 3);
+
+    request.onerror = (event) => {
+      console.error("Database error:", event.target.error);
+      reject(event.target.error);
+    };
+
+    request.onsuccess = (event) => {
+      console.log("Database opened successfully");
+      db = event.target.result;
+
+      // Debug: log database version and available indexes
+      console.log("Database version:", db.version);
+
+      if (db.objectStoreNames.contains(DB_STORES.bahanBakuStock)) {
+        const transaction = db.transaction(
+          [DB_STORES.bahanBakuStock],
+          "readonly"
+        );
+        const store = transaction.objectStore(DB_STORES.bahanBakuStock);
+        console.log(
+          "Available indexes in stock store:",
+          Array.from(store.indexNames)
+        );
+      }
+
+      resolve(db);
+    };
 
     request.onupgradeneeded = (event) => {
       const db = event.target.result;
+      const oldVersion = event.oldVersion;
+      const newVersion = event.newVersion;
+
+      console.log(
+        `Database upgrade from version ${oldVersion} to ${newVersion}`
+      );
 
       // Create Bahan Baku Stock store
       if (!db.objectStoreNames.contains(DB_STORES.bahanBakuStock)) {
@@ -23,7 +80,36 @@ export const openDB = () => {
           autoIncrement: true,
         });
         stockStore.createIndex("category", "category");
+        stockStore.createIndex("nomor", "nomor");
+        stockStore.createIndex("tanggal", "tanggal");
         stockStore.createIndex("updatedAt", "updatedAt");
+        // Composite index untuk kombinasi category + nomor
+        stockStore.createIndex("category_nomor", ["category", "nomor"], {
+          unique: true,
+        });
+      } else if (oldVersion < 3) {
+        // Add new indexes for existing store
+        const transaction = event.target.transaction;
+        const stockStore = transaction.objectStore(DB_STORES.bahanBakuStock);
+
+        // Add tanggal index if it doesn't exist
+        if (!stockStore.indexNames.contains("tanggal")) {
+          stockStore.createIndex("tanggal", "tanggal");
+        }
+
+        // Add composite index if it doesn't exist
+        if (!stockStore.indexNames.contains("category_nomor")) {
+          try {
+            stockStore.createIndex("category_nomor", ["category", "nomor"], {
+              unique: false,
+            });
+          } catch (e) {
+            console.warn(
+              "Could not create unique composite index, creating non-unique:",
+              e
+            );
+          }
+        }
       }
 
       // Create Bahan Baku Transactions store
@@ -36,6 +122,7 @@ export const openDB = () => {
           }
         );
         transactionsStore.createIndex("category", "category");
+        transactionsStore.createIndex("nomor", "nomor");
         transactionsStore.createIndex("type", "type");
         transactionsStore.createIndex("timestamp", "timestamp");
       }
@@ -153,3 +240,35 @@ export const processSyncQueue = async () => {
   // For now, we'll just clear the queue
   localStorage.setItem("syncQueue", "[]");
 };
+
+// Debug function untuk melihat semua data di database
+export const debugDatabase = async () => {
+  console.log("=== DEBUG DATABASE ===");
+  try {
+    const db = await openDB();
+    console.log("Database opened successfully");
+
+    // Check all stores
+    console.log("Available stores:", [...db.objectStoreNames]);
+
+    // Get all stock data
+    const stockData = await getRecords(DB_STORES.bahanBakuStock);
+    console.log("Stock data count:", stockData.length);
+    console.log("Stock data:", stockData);
+
+    // Get all transaction data
+    const transactionData = await getRecords(DB_STORES.bahanBakuTransactions);
+    console.log("Transaction data count:", transactionData.length);
+    console.log("Transaction data:", transactionData);
+
+    return { stockData, transactionData };
+  } catch (error) {
+    console.error("Error debugging database:", error);
+    return null;
+  }
+};
+
+// Make debug function available globally for console testing
+if (typeof window !== "undefined") {
+  window.debugDB = debugDatabase;
+}

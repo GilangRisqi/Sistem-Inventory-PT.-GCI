@@ -1,25 +1,63 @@
 export class BahanBakuPresenter {
   constructor(model, view) {
+    console.log("=== Initializing BahanBakuPresenter ===");
     this.model = model;
     this.view = view;
 
-    // Bind stock form handlers
-    this.bindStockHandlers();
+    console.log("Presenter created with model:", !!model, "view:", !!view);
 
-    // Bind in/out form handlers
-    this.bindInOutHandlers();
+    // Listen for refresh events
+    document.addEventListener("refresh-stock", async (event) => {
+      const { category } = event.detail;
+      console.log(`Handling refresh request for ${category}`);
+      try {
+        if (category === "banner") {
+          await this.loadBannerStockData();
+        }
+      } catch (error) {
+        console.error("Error refreshing data:", error);
+        this.view.showError("Gagal memperbarui data");
+      }
+    });
 
-    // Initial load of stock data
-    this.loadBannerStockData();
-    this.loadDigitalStockData();
-    this.loadProduksiStockData();
+    console.log("Handlers bound successfully");
+
+    // Initial setup with delay to ensure DOM is ready
+    setTimeout(() => {
+      console.log("Setting up handlers and loading initial data...");
+
+      // Bind stock form handlers
+      this.bindStockHandlers();
+
+      // Bind in/out form handlers
+      this.bindInOutHandlers();
+
+      // Load initial stock data
+      this.loadBannerStockData();
+      this.loadDigitalStockData();
+      this.loadProduksiStockData();
+    }, 500);
   }
 
   async loadBannerStockData() {
     try {
+      console.log("=== Loading Banner Stock Data ===");
+      console.log("1. Requesting data from model...");
       const stockData = await this.model.getCurrentBannerStock();
+      console.log("2. Data received from model:", stockData);
+      console.log("3. Updating view with data...");
+
+      // Pastikan view stock form sudah ter-initialize
+      if (!this.view.stockForms.banner) {
+        console.log("Stock banner form not initialized, initializing now...");
+        this.view.stockForms.banner =
+          this.view._initializeStockForm("stock-banner");
+      }
+
       this.view.updateStockBannerDisplay(stockData);
+      console.log("4. View update complete");
     } catch (error) {
+      console.error("Error loading banner stock:", error);
       this.view.showError(error.message);
     }
   }
@@ -51,13 +89,35 @@ export class BahanBakuPresenter {
   }
 
   bindInOutHandlers() {
-    ["banner", "digital", "produksi"].forEach((category) => {
-      this.view.bindInOutSubmit(category, "in", (data) =>
-        this.handleInSubmit(category, data)
-      );
-      this.view.bindInOutSubmit(category, "out", (data) =>
-        this.handleOutSubmit(category, data)
-      );
+    console.log("Binding in/out handlers in presenter");
+
+    this.view.bindInOutSubmit(async (data) => {
+      console.log(`=== Handler called for ${data.type} with data: ===`, data);
+      try {
+        if (data.type.startsWith("in-")) {
+          console.log("Processing IN submission...");
+          await this.handleInSubmit(data.category, data);
+
+          // Refresh the appropriate stock display
+          if (data.category === "banner") {
+            console.log("Refreshing banner stock display...");
+            await this.loadBannerStockData();
+          } else if (data.category === "digital") {
+            await this.loadDigitalStockData();
+          } else if (data.category === "produksi") {
+            await this.loadProduksiStockData();
+          }
+
+          return true;
+        } else if (data.type.startsWith("out-")) {
+          console.log("Processing OUT submission...");
+          return await this.handleOutSubmit(data.category, data);
+        }
+      } catch (error) {
+        console.error("Error in form submission handler:", error);
+        this.view.showError(error.message);
+        throw error;
+      }
     });
   }
 
@@ -73,10 +133,59 @@ export class BahanBakuPresenter {
 
   async handleInSubmit(category, formData) {
     try {
-      console.log("Saving data:", { category, formData });
-      await this.model.addStock(category, formData);
+      console.log("=== Handle In Submit (Presenter) ===>");
+      console.log("Category:", category);
+      console.log("Form Data:", JSON.stringify(formData, null, 2));
 
-      // Refresh stock display immediately after successful save
+      // Validasi data sebelum menyimpan
+      if (!formData || !formData.data) {
+        console.error("Invalid form data:", formData);
+        throw new Error("Data tidak valid");
+      }
+
+      console.log("Data validation passed, proceeding to save...");
+
+      // Tambahkan timestamp
+      formData.data.timestamp = new Date().toISOString();
+
+      console.log("Validation passed, saving data...");
+
+      // Simpan data
+      const savedId = await this.model.addStock(category, formData);
+      console.log(`Data saved successfully with ID: ${savedId}`);
+
+      // Berikan delay untuk memastikan data tersimpan di IndexedDB
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Refresh stock display terlebih dahulu
+      console.log(`Refreshing ${category} stock display immediately...`);
+      await this._refreshStockDisplay(category);
+
+      // Reset form dan tampilkan pesan sukses setelah refresh selesai
+      console.log("Resetting form and showing success message...");
+      this.view.resetForm(category, "in");
+      this.view.showSuccess(
+        `Input ${category} berhasil disimpan dan ditampilkan!`
+      );
+      console.log("Form reset and success message displayed");
+
+      // Schedule additional refresh untuk memastikan data ter-update
+      setTimeout(async () => {
+        console.log(`Executing delayed refresh for ${category}...`);
+        await this._refreshStockDisplay(category);
+      }, 1000);
+
+      return true; // Menandakan bahwa penyimpanan berhasil
+    } catch (error) {
+      console.error("Error in handleInSubmit:", error);
+      this.view.showError(`Gagal menyimpan data: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async _refreshStockDisplay(category) {
+    try {
+      console.log(`=== Refreshing ${category} display ===`);
       if (category === "banner") {
         await this.loadBannerStockData();
       } else if (category === "digital") {
@@ -84,29 +193,47 @@ export class BahanBakuPresenter {
       } else if (category === "produksi") {
         await this.loadProduksiStockData();
       }
-
-      this.view.resetForm(category, "in");
-      this.view.showSuccess(`Input ${category} berhasil disimpan!`);
+      console.log(`${category} stock display refreshed successfully`);
     } catch (error) {
-      console.error("Error in handleInSubmit:", error);
-      this.view.showError(`Gagal menyimpan data: ${error.message}`);
+      console.error(`Error refreshing ${category} display:`, error);
+      throw error;
     }
   }
 
   async handleOutSubmit(category, formData) {
     try {
+      console.log("handleOutSubmit called with:", { category, formData });
+
+      // Simpan data
       await this.model.reduceStock(category, formData);
+      console.log("Stock reduced successfully");
+
+      // Reset form dan tampilkan pesan sukses
       this.view.resetForm(category, "out");
       this.view.showSuccess(`Output ${category} berhasil disimpan!`);
-      if (category === "banner") {
-        await this.loadBannerStockData(); // Refresh banner stock display
-      } else if (category === "digital") {
-        await this.loadDigitalStockData(); // Refresh digital stock display
-      } else if (category === "produksi") {
-        await this.loadProduksiStockData(); // Refresh produksi stock display
-      }
+
+      // Refresh stock display dengan delay kecil
+      console.log(`Refreshing ${category} stock display...`);
+      setTimeout(async () => {
+        try {
+          if (category === "banner") {
+            await this.loadBannerStockData();
+          } else if (category === "digital") {
+            await this.loadDigitalStockData();
+          } else if (category === "produksi") {
+            await this.loadProduksiStockData();
+          }
+          console.log(`${category} stock display refreshed successfully`);
+        } catch (error) {
+          console.error(`Error refreshing ${category} display:`, error);
+        }
+      }, 500); // Increased delay to ensure data is stored
+
+      return true; // Menandakan bahwa penyimpanan berhasil
     } catch (error) {
+      console.error("Error in handleOutSubmit:", error);
       this.view.showError(error.message);
+      throw error;
     }
   }
 }

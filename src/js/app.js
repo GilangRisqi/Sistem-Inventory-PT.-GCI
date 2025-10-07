@@ -1,3 +1,5 @@
+console.log("=== APP.JS FILE LOADED ===");
+
 // Import CSS
 import "../css/style.css";
 
@@ -26,47 +28,34 @@ import * as db from "./db.js";
 
 class App {
   constructor() {
-    // Initialize Models
-    this.bahanBakuModel = new BahanBakuModel();
-    this.dailyReportModel = new DailyReportModel();
+    console.log("App constructor - initialization will happen in init()");
+  }
 
-    // Initialize Views
-    this.loginView = new LoginView();
-    this.navigationView = new NavigationView();
-    this.headerView = new HeaderView();
-    this.bahanBakuView = new BahanBakuView();
-    this.dailyReportView = new DailyReportView();
-    this.rekapView = new RekapView();
-
-    // Initialize Presenters
-    this.loginPresenter = new LoginPresenter(this.loginView);
-    this.navigationPresenter = new NavigationPresenter(this.navigationView);
-    this.headerPresenter = new HeaderPresenter(
-      this.headerView,
-      this.navigationView
-    );
-    this.bahanBakuPresenter = new BahanBakuPresenter(
-      this.bahanBakuModel,
-      this.bahanBakuView
-    );
-    this.dailyReportPresenter = new DailyReportPresenter(
-      this.dailyReportModel,
-      this.dailyReportView
-    );
-    this.rekapPresenter = new RekapPresenter(
-      this.bahanBakuModel,
-      this.dailyReportModel,
-      this.rekapView
-    );
-
-    // Bind event listeners
-    this.bindEvents();
+  async initDatabase() {
+    try {
+      await db.openDB();
+      console.log("Database connection established");
+    } catch (error) {
+      console.error("Error initializing database:", error);
+      throw error;
+    }
   }
 
   bindEvents() {
+    console.log("App: Setting up event listeners");
     document.addEventListener("loginSuccess", () => {
-      this.navigationPresenter.showPage("dashboard");
-      this.navigationPresenter.showDefaultSection();
+      console.log("App: loginSuccess event received, redirecting to dashboard");
+      console.log(
+        "App: navigationPresenter exists:",
+        !!this.navigationPresenter
+      );
+      try {
+        this.navigationPresenter.showPage("dashboard");
+        this.navigationPresenter.showDefaultSection();
+        console.log("App: Dashboard redirect completed");
+      } catch (error) {
+        console.error("App: Error during dashboard redirect:", error);
+      }
     });
 
     document.addEventListener("logout", () => {
@@ -86,19 +75,96 @@ class App {
 
   async init() {
     try {
+      console.log("App init method called");
+
+      // Initialize Database first
       await db.openDB();
       console.log("Database initialized successfully");
+
+      // Initialize Models
+      try {
+        this.bahanBakuModel = new BahanBakuModel();
+      } catch (error) {
+        console.error("BahanBakuModel creation error:", error);
+        return;
+      }
+      this.dailyReportModel = new DailyReportModel();
+
+      // Initialize Views
+      this.loginView = new LoginView();
+      this.navigationView = new NavigationView();
+      this.headerView = new HeaderView();
+      try {
+        this.bahanBakuView = new BahanBakuView(this.bahanBakuModel);
+      } catch (error) {
+        console.error("BahanBakuView creation error:", error);
+        return;
+      }
+      this.dailyReportView = new DailyReportView();
+      this.rekapView = new RekapView();
+
+      // Initialize Presenters
+      console.log("Creating LoginPresenter...");
+      this.loginPresenter = new LoginPresenter(this.loginView);
+      console.log(" LoginPresenter created");
+
+      console.log("Creating NavigationPresenter...");
+      this.navigationPresenter = new NavigationPresenter(this.navigationView);
+      console.log(" NavigationPresenter created");
+
+      console.log("Creating HeaderPresenter...");
+      this.headerPresenter = new HeaderPresenter(
+        this.headerView,
+        this.navigationView
+      );
+      console.log(" HeaderPresenter created");
+
+      try {
+        this.bahanBakuPresenter = new BahanBakuPresenter(
+          this.bahanBakuModel,
+          this.bahanBakuView
+        );
+      } catch (error) {
+        console.error("BahanBakuPresenter creation error:", error);
+        return;
+      }
+
+      console.log("Creating DailyReportPresenter...");
+      this.dailyReportPresenter = new DailyReportPresenter(
+        this.dailyReportModel,
+        this.dailyReportView
+      );
+      console.log(" DailyReportPresenter created");
+
+      console.log("Creating RekapPresenter...");
+      this.rekapPresenter = new RekapPresenter(
+        this.bahanBakuModel,
+        this.dailyReportModel,
+        this.rekapView
+      );
+      console.log(" RekapPresenter created");
+
+      // Bind event listeners
+      console.log("App: About to bind events");
+      this.bindEvents();
+      console.log("App: Events bound successfully");
     } catch (error) {
-      console.error("Error initializing database:", error);
-      alert("Gagal menginisialisasi database");
+      console.error("Error initializing app:", error);
     }
   }
 }
 
-// Initialize app when DOM is loaded
+// Initialize app when DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
-  const app = new App();
-  app.init();
+  console.log("=== DOM CONTENT LOADED ===");
+  try {
+    console.log("Creating app instance...");
+    const app = new App();
+    console.log("App instance created, calling init...");
+    app.init();
+  } catch (error) {
+    console.error("FATAL ERROR during app initialization:", error);
+  }
 });
 
 // Register Service Worker

@@ -27,8 +27,28 @@ export class NavigationView {
     this.currentPage = null;
   }
 
+  bindNavigation(handler) {
+    // Method untuk binding navigation handler dari presenter
+    this.navigationHandler = handler;
+  }
+
+  bindLogout(handler) {
+    // Method untuk binding logout handler dari presenter
+    this.logoutHandler = handler;
+
+    // Bind logout button if exists
+    if (this.logoutBtn) {
+      this.logoutBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (this.logoutHandler) {
+          this.logoutHandler();
+        }
+      });
+    }
+  }
+
   bindEvents() {
-    // Handle navigation links
+    // Handle navigation links for pages
     document.querySelectorAll("a[data-page]").forEach((link) => {
       link.addEventListener("click", (e) => {
         e.preventDefault();
@@ -36,6 +56,22 @@ export class NavigationView {
         if (page) {
           this.showPage(page);
           this.updateActiveState(e.target);
+        }
+      });
+    });
+
+    // Handle navigation links for sections
+    document.querySelectorAll("a[data-section]").forEach((link) => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        const section = e.target.dataset.section;
+        if (section) {
+          this.showSection(section);
+          this.updateActiveState(e.target);
+          // Call navigation handler if available
+          if (this.navigationHandler) {
+            this.navigationHandler(section);
+          }
         }
       });
     });
@@ -84,16 +120,37 @@ export class NavigationView {
   }
 
   showPage(pageId) {
-    // Hide all sections first
-    document.querySelectorAll(".content-section").forEach((section) => {
-      section.style.display = "none";
+    console.log("NavigationView: showPage called with:", pageId);
+
+    // Check if this is actually a section, not a page
+    if (this.sections[pageId]) {
+      console.log(
+        "NavigationView: This is a section, redirecting to showSection"
+      );
+      this.showSection(pageId);
+      return;
+    }
+
+    // Hide all pages first
+    Object.values(this.pages).forEach((page) => {
+      if (page) {
+        page.classList.remove("active");
+        page.style.display = "none";
+      }
     });
 
-    // Show the selected section
-    const section = document.getElementById(`${pageId}-section`);
-    if (section) {
-      section.style.display = "block";
+    // Show the selected page
+    const page = this.pages[pageId];
+    console.log("NavigationView: Looking for page:", pageId);
+    console.log("NavigationView: Page found:", !!page);
+
+    if (page) {
+      page.classList.add("active");
+      page.style.display = "block";
       this.currentPage = pageId;
+      console.log("NavigationView: Page switched to:", pageId);
+    } else {
+      console.warn("NavigationView: Page not found for pageId:", pageId);
     }
   }
 
@@ -118,6 +175,8 @@ export class NavigationView {
   }
 
   showSection(sectionId) {
+    console.log("NavigationView: showSection called with:", sectionId);
+
     // Hide all sections first
     Object.values(this.sections).forEach((section) => {
       if (section) section.style.display = "none";
@@ -125,10 +184,13 @@ export class NavigationView {
 
     // Show the requested section if it exists
     const section = this.sections[sectionId];
+    console.log("NavigationView: Section found:", !!section);
+
     if (section) {
       section.style.display = "block";
+      console.log("NavigationView: Section displayed:", sectionId);
     } else {
-      console.warn(`Section ${sectionId} not found`);
+      console.warn(`NavigationView: Section ${sectionId} not found`);
     }
   }
 }
