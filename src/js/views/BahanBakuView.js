@@ -1,7 +1,13 @@
+// Import jsPDF for PDF generation
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+
 export class BahanBakuView {
   constructor(model) {
     this.model = model;
     this._handleRefreshStock = this._handleRefreshStock.bind(this);
+    this._handlePrintStock = this._handlePrintStock.bind(this);
+    this.stockData = {}; // Store current stock data for each category
     this._init();
     // Don't initialize event listeners here - let presenter do it after setup
     // this._initializeEventListeners();
@@ -10,6 +16,9 @@ export class BahanBakuView {
   updateStockDisplay(category, stockData) {
     console.log(`=== Updating ${category} stock display ===`);
     console.log("Stock data to display:", stockData);
+
+    // Store data for PDF generation
+    this.stockData[category] = stockData;
 
     const formType = `stock-${category}`;
     const section = document.getElementById(`${formType}-section`);
@@ -81,8 +90,17 @@ export class BahanBakuView {
       rows = `<tr><td colspan="${colCount}" class="text-center">Tidak ada data</td></tr>`;
     }
 
-    // Update table content
+    // Update table content and ensure print button is present
     currentForm.container.innerHTML = tableHtml + rows + "</tbody></table>";
+    
+    // Always add print button after updating content
+    const printBtn = document.createElement("button");
+    printBtn.innerHTML = '<i class="bi bi-printer"></i> Download PDF';
+    printBtn.className = "print-button btn btn-success";
+    printBtn.style.cssText = "margin-top: 10px; margin-left: 10px; margin-right: 10px; padding: 8px 15px;";
+    printBtn.onclick = () => this._handlePrintStock(category);
+    currentForm.container.appendChild(printBtn);
+    
     console.log("Table updated successfully");
 
     console.log("Stock display updated successfully");
@@ -107,6 +125,122 @@ export class BahanBakuView {
       if (resultsContainer) {
         resultsContainer.innerHTML = "<p>Memperbarui data...</p>";
       }
+    }
+  }
+
+  _handlePrintStock(category) {
+    console.log(`=== Printing stock for ${category} ===`);
+    
+    try {
+      // Use stored data instead of DOM parsing
+      const stockData = this.stockData[category];
+      console.log('Stored stock data:', stockData);
+      
+      if (!stockData || !Array.isArray(stockData) || stockData.length === 0) {
+        console.warn('No stock data available for PDF generation');
+        alert('Tidak ada data untuk dicetak');
+        return;
+      }
+
+      console.log('Proceeding with PDF generation using stored data...');
+
+      // Create PDF
+      const doc = new window.jspdf.jsPDF();
+
+      // Add company header
+      doc.setFontSize(16);
+      doc.setFont(undefined, 'bold');
+      doc.text('PT. GCI (Garasi Creasindo Indonesia)', 20, 20);
+      
+      // Add report title
+      const title = `Laporan Data Stock ${category.charAt(0).toUpperCase() + category.slice(1)}`;
+      doc.setFontSize(14);
+      doc.setFont(undefined, 'normal');
+      doc.text(title, 20, 32);
+      
+      // Add date and time
+      const currentDate = new Date().toLocaleDateString('id-ID', {
+        day: '2-digit',
+        month: 'long', 
+        year: 'numeric'
+      });
+      const currentTime = new Date().toLocaleTimeString('id-ID');
+      doc.setFontSize(10);
+      doc.text(`Tanggal: ${currentDate}`, 20, 44);
+      doc.text(`Waktu: ${currentTime}`, 20, 52);
+
+      // Define table headers based on category
+      const headers = ['No.', 'Jenis Kertas', 'Ukuran', 'Qty Last Month', 'Jumlah Masuk', 'Total', 'Tanggal'];
+      if (category === 'produksi') {
+        headers.push('Remark');
+      }
+
+      // Convert stored data to table format
+      const tableData = stockData.map(item => {
+        const formattedDate = item.tanggal ? new Date(item.tanggal).toLocaleDateString('id-ID') : '';
+        const total = (Number(item.qtyLastMonth) || 0) + (Number(item.jumlahMasuk) || 0);
+        
+        const row = [
+          item.nomor || '',
+          item.jenisKertas || '',
+          item.ukuran || '',
+          item.qtyLastMonth || 0,
+          item.jumlahMasuk || 0,
+          total,
+          formattedDate
+        ];
+        
+        if (category === 'produksi') {
+          row.push(item.remark || '-');
+        }
+        
+        return row;
+      });
+
+      console.log('Table data for PDF:', tableData);
+
+      // Add total records info
+      doc.text(`Total Record: ${tableData.length} item`, 20, 58);
+
+      // Generate table in PDF
+      doc.autoTable({
+        head: [headers],
+        body: tableData,
+        startY: 60,
+        styles: {
+          fontSize: 9,
+          cellPadding: 3,
+        },
+        headStyles: {
+          fillColor: [52, 152, 219],
+          textColor: 255,
+          fontStyle: 'bold',
+          fontSize: 9,
+        },
+        alternateRowStyles: {
+          fillColor: [248, 249, 250],
+        },
+        margin: { top: 60, left: 10, right: 10 },
+        didDrawPage: function (data) {
+          // Add footer
+          const pageCount = doc.internal.getNumberOfPages();
+          const pageSize = doc.internal.pageSize;
+          doc.setFontSize(8);
+          doc.text(`Halaman ${data.pageNumber} dari ${pageCount}`, 
+                   pageSize.width - 40, pageSize.height - 10);
+        }
+      });
+
+      // Save PDF
+      const filename = `Stock_${category}_${new Date().toISOString().split('T')[0]}.pdf`;
+      doc.save(filename);
+      
+      console.log(`PDF generated: ${filename}`);
+      alert(`PDF berhasil dibuat: ${filename}`);
+      
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Gagal membuat PDF: ' + error.message);
     }
   }
 
@@ -180,6 +314,11 @@ export class BahanBakuView {
       "Tanggal",
     ];
 
+    // Add Remark header for produksi
+    if (formType === "stock-produksi") {
+      headers.push("Remark");
+    }
+
     headers.forEach((text) => {
       const th = document.createElement("th");
       th.textContent = text;
@@ -195,6 +334,14 @@ export class BahanBakuView {
 
     // Add table to container
     container.appendChild(table);
+
+    // Add print button for all stock forms
+    const printBtn = document.createElement("button");
+    printBtn.innerHTML = '<i class="bi bi-printer"></i> Download PDF';
+    printBtn.className = "print-button btn btn-success";
+    printBtn.style.cssText = "margin-top: 10px; margin-left: 10px; margin-right: 10px; padding: 8px 15px;";
+    printBtn.onclick = () => this._handlePrintStock(formType.replace("stock-", ""));
+    container.appendChild(printBtn);
 
     // Add container to section
     section.appendChild(container);
