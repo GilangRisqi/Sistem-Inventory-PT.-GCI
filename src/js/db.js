@@ -55,12 +55,20 @@ export const openDB = () => {
 
 // Generic add record function
 export const addRecord = async (storeName, data) => {
+  console.log("Adding record to store:", storeName, data);
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(storeName, "readwrite");
     const store = transaction.objectStore(storeName);
-    const request = store.add({ ...data, tanggal: new Date(data.tanggal) });
 
+    // Ensure tanggal is a Date object
+    const processedData = {
+      ...data,
+      tanggal: data.tanggal ? new Date(data.tanggal) : new Date(),
+      timestamp: new Date().toISOString(),
+    };
+
+    const request = store.add(processedData);
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
@@ -105,6 +113,20 @@ export const getRecordsByDateRange = async (storeName, startDate, endDate) => {
       });
       resolve(results);
     };
+    request.onerror = () => reject(request.error);
+  });
+};
+
+// Get records by index
+export const getRecordsByIndex = async (storeName, indexName, value) => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(storeName, "readonly");
+    const store = transaction.objectStore(storeName);
+    const index = store.index(indexName);
+    const request = index.getAll(value);
+
+    request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
 };

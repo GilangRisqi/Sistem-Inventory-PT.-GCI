@@ -8,6 +8,38 @@ export class BahanBakuPresenter {
 
     // Bind in/out form handlers
     this.bindInOutHandlers();
+
+    // Initial load of stock data
+    this.loadBannerStockData();
+    this.loadDigitalStockData();
+    this.loadProduksiStockData();
+  }
+
+  async loadBannerStockData() {
+    try {
+      const stockData = await this.model.getCurrentBannerStock();
+      this.view.updateStockBannerDisplay(stockData);
+    } catch (error) {
+      this.view.showError(error.message);
+    }
+  }
+
+  async loadDigitalStockData() {
+    try {
+      const stockData = await this.model.getCurrentDigitalStock();
+      this.view.updateStockDigitalDisplay(stockData);
+    } catch (error) {
+      this.view.showError(error.message);
+    }
+  }
+
+  async loadProduksiStockData() {
+    try {
+      const stockData = await this.model.getCurrentProduksiStock();
+      this.view.updateStockProduksiDisplay(stockData);
+    } catch (error) {
+      this.view.showError(error.message);
+    }
   }
 
   bindStockHandlers() {
@@ -41,11 +73,23 @@ export class BahanBakuPresenter {
 
   async handleInSubmit(category, formData) {
     try {
+      console.log("Saving data:", { category, formData });
       await this.model.addStock(category, formData);
+
+      // Refresh stock display immediately after successful save
+      if (category === "banner") {
+        await this.loadBannerStockData();
+      } else if (category === "digital") {
+        await this.loadDigitalStockData();
+      } else if (category === "produksi") {
+        await this.loadProduksiStockData();
+      }
+
       this.view.resetForm(category, "in");
       this.view.showSuccess(`Input ${category} berhasil disimpan!`);
     } catch (error) {
-      this.view.showError(error.message);
+      console.error("Error in handleInSubmit:", error);
+      this.view.showError(`Gagal menyimpan data: ${error.message}`);
     }
   }
 
@@ -54,6 +98,13 @@ export class BahanBakuPresenter {
       await this.model.reduceStock(category, formData);
       this.view.resetForm(category, "out");
       this.view.showSuccess(`Output ${category} berhasil disimpan!`);
+      if (category === "banner") {
+        await this.loadBannerStockData(); // Refresh banner stock display
+      } else if (category === "digital") {
+        await this.loadDigitalStockData(); // Refresh digital stock display
+      } else if (category === "produksi") {
+        await this.loadProduksiStockData(); // Refresh produksi stock display
+      }
     } catch (error) {
       this.view.showError(error.message);
     }

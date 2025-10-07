@@ -10,8 +10,21 @@ module.exports = {
   },
   devtool: "inline-source-map",
   devServer: {
-    static: "./dist",
+    static: {
+      directory: path.join(__dirname, "dist"),
+      publicPath: "/",
+    },
     hot: true,
+    historyApiFallback: true,
+    compress: true,
+    port: 8080,
+    host: "0.0.0.0",
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+      "Access-Control-Allow-Headers":
+        "X-Requested-With, content-type, Authorization",
+    },
   },
   plugins: [
     new HtmlWebpackPlugin({
@@ -32,6 +45,22 @@ module.exports = {
           to: "images",
           noErrorOnMissing: true,
         },
+        {
+          from: "./node_modules/bootstrap/dist/css/bootstrap.min.css",
+          to: "css/",
+        },
+        {
+          from: "./node_modules/bootstrap/dist/js/bootstrap.bundle.min.js",
+          to: "js/",
+        },
+        {
+          from: "./node_modules/bootstrap-icons/font/bootstrap-icons.css",
+          to: "css/",
+        },
+        {
+          from: "./src/css",
+          to: "css",
+        },
       ],
     }),
   ],
@@ -45,6 +74,16 @@ module.exports = {
       {
         test: /\.css$/i,
         use: ["style-loader", "css-loader"],
+      },
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: {
+          loader: "babel-loader",
+          options: {
+            presets: ["@babel/preset-env"],
+          },
+        },
       },
     ],
   },
