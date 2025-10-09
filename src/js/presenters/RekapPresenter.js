@@ -5,8 +5,8 @@ export class RekapPresenter {
     this.iridesseReportModel = iridesseReportModel;
     this.view = view;
     this.currentData = [];
-    this.currentTipe = '';
-    
+    this.currentTipe = "";
+
     this.view.bindGenerateRekap(this.handleGenerateRekap.bind(this));
     this.view.bindEditRecord(this.handleEditRecord.bind(this));
     this.view.bindSaveRecord(this.handleSaveInlineEdit.bind(this));
@@ -37,7 +37,9 @@ export class RekapPresenter {
   async handleEditRecord(id, type) {
     try {
       // Find the row element
-      const row = document.querySelector(`tr[data-id="${id}"][data-type="${type}"]`);
+      const row = document.querySelector(
+        `tr[data-id="${id}"][data-type="${type}"]`
+      );
       if (!row) {
         this.view.showError("Row tidak ditemukan!");
         return;
@@ -45,7 +47,6 @@ export class RekapPresenter {
 
       // Toggle to edit mode
       this.toggleEditMode(row, true);
-
     } catch (error) {
       this.view.showError("Gagal masuk mode edit: " + error.message);
     }
@@ -71,102 +72,102 @@ export class RekapPresenter {
 
       // Refresh the table
       this.refreshCurrentTable();
-
     } catch (error) {
       this.view.showError("Gagal menghapus data: " + error.message);
     }
   }
 
   toggleEditMode(row, isEdit) {
-    const editableCells = row.querySelectorAll('.editable');
-    const editBtn = row.querySelector('.edit-btn');
-    const saveBtn = row.querySelector('.save-btn');
-    const cancelBtn = row.querySelector('.cancel-btn');
-    const deleteBtn = row.querySelector('.delete-btn');
-    
+    const editableCells = row.querySelectorAll(".editable");
+    const editBtn = row.querySelector(".edit-btn");
+    const saveBtn = row.querySelector(".save-btn");
+    const cancelBtn = row.querySelector(".cancel-btn");
+    const deleteBtn = row.querySelector(".delete-btn");
+
     if (isEdit) {
       // Store original values for cancel functionality
-      row.setAttribute('data-editing', 'true');
-      
-      editableCells.forEach(cell => {
-        const field = cell.getAttribute('data-field');
-        const type = cell.getAttribute('data-type');
-        const value = cell.getAttribute('data-value');
+      row.setAttribute("data-editing", "true");
+
+      editableCells.forEach((cell) => {
+        const field = cell.getAttribute("data-field");
+        const type = cell.getAttribute("data-type");
+        const value = cell.getAttribute("data-value");
         const originalContent = cell.innerHTML;
-        
+
         // Store original content
-        cell.setAttribute('data-original', originalContent);
-        
+        cell.setAttribute("data-original", originalContent);
+
         // Create input element based on type
         let input;
-        if (type === 'select') {
-          const options = cell.getAttribute('data-options').split(',');
-          input = document.createElement('select');
-          input.className = 'form-control form-control-sm';
-          options.forEach(option => {
-            const optionEl = document.createElement('option');
+        if (type === "select") {
+          const options = cell.getAttribute("data-options").split(",");
+          input = document.createElement("select");
+          input.className = "form-control form-control-sm";
+          options.forEach((option) => {
+            const optionEl = document.createElement("option");
             optionEl.value = option;
             optionEl.textContent = option;
             if (option === value) optionEl.selected = true;
             input.appendChild(optionEl);
           });
-        } else if (type === 'date') {
-          input = document.createElement('input');
-          input.type = 'date';
-          input.className = 'form-control form-control-sm';
+        } else if (type === "date") {
+          input = document.createElement("input");
+          input.type = "date";
+          input.className = "form-control form-control-sm";
           input.value = value;
-        } else if (type === 'time') {
-          input = document.createElement('input');
-          input.type = 'time';
-          input.className = 'form-control form-control-sm';
+        } else if (type === "time") {
+          input = document.createElement("input");
+          input.type = "time";
+          input.className = "form-control form-control-sm";
           input.value = value;
-        } else if (type === 'number') {
-          input = document.createElement('input');
-          input.type = 'number';
-          input.className = 'form-control form-control-sm';
+        } else if (type === "number") {
+          input = document.createElement("input");
+          input.type = "number";
+          input.className = "form-control form-control-sm";
           input.value = value;
-          input.min = '0';
+          input.min = "0";
         } else {
-          input = document.createElement('input');
-          input.type = 'text';
-          input.className = 'form-control form-control-sm';
+          input = document.createElement("input");
+          input.type = "text";
+          input.className = "form-control form-control-sm";
           input.value = value;
         }
-        
-        input.setAttribute('data-field', field);
-        cell.innerHTML = '';
+
+        input.setAttribute("data-field", field);
+        cell.innerHTML = "";
         cell.appendChild(input);
       });
-      
+
       // Toggle buttons - dalam mode edit hanya tampilkan Simpan dan Batal
-      editBtn.style.display = 'none';
-      saveBtn.style.display = 'inline-block';
-      cancelBtn.style.display = 'inline-block';
-      deleteBtn.style.display = 'none'; // Sembunyikan tombol hapus saat edit
-      
+      editBtn.style.display = "none";
+      saveBtn.style.display = "inline-block";
+      cancelBtn.style.display = "inline-block";
+      deleteBtn.style.display = "none"; // Sembunyikan tombol hapus saat edit
     } else {
       // Exit edit mode
-      row.removeAttribute('data-editing');
-      
-      editableCells.forEach(cell => {
-        const originalContent = cell.getAttribute('data-original');
+      row.removeAttribute("data-editing");
+
+      editableCells.forEach((cell) => {
+        const originalContent = cell.getAttribute("data-original");
         if (originalContent) {
           cell.innerHTML = originalContent;
-          cell.removeAttribute('data-original');
+          cell.removeAttribute("data-original");
         }
       });
-      
+
       // Toggle buttons - kembali ke mode normal dengan Edit dan Hapus
-      editBtn.style.display = 'inline-block';
-      saveBtn.style.display = 'none';
-      cancelBtn.style.display = 'none';
-      deleteBtn.style.display = 'inline-block'; // Tampilkan kembali tombol hapus
+      editBtn.style.display = "inline-block";
+      saveBtn.style.display = "none";
+      cancelBtn.style.display = "none";
+      deleteBtn.style.display = "inline-block"; // Tampilkan kembali tombol hapus
     }
   }
 
   async handleSaveInlineEdit(id, type) {
     try {
-      const row = document.querySelector(`tr[data-id="${id}"][data-type="${type}"]`);
+      const row = document.querySelector(
+        `tr[data-id="${id}"][data-type="${type}"]`
+      );
       if (!row) {
         this.view.showError("Row tidak ditemukan!");
         return;
@@ -174,10 +175,10 @@ export class RekapPresenter {
 
       // Collect data from inputs
       const data = {};
-      const inputs = row.querySelectorAll('.editable input, .editable select');
-      
-      inputs.forEach(input => {
-        const field = input.getAttribute('data-field');
+      const inputs = row.querySelectorAll(".editable input, .editable select");
+
+      inputs.forEach((input) => {
+        const field = input.getAttribute("data-field");
         data[field] = input.value;
       });
 
@@ -186,47 +187,46 @@ export class RekapPresenter {
       if (type === "iridesse-report") {
         model = this.iridesseReportModel;
         // Calculate only totalCetak for Iridesse (billing and gap are now manual input)
-        data.totalCetak = (Number(data.jumlahCetak) || 0) - (Number(data.ng) || 0);
+        data.totalCetak =
+          (Number(data.jumlahCetak) || 0) - (Number(data.ng) || 0);
         // billing and gap akan diambil dari input manual
       } else {
         model = this.dailyReportModel;
         // Calculate totals for Daily Report
-        data.totalQtyCetakAll = (Number(data.qtyCetakOk) || 0) + (Number(data.qtyCetakNg) || 0);
+        data.totalQtyCetakAll =
+          (Number(data.qtyCetakOk) || 0) + (Number(data.qtyCetakNg) || 0);
       }
 
       // Update data
       await model.update(id, data);
-      
+
       // Exit edit mode and refresh table
       this.view.showSuccess("Data berhasil diperbarui!");
       this.refreshCurrentTable();
-
     } catch (error) {
       this.view.showError("Gagal menyimpan perubahan: " + error.message);
     }
   }
 
   handleCancelInlineEdit(id, type) {
-    const row = document.querySelector(`tr[data-id="${id}"][data-type="${type}"]`);
+    const row = document.querySelector(
+      `tr[data-id="${id}"][data-type="${type}"]`
+    );
     if (row) {
       this.toggleEditMode(row, false);
     }
   }
 
-
-
-
-
   async refreshCurrentTable() {
     if (this.currentTipe && this.currentData.length > 0) {
       // Re-generate the report with current parameters
-      const periodeInput = document.getElementById('rekap-periode');
+      const periodeInput = document.getElementById("rekap-periode");
       if (periodeInput && periodeInput.value) {
-        const [year, month] = periodeInput.value.split('-');
+        const [year, month] = periodeInput.value.split("-");
         await this.handleGenerateRekap({
           tipe: this.currentTipe,
           startDate: new Date(year, month - 1, 1),
-          endDate: new Date(year, month, 0)
+          endDate: new Date(year, month, 0),
         });
       }
     }

@@ -444,7 +444,7 @@ export class BahanBakuView {
         <label>Total</label>
         <div class="total-display" id="${sectionId}-total">0</div>
       </div>
-      <button type="button" class="submit-button" id="${sectionId}-submit">Simpan</button>
+      <button type="submit" class="submit-button" id="${sectionId}-submit">Simpan</button>
     `;
   }
 
@@ -500,7 +500,7 @@ export class BahanBakuView {
         <label>Sisa Stock</label>
         <div class="total-display" id="${sectionId}-sisa-stock">0</div>
       </div>
-      <button type="button" class="submit-button" id="${sectionId}-submit">Simpan</button>
+      <button type="submit" class="submit-button" id="${sectionId}-submit">Simpan</button>
     `;
   }
 

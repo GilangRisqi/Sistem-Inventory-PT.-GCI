@@ -35,10 +35,78 @@
         new NavigationView();
         new DailyReportView();
         new IridesseReportView();
+
+        // Header functionality
+        const menuToggle = document.getElementById("menu-toggle");
+        const sidebar = document.querySelector(".sidebar");
+
+        if (menuToggle && sidebar) {
+          menuToggle.addEventListener("click", () => {
+            sidebar.classList.toggle("active");
+          });
+        }
+
+        // Show user info when logged in
+        const showUserInfo = (username) => {
+          const userInfo = document.getElementById("user-info");
+          const currentUser = document.getElementById("current-user");
+          if (userInfo && currentUser) {
+            currentUser.textContent = username;
+            userInfo.style.display = "flex";
+          }
+        };
+
+        // Hide user info when logged out
+        const hideUserInfo = () => {
+          const userInfo = document.getElementById("user-info");
+          if (userInfo) {
+            userInfo.style.display = "none";
+          }
+        };
+
+        // Listen for login events
+        document.addEventListener("userLoggedIn", (event) => {
+          showUserInfo(event.detail.username);
+        });
+
+        document.addEventListener("userLoggedOut", () => {
+          hideUserInfo();
+        });
       });
     </script>
   </head>
   <body>
+    <!-- Main Header -->
+    <header class="main-header">
+      <div class="header-content">
+        <div class="logo-section">
+          <img
+            src="images/logoheader.png"
+            alt="Logo Perusahaan"
+            class="company-logo"
+          />
+          <div class="company-info">
+            <h1>PT. GCI</h1>
+            <span class="tagline">Sistem Inventory Percetakan</span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button id="menu-toggle" class="menu-toggle-btn">
+            <i class="bi bi-list"></i>
+          </button>
+          <div class="sync-status" id="sync-status">
+            <i class="bi bi-wifi"></i>
+            <span>Online</span>
+          </div>
+          <div class="user-info" id="user-info" style="display: none">
+            <span class="welcome-text"
+              >Selamat datang, <span id="current-user"></span
+            ></span>
+          </div>
+        </div>
+      </div>
+    </header>
+
     <div id="login-page" class="page active">
       <main class="login-container">
         <h1>Login</h1>
@@ -398,7 +466,13 @@
             </div>
             <div class="form-group">
               <label for="billing">BILLING</label>
-              <input type="number" id="billing" name="billing" min="0" required />
+              <input
+                type="number"
+                id="billing"
+                name="billing"
+                min="0"
+                required
+              />
             </div>
             <div class="form-group">
               <label for="gap">GAP</label>

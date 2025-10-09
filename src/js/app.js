@@ -1,7 +1,7 @@
 console.log("=== APP.JS FILE LOADED ===");
 
 // Import Bootstrap
-import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
 
 // Import CSS
 import "../css/style.css";

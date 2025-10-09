@@ -48,10 +48,10 @@ export class IridesseReportModel {
     try {
       const database = await db.openDB();
       return new Promise((resolve, reject) => {
-        const transaction = database.transaction([this.storeName], 'readonly');
+        const transaction = database.transaction([this.storeName], "readonly");
         const store = transaction.objectStore(this.storeName);
         const request = store.get(Number(id));
-        
+
         request.onerror = () => reject(request.error);
         request.onsuccess = () => resolve(request.result);
       });
@@ -64,13 +64,13 @@ export class IridesseReportModel {
     try {
       data.updatedAt = new Date().toISOString();
       data.id = Number(id);
-      
+
       const database = await db.openDB();
       return new Promise((resolve, reject) => {
-        const transaction = database.transaction([this.storeName], 'readwrite');
+        const transaction = database.transaction([this.storeName], "readwrite");
         const store = transaction.objectStore(this.storeName);
         const request = store.put(data);
-        
+
         request.onerror = () => reject(request.error);
         request.onsuccess = () => resolve(request.result);
       });
@@ -83,10 +83,10 @@ export class IridesseReportModel {
     try {
       const database = await db.openDB();
       return new Promise((resolve, reject) => {
-        const transaction = database.transaction([this.storeName], 'readwrite');
+        const transaction = database.transaction([this.storeName], "readwrite");
         const store = transaction.objectStore(this.storeName);
         const request = store.delete(Number(id));
-        
+
         request.onerror = () => reject(request.error);
         request.onsuccess = () => resolve(request.result);
       });

@@ -50,7 +50,7 @@ export const openDB = () => {
       // Debug: log database version and available stores
       console.log("Database version:", db.version);
       console.log("Available object stores:", Array.from(db.objectStoreNames));
-      
+
       // Check specifically for iridesse-reports store
       if (db.objectStoreNames.contains(DB_STORES.iridesseReports)) {
         console.log("✅ iridesse-reports store is available");
