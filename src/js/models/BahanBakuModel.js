@@ -233,6 +233,82 @@ export class BahanBakuModel {
     }
   }
 
+  async getNextNumber(category, type, date = null) {
+    try {
+      const targetDate = date ? new Date(date) : new Date();
+      const currentMonth = targetDate.getMonth() + 1; // 1-12
+      const currentYear = targetDate.getFullYear();
+
+      console.log(`=== Getting next number for ${category}-${type} ===`);
+      console.log(`Current month: ${currentMonth}, year: ${currentYear}`);
+
+      // Create a unique key for this category, type, and month
+      const key = `${category}-${type}-${currentYear}-${currentMonth}`;
+      console.log("Key:", key);
+
+      // Get all records from both stock and transactions stores
+      const stockRecords = await db.getRecords(this.storeNames.stock);
+      const transactionRecords = await db.getRecords(
+        this.storeNames.transactions
+      );
+
+      // Filter records for current category, type, and month
+      const relevantRecords = [];
+
+      // Process stock records
+      stockRecords.forEach((record) => {
+        if (record.category === category && record.tanggal) {
+          const recordDate = new Date(record.tanggal);
+          if (
+            recordDate.getMonth() + 1 === currentMonth &&
+            recordDate.getFullYear() === currentYear
+          ) {
+            relevantRecords.push({ nomor: record.nomor, source: "stock" });
+          }
+        }
+      });
+
+      // Process transaction records
+      transactionRecords.forEach((record) => {
+        if (
+          record.category === category &&
+          record.type === type &&
+          record.tanggal
+        ) {
+          const recordDate = new Date(record.tanggal);
+          if (
+            recordDate.getMonth() + 1 === currentMonth &&
+            recordDate.getFullYear() === currentYear
+          ) {
+            relevantRecords.push({
+              nomor: record.nomor,
+              source: "transaction",
+            });
+          }
+        }
+      });
+
+      console.log("Relevant records found:", relevantRecords);
+
+      // Find the highest number used this month
+      let maxNumber = 0;
+      relevantRecords.forEach((record) => {
+        const num = Number(record.nomor);
+        if (!isNaN(num) && num > maxNumber) {
+          maxNumber = num;
+        }
+      });
+
+      const nextNumber = maxNumber + 1;
+      console.log(`Max number found: ${maxNumber}, next number: ${nextNumber}`);
+
+      return nextNumber;
+    } catch (error) {
+      console.error("Error getting next number:", error);
+      return 1; // Default to 1 if there's an error
+    }
+  }
+
   async getCurrentStock(category) {
     try {
       console.log(`=== Getting current stock for category: ${category} ===`);

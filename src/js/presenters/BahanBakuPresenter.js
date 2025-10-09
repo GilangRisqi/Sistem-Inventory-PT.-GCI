@@ -20,10 +20,24 @@ export class BahanBakuPresenter {
       }
     });
 
+    // Listen for get-next-number events
+    document.addEventListener("get-next-number", async (event) => {
+      const { sectionId, category, type, date } = event.detail;
+      console.log(`Handling get-next-number request for ${sectionId}`);
+      try {
+        const nextNumber = await this.model.getNextNumber(category, type, date);
+        console.log(`Next number for ${sectionId}: ${nextNumber}`);
+        await this.view.updateAutoNumber(sectionId, nextNumber);
+      } catch (error) {
+        console.error("Error getting next number:", error);
+        await this.view.updateAutoNumber(sectionId, 1); // Default to 1 on error
+      }
+    });
+
     console.log("Handlers bound successfully");
 
     // Initial setup with delay to ensure DOM is ready
-    setTimeout(() => {
+    setTimeout(async () => {
       console.log("Setting up handlers and loading initial data...");
 
       // Bind stock form handlers
@@ -31,6 +45,9 @@ export class BahanBakuPresenter {
 
       // Bind in/out form handlers
       this.bindInOutHandlers();
+
+      // Initialize auto numbers for all forms
+      await this.view.initializeAutoNumbers();
 
       // Load initial stock data
       this.loadBannerStockData();
@@ -145,10 +162,25 @@ export class BahanBakuPresenter {
 
       console.log("Data validation passed, proceeding to save...");
 
+      // Get next auto number before saving
+      const nextNumber = await this.model.getNextNumber(
+        category,
+        "in",
+        formData.data.tanggal
+      );
+      console.log(`Auto-generated number: ${nextNumber}`);
+
+      // Override nomor with auto-generated number
+      formData.data.nomor = nextNumber;
+
       // Tambahkan timestamp
       formData.data.timestamp = new Date().toISOString();
 
-      console.log("Validation passed, saving data...");
+      console.log("Validation passed, saving data with auto number...");
+      console.log(
+        "Final data to save:",
+        JSON.stringify(formData.data, null, 2)
+      );
 
       // Simpan data
       const savedId = await this.model.addStock(category, formData);
@@ -164,8 +196,12 @@ export class BahanBakuPresenter {
       // Reset form dan tampilkan pesan sukses setelah refresh selesai
       console.log("Resetting form and showing success message...");
       this.view.resetForm(category, "in");
+
+      // Re-initialize auto numbers after reset
+      await this.view.initializeAutoNumbers();
+
       this.view.showSuccess(
-        `Input ${category} berhasil disimpan dan ditampilkan!`
+        `Input ${category} berhasil disimpan dengan nomor ${nextNumber}!`
       );
       console.log("Form reset and success message displayed");
 
@@ -204,13 +240,35 @@ export class BahanBakuPresenter {
     try {
       console.log("handleOutSubmit called with:", { category, formData });
 
+      // Get next auto number before saving
+      const nextNumber = await this.model.getNextNumber(
+        category,
+        "out",
+        formData.data.tanggal
+      );
+      console.log(`Auto-generated number for OUT: ${nextNumber}`);
+
+      // Override nomor with auto-generated number
+      formData.data.nomor = nextNumber;
+
+      console.log(
+        "Final OUT data to save:",
+        JSON.stringify(formData.data, null, 2)
+      );
+
       // Simpan data
       await this.model.reduceStock(category, formData);
       console.log("Stock reduced successfully");
 
       // Reset form dan tampilkan pesan sukses
       this.view.resetForm(category, "out");
-      this.view.showSuccess(`Output ${category} berhasil disimpan!`);
+
+      // Re-initialize auto numbers after reset
+      await this.view.initializeAutoNumbers();
+
+      this.view.showSuccess(
+        `Output ${category} berhasil disimpan dengan nomor ${nextNumber}!`
+      );
 
       // Refresh stock display dengan delay kecil
       console.log(`Refreshing ${category} stock display...`);

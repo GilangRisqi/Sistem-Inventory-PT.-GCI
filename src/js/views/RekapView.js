@@ -1,9 +1,15 @@
+// Import jsPDF for PDF generation
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+
 export class RekapView {
   constructor() {
     this.generateBtn = document.getElementById("generate-rekap");
     this.tipeSelect = document.getElementById("rekap-tipe");
     this.periodeInput = document.getElementById("rekap-periode");
     this.tableContainer = document.querySelector(".table-container");
+    this.currentData = []; // Store current table data for PDF generation
+    this.currentType = ""; // Store current table type
   }
 
   formatDateForInput(dateValue) {
@@ -341,48 +347,14 @@ export class RekapView {
     this.deleteHandler = handler;
   }
 
-  attachEventListeners() {
-    // Remove existing listeners to avoid duplicates
-    this.tableContainer.removeEventListener("click", this.handleTableClick);
 
-    // Add event listener for edit, save, cancel and delete buttons
-    this.handleTableClick = (e) => {
-      if (e.target.closest(".edit-btn")) {
-        const btn = e.target.closest(".edit-btn");
-        const id = btn.dataset.id;
-        const type = btn.dataset.type;
-        if (this.editHandler) {
-          this.editHandler(id, type);
-        }
-      } else if (e.target.closest(".save-btn")) {
-        const btn = e.target.closest(".save-btn");
-        const id = btn.dataset.id;
-        const type = btn.dataset.type;
-        if (this.saveHandler) {
-          this.saveHandler(id, type);
-        }
-      } else if (e.target.closest(".cancel-btn")) {
-        const btn = e.target.closest(".cancel-btn");
-        const id = btn.dataset.id;
-        const type = btn.dataset.type;
-        if (this.cancelHandler) {
-          this.cancelHandler(id, type);
-        }
-      } else if (e.target.closest(".delete-btn")) {
-        const btn = e.target.closest(".delete-btn");
-        const id = btn.dataset.id;
-        const type = btn.dataset.type;
-        if (this.deleteHandler) {
-          this.deleteHandler(id, type);
-        }
-      }
-    };
-
-    this.tableContainer.addEventListener("click", this.handleTableClick);
-  }
 
   displayTable(data, tipe) {
     let html = "";
+
+    // Store data for PDF generation
+    this.currentData = data;
+    this.currentType = tipe;
 
     if (tipe === "bahan-baku") {
       html = this.generateBahanBakuTable(data);
@@ -392,10 +364,270 @@ export class RekapView {
       html = this.generateDailyReportTable(data);
     }
 
-    this.tableContainer.innerHTML = html;
+    // Add download PDF button
+    const downloadBtn = this.createDownloadButton(tipe);
+    this.tableContainer.innerHTML = downloadBtn + html;
 
     // Attach event listeners after table is rendered
     this.attachEventListeners();
+  }
+
+  createDownloadButton(tipe) {
+    const typeLabel = tipe === "iridesse-report" ? "Iridesse" : "Daily Report Mesin";
+    return `
+      <div style="margin-bottom: 15px;">
+        <button id="download-pdf-btn" class="btn btn-success" style="margin-right: 10px;">
+          <i class="bi bi-file-earmark-pdf"></i> Download PDF - ${typeLabel}
+        </button>
+      </div>
+    `;
+  }
+
+  attachEventListeners() {
+    // Remove existing listeners to avoid duplicates
+    this.tableContainer.removeEventListener("click", this.handleTableClick);
+
+    // Add download PDF button listener
+    const downloadBtn = this.tableContainer.querySelector("#download-pdf-btn");
+    if (downloadBtn) {
+      downloadBtn.addEventListener("click", () => this.downloadPDF());
+    }
+
+    // Add event listener for edit, save, cancel and delete buttons
+    this.handleTableClick = (e) => {
+      if (e.target.closest(".edit-btn")) {
+        const btn = e.target.closest(".edit-btn");
+        const id = btn.dataset.id;
+        const type = btn.dataset.type;
+        this.startEdit(id, type);
+        if (this.editHandler) this.editHandler(id, type);
+      } else if (e.target.closest(".save-btn")) {
+        const btn = e.target.closest(".save-btn");
+        const id = btn.dataset.id;
+        const type = btn.dataset.type;
+        this.saveEdit(id, type);
+      } else if (e.target.closest(".cancel-btn")) {
+        const btn = e.target.closest(".cancel-btn");
+        const id = btn.dataset.id;
+        const type = btn.dataset.type;
+        this.cancelEdit(id, type);
+        if (this.cancelHandler) this.cancelHandler(id, type);
+      } else if (e.target.closest(".delete-btn")) {
+        const btn = e.target.closest(".delete-btn");
+        const id = btn.dataset.id;
+        const type = btn.dataset.type;
+        if (confirm("Apakah Anda yakin ingin menghapus data ini?")) {
+          if (this.deleteHandler) this.deleteHandler(id, type);
+        }
+      }
+    };
+
+    this.tableContainer.addEventListener("click", this.handleTableClick);
+  }
+
+  downloadPDF() {
+    try {
+      console.log("=== Generating PDF ===");
+      console.log("Current data:", this.currentData);
+      console.log("Current type:", this.currentType);
+
+      if (!this.currentData || this.currentData.length === 0) {
+        alert("Tidak ada data untuk dicetak");
+        return;
+      }
+
+      // Create PDF
+      const doc = new window.jspdf.jsPDF({ orientation: 'landscape' });
+
+      // Add company header
+      doc.setFontSize(16);
+      doc.setFont(undefined, "bold");
+      doc.text("PT. GCI (Garasi Creasindo Indonesia)", 20, 20);
+
+      // Add report title
+      const title = this.currentType === "iridesse-report" 
+        ? "Laporan Iridesse Report" 
+        : "Laporan Daily Report Mesin";
+      doc.setFontSize(14);
+      doc.setFont(undefined, "normal");
+      doc.text(title, 20, 32);
+
+      // Add period info
+      const periode = this.periodeInput.value;
+      if (periode) {
+        const [year, month] = periode.split("-");
+        const monthNames = [
+          "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+          "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+        ];
+        doc.text(`Periode: ${monthNames[parseInt(month) - 1]} ${year}`, 20, 44);
+      }
+
+      // Add date and time
+      const currentDate = new Date().toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      });
+      const currentTime = new Date().toLocaleTimeString("id-ID");
+      doc.setFontSize(10);
+      doc.text(`Tanggal: ${currentDate}`, 20, 52);
+      doc.text(`Waktu: ${currentTime}`, 20, 58);
+
+      // Generate table based on type
+      if (this.currentType === "iridesse-report") {
+        this.generateIridessePDF(doc);
+      } else {
+        this.generateDailyReportPDF(doc);
+      }
+
+      console.log("PDF generation completed");
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("Gagal membuat PDF: " + error.message);
+    }
+  }
+
+  generateIridessePDF(doc) {
+    const headers = [
+      "Tanggal", "No SPK", "Nama Client", "Nama Pekerjaan", 
+      "Jenis Kertas", "Ukuran Kertas", "Jenis Print", 
+      "Jumlah Cetak", "Jumlah OK", "Jumlah NG", "Total Cetak",
+      "Time Start", "Time Finish", "Start Billing", "Finish Billing",
+      "Billing", "Gap", "Status"
+    ];
+
+    const tableData = this.currentData.map((item) => {
+      const totalCetak = (Number(item.jumlahCetak) || 0) - (Number(item.ng) || 0);
+      const billing = (Number(item.finishBilling) || 0) - (Number(item.startBilling) || 0);
+      const gap = totalCetak - billing;
+
+      return [
+        new Date(item.tanggal).toLocaleDateString("id-ID"),
+        item.noSpk || "-",
+        item.namaClient || "-",
+        item.namaPekerjaan || "-",
+        item.jenisKertas || "-",
+        item.ukuranKertas || "-",
+        item.jenisPrint || "-",
+        (item.jumlahCetak || 0).toLocaleString(),
+        (item.jumlahOk || 0).toLocaleString(),
+        (item.ng || 0).toLocaleString(),
+        totalCetak.toLocaleString(),
+        item.timeStart || "-",
+        item.timeFinish || "-",
+        (item.startBilling || 0).toLocaleString(),
+        (item.finishBilling || 0).toLocaleString(),
+        billing.toLocaleString(),
+        gap.toLocaleString(),
+        item.status || "-"
+      ];
+    });
+
+    // Add total records info
+    doc.text(`Total Record: ${tableData.length} item`, 20, 64);
+
+    // Generate table in PDF
+    doc.autoTable({
+      head: [headers],
+      body: tableData,
+      startY: 66,
+      styles: {
+        fontSize: 7,
+        cellPadding: 2,
+      },
+      headStyles: {
+        fillColor: [52, 152, 219],
+        textColor: 255,
+        fontStyle: "bold",
+        fontSize: 7,
+      },
+      alternateRowStyles: {
+        fillColor: [248, 249, 250],
+      },
+      margin: { top: 66, left: 10, right: 10 },
+      didDrawPage: function (data) {
+        const pageCount = doc.internal.getNumberOfPages();
+        const pageSize = doc.internal.pageSize;
+        doc.setFontSize(8);
+        doc.text(
+          `Halaman ${data.pageNumber} dari ${pageCount}`,
+          pageSize.width - 40,
+          pageSize.height - 10
+        );
+      },
+    });
+
+    // Save PDF
+    const filename = `Laporan_Iridesse_${new Date().toISOString().split("T")[0]}.pdf`;
+    doc.save(filename);
+    alert(`PDF berhasil dibuat: ${filename}`);
+  }
+
+  generateDailyReportPDF(doc) {
+    const headers = [
+      "No", "Tanggal", "Qty PO", "Jenis Bahan", "Jenis Pekerjaan",
+      "Client", "Spesifikasi", "Qty Cetak OK", "Qty Cetak NG", 
+      "Total Qty Cetak", "Satuan Cetak", "Waktu Start", "Waktu Finish",
+      "No SPK", "Keterangan"
+    ];
+
+    const tableData = this.currentData.map((item) => [
+      item.nomor || "",
+      new Date(item.tanggal).toLocaleDateString("id-ID"),
+      (item.qtyPo || 0).toLocaleString(),
+      item.jenisBahan || "-",
+      item.jenisPekerjaan || "-",
+      item.client || "-",
+      item.spesifikasi || "-",
+      (item.qtyCetakOk || 0).toLocaleString(),
+      (item.qtyCetakNg || 0).toLocaleString(),
+      (item.totalQtyCetakAll || 0).toLocaleString(),
+      item.satuanCetak || "LEMBAR PLANO",
+      item.waktuStart || "-",
+      item.waktuFinish || "-",
+      item.noSpk || "-",
+      item.keterangan || "-"
+    ]);
+
+    // Add total records info
+    doc.text(`Total Record: ${tableData.length} item`, 20, 64);
+
+    // Generate table in PDF
+    doc.autoTable({
+      head: [headers],
+      body: tableData,
+      startY: 66,
+      styles: {
+        fontSize: 7,
+        cellPadding: 2,
+      },
+      headStyles: {
+        fillColor: [52, 152, 219],
+        textColor: 255,
+        fontStyle: "bold",
+        fontSize: 7,
+      },
+      alternateRowStyles: {
+        fillColor: [248, 249, 250],
+      },
+      margin: { top: 66, left: 10, right: 10 },
+      didDrawPage: function (data) {
+        const pageCount = doc.internal.getNumberOfPages();
+        const pageSize = doc.internal.pageSize;
+        doc.setFontSize(8);
+        doc.text(
+          `Halaman ${data.pageNumber} dari ${pageCount}`,
+          pageSize.width - 40,
+          pageSize.height - 10
+        );
+      },
+    });
+
+    // Save PDF
+    const filename = `Laporan_Daily_Report_${new Date().toISOString().split("T")[0]}.pdf`;
+    doc.save(filename);
+    alert(`PDF berhasil dibuat: ${filename}`);
   }
 
   showSuccess(message) {

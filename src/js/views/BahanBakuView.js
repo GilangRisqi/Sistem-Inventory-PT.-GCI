@@ -417,8 +417,8 @@ export class BahanBakuView {
   _generateInForm(sectionId) {
     return `
       <div class="form-group">
-        <label for="${sectionId}-nomor">No.</label>
-        <input type="number" id="${sectionId}-nomor" name="nomor" required />
+        <label for="${sectionId}-nomor">No. (Otomatis)</label>
+        <input type="number" id="${sectionId}-nomor" name="nomor" readonly style="background-color: #f8f9fa; cursor: not-allowed;" />
       </div>
       <div class="form-group">
         <label for="${sectionId}-jenis-kertas">Jenis Kertas</label>
@@ -463,8 +463,8 @@ export class BahanBakuView {
   _generateOutForm(sectionId) {
     return `
       <div class="form-group">
-        <label for="${sectionId}-nomor">No.</label>
-        <input type="number" id="${sectionId}-nomor" name="nomor" required />
+        <label for="${sectionId}-nomor">No. (Otomatis)</label>
+        <input type="number" id="${sectionId}-nomor" name="nomor" readonly style="background-color: #f8f9fa; cursor: not-allowed;" />
       </div>
       <div class="form-group">
         <label for="${sectionId}-jenis-kertas">Jenis Kertas</label>
@@ -529,6 +529,21 @@ export class BahanBakuView {
       totalInput.value = total;
     };
 
+    const updateAutoNumber = () => {
+      const dateInput = form.querySelector('[name="tanggal"]');
+      if (dateInput && dateInput.value) {
+        // Extract category and type from sectionId
+        const category = sectionId.split("-")[1]; // banner, digital, produksi
+        const type = "in";
+        this.updateAutoNumberForSection(
+          sectionId,
+          category,
+          type,
+          dateInput.value
+        );
+      }
+    };
+
     // Panggil updateTotal saat form pertama kali dimuat
     updateTotal();
 
@@ -539,6 +554,12 @@ export class BahanBakuView {
     form
       .querySelector('[name="jumlahMasuk"]')
       .addEventListener("input", updateTotal);
+
+    // Add event listener for date change to update auto number
+    const dateInput = form.querySelector('[name="tanggal"]');
+    if (dateInput) {
+      dateInput.addEventListener("change", updateAutoNumber);
+    }
   }
 
   _setupOutFormCalculations(form, sectionId) {
@@ -558,6 +579,21 @@ export class BahanBakuView {
         sisaStock;
     };
 
+    const updateAutoNumber = () => {
+      const dateInput = form.querySelector('[name="tanggal"]');
+      if (dateInput && dateInput.value) {
+        // Extract category and type from sectionId
+        const category = sectionId.split("-")[1]; // banner, digital, produksi
+        const type = "out";
+        this.updateAutoNumberForSection(
+          sectionId,
+          category,
+          type,
+          dateInput.value
+        );
+      }
+    };
+
     form
       .querySelector('[name="totalMasuk"]')
       .addEventListener("input", updateTotals);
@@ -567,6 +603,12 @@ export class BahanBakuView {
     form
       .querySelector('[name="totalKeluarNg"]')
       .addEventListener("input", updateTotals);
+
+    // Add event listener for date change to update auto number
+    const dateInput = form.querySelector('[name="tanggal"]');
+    if (dateInput) {
+      dateInput.addEventListener("change", updateAutoNumber);
+    }
   }
 
   _getFormElements(section, sectionId) {
@@ -649,9 +691,8 @@ export class BahanBakuView {
 
         try {
           console.log("Checking form elements:", formElements);
-          // Validasi input
+          // Validasi input (nomor tidak perlu karena auto-generated)
           if (
-            !formElements.nomor?.value ||
             !formElements.jenisKertas?.value ||
             !formElements.ukuran?.value ||
             !formElements.qtyLastMonth?.value ||
@@ -659,7 +700,6 @@ export class BahanBakuView {
             !formElements.jumlahMasuk?.value
           ) {
             console.error("Missing required fields:", {
-              nomor: !!formElements.nomor?.value,
               jenisKertas: !!formElements.jenisKertas?.value,
               ukuran: !!formElements.ukuran?.value,
               qtyLastMonth: !!formElements.qtyLastMonth?.value,
@@ -670,15 +710,11 @@ export class BahanBakuView {
           }
           console.log("All required fields are filled");
 
-          // Validasi angka
-          const nomor = Number(formElements.nomor.value);
+          // Validasi angka (nomor akan di-generate otomatis)
           const qtyLastMonth = Number(formElements.qtyLastMonth.value);
           const jumlahMasuk = Number(formElements.jumlahMasuk.value);
           const total = qtyLastMonth + jumlahMasuk;
 
-          if (isNaN(nomor) || nomor <= 0) {
-            throw new Error("Nomor harus berupa angka positif");
-          }
           if (isNaN(qtyLastMonth) || qtyLastMonth < 0) {
             throw new Error("Qty Last Month tidak boleh negatif");
           }
@@ -691,7 +727,7 @@ export class BahanBakuView {
             category: category,
             type: formType,
             data: {
-              nomor: nomor,
+              nomor: Number(formElements.nomor.value) || 0, // Will be overridden by auto-generated number
               jenisKertas: formElements.jenisKertas.value.trim(),
               ukuran: formElements.ukuran.value.trim(),
               qtyLastMonth: qtyLastMonth,
@@ -742,7 +778,6 @@ export class BahanBakuView {
 
         try {
           if (
-            !formElements.nomor.value ||
             !formElements.jenisKertas.value ||
             !formElements.ukuran.value ||
             !formElements.totalMasuk.value ||
@@ -763,7 +798,7 @@ export class BahanBakuView {
             category: category,
             type: formType,
             data: {
-              nomor: Number(formElements.nomor.value),
+              nomor: Number(formElements.nomor.value) || 0, // Will be overridden by auto-generated number
               jenisKertas: formElements.jenisKertas.value.trim(),
               ukuran: formElements.ukuran.value.trim(),
               totalMasuk: totalMasuk,
@@ -928,6 +963,79 @@ export class BahanBakuView {
     // Add the new handler
     document.addEventListener("form-submit", this._formSubmitHandler);
     console.log("Form-submit event handler attached");
+  }
+
+  async updateAutoNumber(sectionId, nextNumber) {
+    console.log(`=== Updating auto number for ${sectionId} ===`);
+    console.log("Next number:", nextNumber);
+
+    const nomorInput = document.getElementById(`${sectionId}-nomor`);
+    if (nomorInput) {
+      nomorInput.value = nextNumber;
+      console.log(`Auto number ${nextNumber} set for ${sectionId}`);
+    } else {
+      console.error(`Nomor input not found for ${sectionId}`);
+    }
+  }
+
+  async initializeAutoNumbers() {
+    console.log("=== Initializing auto numbers for all forms ===");
+
+    // Set current date as default for date inputs and update auto numbers
+    const currentDate = new Date().toISOString().split("T")[0];
+
+    // Array of all form sections
+    const formSections = [
+      { id: "in-banner", category: "banner", type: "in" },
+      { id: "out-banner", category: "banner", type: "out" },
+      { id: "in-digital", category: "digital", type: "in" },
+      { id: "out-digital", category: "digital", type: "out" },
+      { id: "in-produksi", category: "produksi", type: "in" },
+      { id: "out-produksi", category: "produksi", type: "out" },
+    ];
+
+    for (const section of formSections) {
+      try {
+        // Set default date
+        const dateInput = document.getElementById(`${section.id}-tanggal`);
+        if (dateInput && !dateInput.value) {
+          dateInput.value = currentDate;
+        }
+
+        // Trigger auto number update
+        await this.updateAutoNumberForSection(
+          section.id,
+          section.category,
+          section.type,
+          currentDate
+        );
+      } catch (error) {
+        console.error(
+          `Error initializing auto number for ${section.id}:`,
+          error
+        );
+      }
+    }
+  }
+
+  async updateAutoNumberForSection(sectionId, category, type, date = null) {
+    try {
+      console.log(`=== Updating auto number for section: ${sectionId} ===`);
+
+      // Dispatch event to get next number from model
+      const event = new CustomEvent("get-next-number", {
+        detail: {
+          sectionId,
+          category,
+          type,
+          date: date || new Date().toISOString().split("T")[0],
+        },
+      });
+
+      document.dispatchEvent(event);
+    } catch (error) {
+      console.error(`Error updating auto number for ${sectionId}:`, error);
+    }
   }
 
   bindStockSubmit(category, handler) {
