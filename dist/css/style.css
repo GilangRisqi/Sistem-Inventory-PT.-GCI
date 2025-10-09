@@ -344,6 +344,10 @@ body {
   border: 1px solid rgba(203, 213, 225, 0.2);
 }
 
+.content-section.active {
+  display: block;
+}
+
 .content-section h2 {
   margin: 0 0 2rem 0;
   padding: 0 0 1rem 0;
@@ -436,6 +440,39 @@ form button[type="submit"] {
 
 form button[type="submit"]:hover {
   background: #2563eb;
+}
+
+/* Generate rekap button */
+#generate-rekap {
+  padding: 0.75rem 1.5rem;
+  background: var(--sky);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 8px rgba(56, 189, 248, 0.3);
+}
+
+#generate-rekap:hover {
+  background: #2563eb;
+  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.4);
+  transform: translateY(-1px);
+}
+
+#generate-rekap:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.3);
+}
+
+#generate-rekap:active {
+  transform: translateY(0);
 }
 
 /* Table styles */
@@ -700,6 +737,113 @@ td {
     padding: 0.375rem 0.625rem;
     font-size: 0.75rem;
     margin: 0.1rem;
+  }
+}
+
+/* Landing Page Styles */
+.landing-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  text-align: center;
+  padding: 2rem;
+}
+
+.welcome-header {
+  margin-bottom: 3rem;
+}
+
+.welcome-header h1 {
+  font-size: 2.5rem;
+  color: var(--charcoal);
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.welcome-header h2 {
+  font-size: 1.8rem;
+  color: var(--sky);
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.company-image-container {
+  margin: 2rem 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.company-image {
+  max-width: 100%;
+  max-height: 400px;
+  width: auto;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(30, 41, 59, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.company-image:hover {
+  transform: scale(1.02);
+  box-shadow: 0 12px 40px rgba(30, 41, 59, 0.3);
+}
+
+.welcome-message {
+  margin-top: 2rem;
+  max-width: 600px;
+}
+
+.welcome-message p {
+  font-size: 1.2rem;
+  color: var(--graphite);
+  margin-bottom: 1rem;
+  line-height: 1.8;
+}
+
+.welcome-message p:first-child {
+  font-weight: 600;
+  color: var(--charcoal);
+}
+
+/* Responsive design for landing page */
+@media (max-width: 768px) {
+  .welcome-header h1 {
+    font-size: 2rem;
+  }
+
+  .welcome-header h2 {
+    font-size: 1.4rem;
+  }
+
+  .welcome-message p {
+    font-size: 1rem;
+  }
+
+  .company-image {
+    max-height: 300px;
+  }
+
+  .landing-container {
+    padding: 1rem;
+    min-height: 70vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .welcome-header h1 {
+    font-size: 1.6rem;
+  }
+
+  .welcome-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .company-image {
+    max-height: 250px;
   }
 }
 

@@ -61,6 +61,24 @@ export class LoginView {
   showDashboard() {
     this.loginPage.classList.remove("active");
     this.dashboardPage.classList.add("active");
+
+    // Show landing page by default after login
+    setTimeout(() => {
+      // Remove active class from all sections
+      document.querySelectorAll(".content-section").forEach((section) => {
+        section.classList.remove("active");
+        section.style.display = "none";
+      });
+
+      // Show landing page section
+      const landingSection = document.getElementById("landing-page-section");
+      if (landingSection) {
+        landingSection.classList.add("active");
+        landingSection.style.display = "block";
+      }
+
+      console.log("Dashboard shown with landing page as default");
+    }, 100);
   }
 
   showLogin() {

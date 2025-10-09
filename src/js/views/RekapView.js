@@ -347,8 +347,6 @@ export class RekapView {
     this.deleteHandler = handler;
   }
 
-
-
   displayTable(data, tipe) {
     let html = "";
 
@@ -373,7 +371,8 @@ export class RekapView {
   }
 
   createDownloadButton(tipe) {
-    const typeLabel = tipe === "iridesse-report" ? "Iridesse" : "Daily Report Mesin";
+    const typeLabel =
+      tipe === "iridesse-report" ? "Iridesse" : "Daily Report Mesin";
     return `
       <div style="margin-bottom: 15px;">
         <button id="download-pdf-btn" class="btn btn-success" style="margin-right: 10px;">
@@ -437,7 +436,7 @@ export class RekapView {
       }
 
       // Create PDF
-      const doc = new window.jspdf.jsPDF({ orientation: 'landscape' });
+      const doc = new window.jspdf.jsPDF({ orientation: "landscape" });
 
       // Add company header
       doc.setFontSize(16);
@@ -445,9 +444,10 @@ export class RekapView {
       doc.text("PT. GCI (Garasi Creasindo Indonesia)", 20, 20);
 
       // Add report title
-      const title = this.currentType === "iridesse-report" 
-        ? "Laporan Iridesse Report" 
-        : "Laporan Daily Report Mesin";
+      const title =
+        this.currentType === "iridesse-report"
+          ? "Laporan Iridesse Report"
+          : "Laporan Daily Report Mesin";
       doc.setFontSize(14);
       doc.setFont(undefined, "normal");
       doc.text(title, 20, 32);
@@ -457,8 +457,18 @@ export class RekapView {
       if (periode) {
         const [year, month] = periode.split("-");
         const monthNames = [
-          "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-          "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+          "Januari",
+          "Februari",
+          "Maret",
+          "April",
+          "Mei",
+          "Juni",
+          "Juli",
+          "Agustus",
+          "September",
+          "Oktober",
+          "November",
+          "Desember",
         ];
         doc.text(`Periode: ${monthNames[parseInt(month) - 1]} ${year}`, 20, 44);
       }
@@ -490,16 +500,31 @@ export class RekapView {
 
   generateIridessePDF(doc) {
     const headers = [
-      "Tanggal", "No SPK", "Nama Client", "Nama Pekerjaan", 
-      "Jenis Kertas", "Ukuran Kertas", "Jenis Print", 
-      "Jumlah Cetak", "Jumlah OK", "Jumlah NG", "Total Cetak",
-      "Time Start", "Time Finish", "Start Billing", "Finish Billing",
-      "Billing", "Gap", "Status"
+      "Tanggal",
+      "No SPK",
+      "Nama Client",
+      "Nama Pekerjaan",
+      "Jenis Kertas",
+      "Ukuran Kertas",
+      "Jenis Print",
+      "Jumlah Cetak",
+      "Jumlah OK",
+      "Jumlah NG",
+      "Total Cetak",
+      "Time Start",
+      "Time Finish",
+      "Start Billing",
+      "Finish Billing",
+      "Billing",
+      "Gap",
+      "Status",
     ];
 
     const tableData = this.currentData.map((item) => {
-      const totalCetak = (Number(item.jumlahCetak) || 0) - (Number(item.ng) || 0);
-      const billing = (Number(item.finishBilling) || 0) - (Number(item.startBilling) || 0);
+      const totalCetak =
+        (Number(item.jumlahCetak) || 0) - (Number(item.ng) || 0);
+      const billing =
+        (Number(item.finishBilling) || 0) - (Number(item.startBilling) || 0);
       const gap = totalCetak - billing;
 
       return [
@@ -520,7 +545,7 @@ export class RekapView {
         (item.finishBilling || 0).toLocaleString(),
         billing.toLocaleString(),
         gap.toLocaleString(),
-        item.status || "-"
+        item.status || "-",
       ];
     });
 
@@ -559,17 +584,30 @@ export class RekapView {
     });
 
     // Save PDF
-    const filename = `Laporan_Iridesse_${new Date().toISOString().split("T")[0]}.pdf`;
+    const filename = `Laporan_Iridesse_${
+      new Date().toISOString().split("T")[0]
+    }.pdf`;
     doc.save(filename);
     alert(`PDF berhasil dibuat: ${filename}`);
   }
 
   generateDailyReportPDF(doc) {
     const headers = [
-      "No", "Tanggal", "Qty PO", "Jenis Bahan", "Jenis Pekerjaan",
-      "Client", "Spesifikasi", "Qty Cetak OK", "Qty Cetak NG", 
-      "Total Qty Cetak", "Satuan Cetak", "Waktu Start", "Waktu Finish",
-      "No SPK", "Keterangan"
+      "No",
+      "Tanggal",
+      "Qty PO",
+      "Jenis Bahan",
+      "Jenis Pekerjaan",
+      "Client",
+      "Spesifikasi",
+      "Qty Cetak OK",
+      "Qty Cetak NG",
+      "Total Qty Cetak",
+      "Satuan Cetak",
+      "Waktu Start",
+      "Waktu Finish",
+      "No SPK",
+      "Keterangan",
     ];
 
     const tableData = this.currentData.map((item) => [
@@ -587,7 +625,7 @@ export class RekapView {
       item.waktuStart || "-",
       item.waktuFinish || "-",
       item.noSpk || "-",
-      item.keterangan || "-"
+      item.keterangan || "-",
     ]);
 
     // Add total records info
@@ -625,7 +663,9 @@ export class RekapView {
     });
 
     // Save PDF
-    const filename = `Laporan_Daily_Report_${new Date().toISOString().split("T")[0]}.pdf`;
+    const filename = `Laporan_Daily_Report_${
+      new Date().toISOString().split("T")[0]
+    }.pdf`;
     doc.save(filename);
     alert(`PDF berhasil dibuat: ${filename}`);
   }

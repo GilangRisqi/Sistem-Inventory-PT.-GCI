@@ -22,9 +22,11 @@ export class NavigationPresenter {
 
   showDefaultSection() {
     console.log("NavigationPresenter: showDefaultSection called");
-    // Show stock-banner as default section after login
+    // Show landing page as default section after login
     // Make sure we're on dashboard page first
-    this.view.showSection("stock-banner");
-    console.log("NavigationPresenter: showDefaultSection completed");
+    this.view.showSection("landing-page");
+    console.log(
+      "NavigationPresenter: showDefaultSection completed - landing page shown"
+    );
   }
 }

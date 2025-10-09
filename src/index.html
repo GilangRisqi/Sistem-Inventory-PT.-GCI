@@ -128,6 +128,11 @@
       <aside class="sidebar">
         <nav class="main-nav">
           <ul>
+            <li>
+              <a href="#" data-page="landing-page">
+                <i class="bi bi-house-door"></i> Dashboard
+              </a>
+            </li>
             <li class="has-submenu">
               <a href="#" class="menu-toggle">Inventory Bahan Baku</a>
               <ul class="submenu">
@@ -157,6 +162,22 @@
       </aside>
 
       <main class="main-content">
+        <section id="landing-page-section" class="content-section">
+          <div class="landing-container">
+            <div class="welcome-header">
+              <h1>Selamat Datang di Sistem Inventory</h1>
+              <h2>PT. GCI (Garasi Creasindo Indonesia)</h2>
+            </div>
+            <div class="company-image-container">
+              <img
+                src="images/logods2.png"
+                alt="PT. GCI Company"
+                class="company-image"
+              />
+            </div>
+          </div>
+        </section>
+
         <section id="stock-banner-section" class="content-section">
           <h2>List Stock Bahan Baku Banner</h2>
           <!-- Form akan ditambahkan nanti -->
@@ -354,7 +375,10 @@
               <label for="rekap-periode">Periode</label>
               <input type="month" id="rekap-periode" />
             </div>
-            <button id="generate-rekap">Generate Laporan</button>
+            <button id="generate-rekap">
+              <i class="bi bi-file-earmark-bar-graph"></i>
+              Generate Laporan
+            </button>
           </div>
           <div class="table-container">
             <!-- Table will be dynamically generated here -->
@@ -499,5 +523,12 @@
         </section>
       </main>
     </div>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+      <div class="footer-content">
+        <p>&copy; GAP Circle 2025 - All Rights Reserved</p>
+      </div>
+    </footer>
   </body>
 </html>

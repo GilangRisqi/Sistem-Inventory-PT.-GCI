@@ -6,6 +6,7 @@ export class NavigationView {
     };
 
     this.sections = {
+      "landing-page": document.getElementById("landing-page-section"),
       "stock-banner": document.getElementById("stock-banner-section"),
       "stock-digital": document.getElementById("stock-digital-section"),
       "stock-produksi": document.getElementById("stock-produksi-section"),
@@ -25,6 +26,7 @@ export class NavigationView {
 
     this.bindEvents();
     this.setupSubmenuToggle();
+    this.setupMobileOverlay();
     this.currentPage = null;
   }
 
@@ -57,6 +59,8 @@ export class NavigationView {
         if (page) {
           this.showPage(page);
           this.updateActiveState(e.target);
+          // Auto-close sidebar on mobile after menu click
+          this.closeSidebarOnMobile();
         }
       });
     });
@@ -73,9 +77,31 @@ export class NavigationView {
           if (this.navigationHandler) {
             this.navigationHandler(section);
           }
+          // Auto-close sidebar on mobile after menu click
+          this.closeSidebarOnMobile();
         }
       });
     });
+
+    // Handle all submenu links (they use data-page attribute)
+    document.querySelectorAll(".submenu a[data-page]").forEach((link) => {
+      link.addEventListener("click", (e) => {
+        // Auto-close sidebar on mobile after submenu click
+        this.closeSidebarOnMobile();
+      });
+    });
+
+    // Handle regular menu links that don't have data attributes
+    document
+      .querySelectorAll(
+        ".main-nav a:not([data-page]):not([data-section]):not(.menu-toggle)"
+      )
+      .forEach((link) => {
+        link.addEventListener("click", (e) => {
+          // Auto-close sidebar on mobile for regular menu clicks
+          this.closeSidebarOnMobile();
+        });
+      });
   }
 
   setupSubmenuToggle() {
@@ -183,5 +209,54 @@ export class NavigationView {
         sectionId
       );
     }
+  }
+
+  showLandingPage() {
+    // Show landing page as default after login
+    this.showSection("landing-page");
+  }
+
+  closeSidebarOnMobile() {
+    // Check if we're on mobile (screen width <= 768px)
+    if (window.innerWidth <= 768) {
+      if (this.sidebar) {
+        this.sidebar.classList.remove("active");
+      }
+    }
+  }
+
+  setupMobileOverlay() {
+    // Add event listener to main content area to close sidebar on mobile
+    const mainContent = document.querySelector(".main-content");
+    if (mainContent) {
+      mainContent.addEventListener("click", (e) => {
+        // Only close sidebar on mobile and if sidebar is currently active
+        if (
+          window.innerWidth <= 768 &&
+          this.sidebar &&
+          this.sidebar.classList.contains("active")
+        ) {
+          this.closeSidebarOnMobile();
+        }
+      });
+    }
+
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener("click", (e) => {
+      // Only on mobile devices
+      if (window.innerWidth <= 768) {
+        // If sidebar is active and click is outside sidebar and not on menu toggle button
+        if (this.sidebar && this.sidebar.classList.contains("active")) {
+          const menuToggleBtn = document.getElementById("menu-toggle");
+          if (
+            !this.sidebar.contains(e.target) &&
+            e.target !== menuToggleBtn &&
+            !menuToggleBtn.contains(e.target)
+          ) {
+            this.closeSidebarOnMobile();
+          }
+        }
+      }
+    });
   }
 }
