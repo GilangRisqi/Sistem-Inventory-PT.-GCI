@@ -1,6 +1,6 @@
 // Import jsPDF for PDF generation
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 export class BahanBakuView {
   constructor(model) {
@@ -65,7 +65,9 @@ export class BahanBakuView {
     if (Array.isArray(stockData) && stockData.length > 0) {
       stockData.forEach((item) => {
         if (item && typeof item === "object") {
-          const formattedDate = item.tanggal ? new Date(item.tanggal).toLocaleDateString('id-ID') : "";
+          const formattedDate = item.tanggal
+            ? new Date(item.tanggal).toLocaleDateString("id-ID")
+            : "";
           rows += `
             <tr>
               <td>${item.nomor || ""}</td>
@@ -92,15 +94,16 @@ export class BahanBakuView {
 
     // Update table content and ensure print button is present
     currentForm.container.innerHTML = tableHtml + rows + "</tbody></table>";
-    
+
     // Always add print button after updating content
     const printBtn = document.createElement("button");
     printBtn.innerHTML = '<i class="bi bi-printer"></i> Download PDF';
     printBtn.className = "print-button btn btn-success";
-    printBtn.style.cssText = "margin-top: 10px; margin-left: 10px; margin-right: 10px; padding: 8px 15px;";
+    printBtn.style.cssText =
+      "margin-top: 10px; margin-left: 10px; margin-right: 10px; padding: 8px 15px;";
     printBtn.onclick = () => this._handlePrintStock(category);
     currentForm.container.appendChild(printBtn);
-    
+
     console.log("Table updated successfully");
 
     console.log("Stock display updated successfully");
@@ -130,74 +133,87 @@ export class BahanBakuView {
 
   _handlePrintStock(category) {
     console.log(`=== Printing stock for ${category} ===`);
-    
+
     try {
       // Use stored data instead of DOM parsing
       const stockData = this.stockData[category];
-      console.log('Stored stock data:', stockData);
-      
+      console.log("Stored stock data:", stockData);
+
       if (!stockData || !Array.isArray(stockData) || stockData.length === 0) {
-        console.warn('No stock data available for PDF generation');
-        alert('Tidak ada data untuk dicetak');
+        console.warn("No stock data available for PDF generation");
+        alert("Tidak ada data untuk dicetak");
         return;
       }
 
-      console.log('Proceeding with PDF generation using stored data...');
+      console.log("Proceeding with PDF generation using stored data...");
 
       // Create PDF
       const doc = new window.jspdf.jsPDF();
 
       // Add company header
       doc.setFontSize(16);
-      doc.setFont(undefined, 'bold');
-      doc.text('PT. GCI (Garasi Creasindo Indonesia)', 20, 20);
-      
+      doc.setFont(undefined, "bold");
+      doc.text("PT. GCI (Garasi Creasindo Indonesia)", 20, 20);
+
       // Add report title
-      const title = `Laporan Data Stock ${category.charAt(0).toUpperCase() + category.slice(1)}`;
+      const title = `Laporan Data Stock ${
+        category.charAt(0).toUpperCase() + category.slice(1)
+      }`;
       doc.setFontSize(14);
-      doc.setFont(undefined, 'normal');
+      doc.setFont(undefined, "normal");
       doc.text(title, 20, 32);
-      
+
       // Add date and time
-      const currentDate = new Date().toLocaleDateString('id-ID', {
-        day: '2-digit',
-        month: 'long', 
-        year: 'numeric'
+      const currentDate = new Date().toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
       });
-      const currentTime = new Date().toLocaleTimeString('id-ID');
+      const currentTime = new Date().toLocaleTimeString("id-ID");
       doc.setFontSize(10);
       doc.text(`Tanggal: ${currentDate}`, 20, 44);
       doc.text(`Waktu: ${currentTime}`, 20, 52);
 
       // Define table headers based on category
-      const headers = ['No.', 'Jenis Kertas', 'Ukuran', 'Qty Last Month', 'Jumlah Masuk', 'Total', 'Tanggal'];
-      if (category === 'produksi') {
-        headers.push('Remark');
+      const headers = [
+        "No.",
+        "Jenis Kertas",
+        "Ukuran",
+        "Qty Last Month",
+        "Jumlah Masuk",
+        "Total",
+        "Tanggal",
+      ];
+      if (category === "produksi") {
+        headers.push("Remark");
       }
 
       // Convert stored data to table format
-      const tableData = stockData.map(item => {
-        const formattedDate = item.tanggal ? new Date(item.tanggal).toLocaleDateString('id-ID') : '';
-        const total = (Number(item.qtyLastMonth) || 0) + (Number(item.jumlahMasuk) || 0);
-        
+      const tableData = stockData.map((item) => {
+        const formattedDate = item.tanggal
+          ? new Date(item.tanggal).toLocaleDateString("id-ID")
+          : "";
+        const total =
+          (Number(item.qtyLastMonth) || 0) + (Number(item.jumlahMasuk) || 0);
+
         const row = [
-          item.nomor || '',
-          item.jenisKertas || '',
-          item.ukuran || '',
+          item.nomor || "",
+          item.jenisKertas || "",
+          item.ukuran || "",
           item.qtyLastMonth || 0,
           item.jumlahMasuk || 0,
           total,
-          formattedDate
+          formattedDate,
         ];
-        
-        if (category === 'produksi') {
-          row.push(item.remark || '-');
+
+        if (category === "produksi") {
+          row.push(item.remark || "-");
         }
-        
+
         return row;
       });
 
-      console.log('Table data for PDF:', tableData);
+      console.log("Table data for PDF:", tableData);
 
       // Add total records info
       doc.text(`Total Record: ${tableData.length} item`, 20, 58);
@@ -214,7 +230,7 @@ export class BahanBakuView {
         headStyles: {
           fillColor: [52, 152, 219],
           textColor: 255,
-          fontStyle: 'bold',
+          fontStyle: "bold",
           fontSize: 9,
         },
         alternateRowStyles: {
@@ -226,21 +242,25 @@ export class BahanBakuView {
           const pageCount = doc.internal.getNumberOfPages();
           const pageSize = doc.internal.pageSize;
           doc.setFontSize(8);
-          doc.text(`Halaman ${data.pageNumber} dari ${pageCount}`, 
-                   pageSize.width - 40, pageSize.height - 10);
-        }
+          doc.text(
+            `Halaman ${data.pageNumber} dari ${pageCount}`,
+            pageSize.width - 40,
+            pageSize.height - 10
+          );
+        },
       });
 
       // Save PDF
-      const filename = `Stock_${category}_${new Date().toISOString().split('T')[0]}.pdf`;
+      const filename = `Stock_${category}_${
+        new Date().toISOString().split("T")[0]
+      }.pdf`;
       doc.save(filename);
-      
+
       console.log(`PDF generated: ${filename}`);
       alert(`PDF berhasil dibuat: ${filename}`);
-      
     } catch (error) {
-      console.error('Error generating PDF:', error);
-      alert('Gagal membuat PDF: ' + error.message);
+      console.error("Error generating PDF:", error);
+      alert("Gagal membuat PDF: " + error.message);
     }
   }
 
@@ -339,8 +359,10 @@ export class BahanBakuView {
     const printBtn = document.createElement("button");
     printBtn.innerHTML = '<i class="bi bi-printer"></i> Download PDF';
     printBtn.className = "print-button btn btn-success";
-    printBtn.style.cssText = "margin-top: 10px; margin-left: 10px; margin-right: 10px; padding: 8px 15px;";
-    printBtn.onclick = () => this._handlePrintStock(formType.replace("stock-", ""));
+    printBtn.style.cssText =
+      "margin-top: 10px; margin-left: 10px; margin-right: 10px; padding: 8px 15px;";
+    printBtn.onclick = () =>
+      this._handlePrintStock(formType.replace("stock-", ""));
     container.appendChild(printBtn);
 
     // Add container to section
@@ -812,8 +834,6 @@ export class BahanBakuView {
       }
     }
   }
-
-
 
   updateStockBannerDisplay(data) {
     console.log("=== Update Banner Display Called ===");

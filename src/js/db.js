@@ -3,6 +3,7 @@ export const DB_STORES = {
   bahanBakuStock: "bahan_baku_stock",
   bahanBakuTransactions: "bahan_baku_transactions",
   dailyReport: "daily_report",
+  iridesseReports: "iridesse-reports",
 };
 
 let db = null;
@@ -15,7 +16,7 @@ export const recreateDB = () => {
       db = null;
     }
 
-    const deleteRequest = indexedDB.deleteDatabase("InventoryDB");
+    const deleteRequest = indexedDB.deleteDatabase("PrintingDB");
     deleteRequest.onsuccess = () => {
       console.log("Database deleted successfully, recreating...");
       openDB().then(resolve).catch(reject);
@@ -35,7 +36,7 @@ export const openDB = () => {
     }
 
     console.log("Opening database connection...");
-    const request = indexedDB.open("PrintingDB", 3);
+    const request = indexedDB.open("PrintingDB", 4);
 
     request.onerror = (event) => {
       console.error("Database error:", event.target.error);
@@ -46,8 +47,16 @@ export const openDB = () => {
       console.log("Database opened successfully");
       db = event.target.result;
 
-      // Debug: log database version and available indexes
+      // Debug: log database version and available stores
       console.log("Database version:", db.version);
+      console.log("Available object stores:", Array.from(db.objectStoreNames));
+      
+      // Check specifically for iridesse-reports store
+      if (db.objectStoreNames.contains(DB_STORES.iridesseReports)) {
+        console.log("✅ iridesse-reports store is available");
+      } else {
+        console.error("❌ iridesse-reports store is missing!");
+      }
 
       if (db.objectStoreNames.contains(DB_STORES.bahanBakuStock)) {
         const transaction = db.transaction(
@@ -134,7 +143,22 @@ export const openDB = () => {
           autoIncrement: true,
         });
         dailyReportStore.createIndex("tanggal", "tanggal");
-        dailyReportStore.createIndex("shift", "shift");
+        dailyReportStore.createIndex("noSpk", "noSpk");
+        dailyReportStore.createIndex("client", "client");
+      }
+
+      // Create Iridesse Reports store
+      if (!db.objectStoreNames.contains(DB_STORES.iridesseReports)) {
+        console.log("Creating iridesse-reports store...");
+        const iridesseStore = db.createObjectStore(DB_STORES.iridesseReports, {
+          keyPath: "id",
+          autoIncrement: true,
+        });
+        iridesseStore.createIndex("tanggal", "tanggal");
+        iridesseStore.createIndex("noSpk", "noSpk");
+        iridesseStore.createIndex("namaClient", "namaClient");
+        iridesseStore.createIndex("status", "status");
+        console.log("iridesse-reports store created successfully");
       }
     };
   });

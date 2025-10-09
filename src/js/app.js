@@ -1,11 +1,15 @@
 console.log("=== APP.JS FILE LOADED ===");
 
+// Import Bootstrap
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+
 // Import CSS
 import "../css/style.css";
 
 // Import Models
 import { BahanBakuModel } from "./models/BahanBakuModel.js";
 import { DailyReportModel } from "./models/DailyReportModel.js";
+import { IridesseReportModel } from "./models/IridesseReportModel.js";
 
 // Import Views
 import { LoginView } from "./views/LoginView.js";
@@ -13,6 +17,7 @@ import { NavigationView } from "./views/NavigationView.js";
 import { HeaderView } from "./views/HeaderView.js";
 import { BahanBakuView } from "./views/BahanBakuView.js";
 import { DailyReportView } from "./views/DailyReportView.js";
+import { IridesseReportView } from "./views/IridesseReportView.js";
 import { RekapView } from "./views/RekapView.js";
 
 // Import Presenters
@@ -21,6 +26,7 @@ import { NavigationPresenter } from "./presenters/NavigationPresenter.js";
 import { HeaderPresenter } from "./presenters/HeaderPresenter.js";
 import { BahanBakuPresenter } from "./presenters/BahanBakuPresenter.js";
 import { DailyReportPresenter } from "./presenters/DailyReportPresenter.js";
+import { IridesseReportPresenter } from "./presenters/IridesseReportPresenter.js";
 import { RekapPresenter } from "./presenters/RekapPresenter.js";
 
 // Import Database
@@ -89,6 +95,7 @@ class App {
         return;
       }
       this.dailyReportModel = new DailyReportModel();
+      this.iridesseReportModel = new IridesseReportModel();
 
       // Initialize Views
       this.loginView = new LoginView();
@@ -101,6 +108,7 @@ class App {
         return;
       }
       this.dailyReportView = new DailyReportView();
+      this.iridesseReportView = new IridesseReportView();
       this.rekapView = new RekapView();
 
       // Initialize Presenters
@@ -136,10 +144,18 @@ class App {
       );
       console.log(" DailyReportPresenter created");
 
+      console.log("Creating IridesseReportPresenter...");
+      this.iridesseReportPresenter = new IridesseReportPresenter(
+        this.iridesseReportModel,
+        this.iridesseReportView
+      );
+      console.log(" IridesseReportPresenter created");
+
       console.log("Creating RekapPresenter...");
       this.rekapPresenter = new RekapPresenter(
         this.bahanBakuModel,
         this.dailyReportModel,
+        this.iridesseReportModel,
         this.rekapView
       );
       console.log(" RekapPresenter created");

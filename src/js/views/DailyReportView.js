@@ -10,6 +10,10 @@ export class DailyReportView {
     }
   }
 
+  bindSaveReport(handler) {
+    this.saveHandler = handler;
+  }
+
   initializeEventListeners() {
     const qtyOkInput = this.form.querySelector("#qty-cetak-ok");
     const qtyNgInput = this.form.querySelector("#qty-cetak-ng");
@@ -54,8 +58,10 @@ export class DailyReportView {
         ),
       };
 
-      // Disini bisa ditambahkan kode untuk menyimpan data ke server
-      console.log("Form submitted:", data);
+      // Call the save handler if available
+      if (this.saveHandler) {
+        this.saveHandler(data);
+      }
 
       // Reset form setelah submit
       this.form.reset();
@@ -63,29 +69,11 @@ export class DailyReportView {
     });
   }
 
-  bindSubmit(handler) {
-    this.form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      handler({
-        tanggal: this.tanggal.value,
-        shift: this.shift.value,
-        jamJalan: Number(this.jamJalan.value),
-        jamBerhenti: Number(this.jamBerhenti.value),
-        hasilProduksi: Number(this.hasilProduksi.value),
-        catatan: this.catatan.value,
-      });
-    });
-  }
-
-  reset() {
-    this.form.reset();
-  }
-
   showSuccess(message) {
-    alert(message);
+    alert(message || "Data berhasil disimpan!");
   }
 
   showError(message) {
-    alert(message);
+    alert("Error: " + message);
   }
 }

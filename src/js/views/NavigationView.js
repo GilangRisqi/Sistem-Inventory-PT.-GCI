@@ -16,6 +16,7 @@ export class NavigationView {
       "in-produksi": document.getElementById("in-produksi-section"),
       "out-produksi": document.getElementById("out-produksi-section"),
       "daily-report": document.getElementById("daily-report-section"),
+      "iridesse-report": document.getElementById("iridesse-report-section"),
       rekap: document.getElementById("rekap-section"),
     };
 
@@ -120,13 +121,8 @@ export class NavigationView {
   }
 
   showPage(pageId) {
-    console.log("NavigationView: showPage called with:", pageId);
-
     // Check if this is actually a section, not a page
     if (this.sections[pageId]) {
-      console.log(
-        "NavigationView: This is a section, redirecting to showSection"
-      );
       this.showSection(pageId);
       return;
     }
@@ -141,14 +137,11 @@ export class NavigationView {
 
     // Show the selected page
     const page = this.pages[pageId];
-    console.log("NavigationView: Looking for page:", pageId);
-    console.log("NavigationView: Page found:", !!page);
 
     if (page) {
       page.classList.add("active");
       page.style.display = "block";
       this.currentPage = pageId;
-      console.log("NavigationView: Page switched to:", pageId);
     } else {
       console.warn("NavigationView: Page not found for pageId:", pageId);
     }
@@ -175,22 +168,20 @@ export class NavigationView {
   }
 
   showSection(sectionId) {
-    console.log("NavigationView: showSection called with:", sectionId);
-
     // Hide all sections first
     Object.values(this.sections).forEach((section) => {
       if (section) section.style.display = "none";
     });
 
-    // Show the requested section if it exists
     const section = this.sections[sectionId];
-    console.log("NavigationView: Section found:", !!section);
 
     if (section) {
       section.style.display = "block";
-      console.log("NavigationView: Section displayed:", sectionId);
     } else {
-      console.warn(`NavigationView: Section ${sectionId} not found`);
+      console.warn(
+        "NavigationView: Section not found for sectionId:",
+        sectionId
+      );
     }
   }
 }

@@ -2,16 +2,47 @@ export class DailyReportPresenter {
   constructor(model, view) {
     this.model = model;
     this.view = view;
-    this.view.bindSubmit(this.handleSubmit.bind(this));
+
+    // Bind the save handler
+    this.view.bindSaveReport(this.handleSaveReport.bind(this));
   }
 
-  async handleSubmit(formData) {
+  async handleSaveReport(data) {
     try {
-      await this.model.add(formData);
-      this.view.reset();
-      this.view.showSuccess("Daily report berhasil disimpan!");
+      // Validate required fields
+      if (!data.tanggal || !data.noSpk || !data.client) {
+        this.view.showError("Harap lengkapi data yang wajib diisi!");
+        return;
+      }
+
+      // Save to database
+      await this.model.save(data);
+      this.view.showSuccess("Daily Report berhasil disimpan!");
     } catch (error) {
-      this.view.showError(error.message);
+      console.error("Error saving daily report:", error);
+      this.view.showError("Gagal menyimpan laporan: " + error.message);
+    }
+  }
+
+  async loadReports() {
+    try {
+      const reports = await this.model.getAll();
+      return reports;
+    } catch (error) {
+      console.error("Error loading daily reports:", error);
+      this.view.showError("Gagal memuat laporan: " + error.message);
+      return [];
+    }
+  }
+
+  async getReportsByDateRange(startDate, endDate) {
+    try {
+      const reports = await this.model.getByDateRange(startDate, endDate);
+      return reports;
+    } catch (error) {
+      console.error("Error loading daily reports by date range:", error);
+      this.view.showError("Gagal memuat laporan: " + error.message);
+      return [];
     }
   }
 }

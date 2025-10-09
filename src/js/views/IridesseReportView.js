@@ -1,49 +1,35 @@
-class IridesseReportView {
+export class IridesseReportView {
   constructor() {
     this.form = document.getElementById("iridesse-form");
     this.totalCetakDisplay = document.getElementById("total-cetak");
-    this.billingDisplay = document.getElementById("billing");
-    this.gapDisplay = document.getElementById("gap");
+    this.billingInput = document.getElementById("billing");
+    this.gapInput = document.getElementById("gap");
 
     if (this.form) {
       this.initializeEventListeners();
     }
   }
 
+  bindSaveReport(handler) {
+    this.saveHandler = handler;
+  }
+
   initializeEventListeners() {
     const jumlahCetakInput = this.form.querySelector("#jumlah-cetak");
     const ngInput = this.form.querySelector("#ng");
-    const startBillingInput = this.form.querySelector("#start-billing");
-    const finishBillingInput = this.form.querySelector("#finish-billing");
 
-    const updateTotals = () => {
+    const updateTotalCetak = () => {
       const jumlahCetak = Number(jumlahCetakInput.value) || 0;
       const ng = Number(ngInput.value) || 0;
-      const startBilling = Number(startBillingInput.value) || 0;
-      const finishBilling = Number(finishBillingInput.value) || 0;
 
-      // Hitung total cetak (jumlah cetak - NG)
+      // Hitung total cetak (jumlah cetak - NG) - hanya auto calculate ini saja
       const totalCetak = Math.max(0, jumlahCetak - ng);
       this.totalCetakDisplay.textContent = totalCetak.toLocaleString();
-
-      // Hitung billing (finish billing - start billing)
-      const billing = Math.max(0, finishBilling - startBilling);
-      this.billingDisplay.textContent = billing.toLocaleString();
-
-      // Hitung gap (total cetak - billing)
-      const gap = totalCetak - billing;
-      this.gapDisplay.textContent = gap.toLocaleString();
-
-      // Tambahkan class untuk menunjukkan gap positif atau negatif
-      this.gapDisplay.className =
-        "total-display " + (gap < 0 ? "negative" : gap > 0 ? "positive" : "");
     };
 
-    // Add event listeners untuk setiap input yang mempengaruhi perhitungan
-    jumlahCetakInput.addEventListener("input", updateTotals);
-    ngInput.addEventListener("input", updateTotals);
-    startBillingInput.addEventListener("input", updateTotals);
-    finishBillingInput.addEventListener("input", updateTotals);
+    // Add event listeners hanya untuk total cetak (sisanya manual input)
+    jumlahCetakInput.addEventListener("input", updateTotalCetak);
+    ngInput.addEventListener("input", updateTotalCetak);
 
     // Handle form submission
     this.form.addEventListener("submit", (e) => {
@@ -53,6 +39,7 @@ class IridesseReportView {
       const data = {
         tanggal: formData.get("tanggal"),
         startBilling: formData.get("startBilling"),
+        noSpk: formData.get("noSpk"),
         namaClient: formData.get("namaClient"),
         namaPekerjaan: formData.get("namaPekerjaan"),
         jenisKertas: formData.get("jenisKertas"),
@@ -63,25 +50,30 @@ class IridesseReportView {
         timeStart: formData.get("timeStart"),
         timeFinish: formData.get("timeFinish"),
         finishBilling: formData.get("finishBilling"),
+        billing: Number(formData.get("billing")), // Ambil dari input manual
+        gap: Number(formData.get("gap")), // Ambil dari input manual
         totalCetak: Number(
           this.totalCetakDisplay.textContent.replace(/,/g, "")
         ),
-        billing: Number(this.billingDisplay.textContent.replace(/,/g, "")),
-        gap: Number(this.gapDisplay.textContent.replace(/,/g, "")),
         status: formData.get("status"),
       };
 
-      // Disini bisa ditambahkan kode untuk menyimpan data ke server
-      console.log("Form submitted:", data);
+      // Call the save handler if available
+      if (this.saveHandler) {
+        this.saveHandler(data);
+      }
 
       // Reset form setelah submit
       this.form.reset();
-      updateTotals();
+      updateTotalCetak();
     });
   }
-}
 
-// Initialize the view
-document.addEventListener("DOMContentLoaded", () => {
-  new IridesseReportView();
-});
+  showSuccess(message) {
+    alert(message || "Data berhasil disimpan!");
+  }
+
+  showError(message) {
+    alert("Error: " + message);
+  }
+}

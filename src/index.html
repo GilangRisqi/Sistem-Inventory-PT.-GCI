@@ -13,7 +13,7 @@
     />
     <!-- Bootstrap Icons -->
     <link
-      href="../node_modules/bootstrap-icons/font/bootstrap-icons.css"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="css/style.css" />
@@ -279,6 +279,7 @@
               <select id="rekap-tipe">
                 <option value="bahan-baku">Bahan Baku</option>
                 <option value="daily-report">Daily Report Mesin</option>
+                <option value="iridesse-report">Laporan Iridesse</option>
               </select>
             </div>
             <div class="form-group">
@@ -294,7 +295,7 @@
 
         <section id="iridesse-report-section" class="content-section">
           <h2>Laporan Mesin Iridesse</h2>
-          <div id="iridesse-form">
+          <form id="iridesse-form">
             <div class="form-group">
               <label for="iridesse-tanggal">Hari / Tanggal</label>
               <input
@@ -396,14 +397,13 @@
               />
             </div>
             <div class="form-group">
-                  <label for="billing">BILLING</label>
-                  <input type="number" id="billing" name="billing" required />
-                </div>
+              <label for="billing">BILLING</label>
+              <input type="number" id="billing" name="billing" min="0" required />
             </div>
             <div class="form-group">
-                  <label for="gap">GAP</label>
-                  <input type="number" id="gap" name="gap" required />
-                </div>
+              <label for="gap">GAP</label>
+              <input type="number" id="gap" name="gap" required />
+            </div>
             <div class="summary-section">
               <div class="form-row">
                 <div class="form-group third-width">
