@@ -14,25 +14,39 @@ export class BahanBakuView {
   }
 
   updateStockDisplay(category, stockData) {
-    console.log(`=== Updating ${category} stock display ===`);
-    console.log("Stock data to display:", stockData);
-
     // Store data for PDF generation
     this.stockData[category] = stockData;
 
-    const formType = `stock-${category}`;
-    const section = document.getElementById(`${formType}-section`);
+    // Handle special case for banner-in and banner-out sections
+    let sectionId;
+    if (category === "banner-in") {
+      sectionId = "stock-banner-section-in";
+    } else if (category === "banner-out") {
+      sectionId = "stock-banner-section-out";
+    } else {
+      sectionId = `stock-${category}-section`;
+    }
+
+    const section = document.getElementById(sectionId);
 
     if (!section) {
-      console.error(`Section ${formType}-section not found`);
+      console.error(`Section ${sectionId} not found`);
       return;
     }
 
     // Initialize or get the form references
     const formRefs = this.stockForms[category];
     if (!formRefs) {
-      console.log("Initializing new stock form...");
-      this.stockForms[category] = this._initializeStockForm(formType);
+      // Use correct form type name for _initializeStockForm
+      let formTypeName;
+      if (category === "banner-in") {
+        formTypeName = "stock-banner-in";
+      } else if (category === "banner-out") {
+        formTypeName = "stock-banner-out";
+      } else {
+        formTypeName = `stock-${category}`;
+      }
+      this.stockForms[category] = this._initializeStockForm(formTypeName);
     }
 
     // Get the current form references
@@ -42,19 +56,23 @@ export class BahanBakuView {
       return;
     }
 
-    // Reset and update table content
+    // Reset and update table content with inline styles for reliability
     const tableHtml = `
-      <table class="table table-bordered">
+      <table style="width: 100%; border-collapse: collapse; margin: 10px 0; font-family: Arial, sans-serif;">
         <thead>
-          <tr>
-            <th>No.</th>
-            <th>Jenis Kertas</th>
-            <th>Ukuran</th>
-            <th>Qty Last Month</th>
-            <th>Jumlah Masuk</th>
-            <th>Total</th>
-            <th>Tanggal</th>
-            ${category === "produksi" ? "<th>Remark</th>" : ""}
+          <tr style="background-color: #f8f9fa;">
+            <th style="border: 1px solid #dee2e6; padding: 8px; text-align: left;">No.</th>
+            <th style="border: 1px solid #dee2e6; padding: 8px; text-align: left;">Jenis Kertas</th>
+            <th style="border: 1px solid #dee2e6; padding: 8px; text-align: left;">Ukuran</th>
+            <th style="border: 1px solid #dee2e6; padding: 8px; text-align: left;">Qty Last Month</th>
+            <th style="border: 1px solid #dee2e6; padding: 8px; text-align: left;">Jumlah Masuk</th>
+            <th style="border: 1px solid #dee2e6; padding: 8px; text-align: left;">Total</th>
+            <th style="border: 1px solid #dee2e6; padding: 8px; text-align: left;">Tanggal</th>
+            ${
+              category === "produksi"
+                ? '<th style="border: 1px solid #dee2e6; padding: 8px; text-align: left;">Remark</th>'
+                : ""
+            }
           </tr>
         </thead>
         <tbody>
@@ -63,55 +81,108 @@ export class BahanBakuView {
     // Create table content
     let rows = "";
     if (Array.isArray(stockData) && stockData.length > 0) {
-      stockData.forEach((item) => {
+      stockData.forEach((item, index) => {
         if (item && typeof item === "object") {
           const formattedDate = item.tanggal
             ? new Date(item.tanggal).toLocaleDateString("id-ID")
             : "";
-          rows += `
-            <tr>
-              <td>${item.nomor || ""}</td>
-              <td>${item.jenisKertas || ""}</td>
-              <td>${item.ukuran || ""}</td>
-              <td>${item.qtyLastMonth || 0}</td>
-              <td>${item.jumlahMasuk || 0}</td>
-              <td>${
-                (Number(item.qtyLastMonth) || 0) +
-                (Number(item.jumlahMasuk) || 0)
+          const total =
+            (Number(item.qtyLastMonth) || 0) + (Number(item.jumlahMasuk) || 0);
+
+          const rowHtml = `
+            <tr style="border-bottom: 1px solid #dee2e6; background-color: ${
+              index % 2 === 0 ? "#ffffff" : "#f8f9fa"
+            };">
+              <td style="border: 1px solid #dee2e6; padding: 10px;">${
+                item.nomor || ""
               }</td>
-              <td>${formattedDate}</td>
-              ${category === "produksi" ? `<td>${item.remark || "-"}</td>` : ""}
+              <td style="border: 1px solid #dee2e6; padding: 10px;">${
+                item.jenisKertas || ""
+              }</td>
+              <td style="border: 1px solid #dee2e6; padding: 10px;">${
+                item.ukuran || ""
+              }</td>
+              <td style="border: 1px solid #dee2e6; padding: 10px; text-align: center;">${
+                item.qtyLastMonth || 0
+              }</td>
+              <td style="border: 1px solid #dee2e6; padding: 10px; text-align: center;">${
+                item.jumlahMasuk || 0
+              }</td>
+              <td style="border: 1px solid #dee2e6; padding: 10px; text-align: center; font-weight: bold; background-color: #e3f2fd;">${total}</td>
+              <td style="border: 1px solid #dee2e6; padding: 10px; text-align: center;">${formattedDate}</td>
+              ${
+                category === "produksi"
+                  ? `<td style="border: 1px solid #dee2e6; padding: 10px;">${
+                      item.remark || "-"
+                    }</td>`
+                  : ""
+              }
             </tr>
           `;
+
+          rows += rowHtml;
         }
       });
     }
 
     if (!rows) {
       const colCount = category === "produksi" ? "8" : "7";
-      rows = `<tr><td colspan="${colCount}" class="text-center">Tidak ada data</td></tr>`;
+      rows = `<tr>
+        <td colspan="${colCount}" style="border: 1px solid #dee2e6; padding: 20px; text-align: center; color: #6c757d; font-style: italic;">
+          Tidak ada data
+        </td>
+      </tr>`;
     }
 
-    // Update table content and ensure print button is present
-    currentForm.container.innerHTML = tableHtml + rows + "</tbody></table>";
+    // Find or create table container (separate from buttons)
+    let tableContainer =
+      currentForm.container.querySelector(".table-container");
+    if (!tableContainer) {
+      tableContainer = document.createElement("div");
+      tableContainer.className = "table-container";
+      currentForm.container.appendChild(tableContainer);
+    }
 
-    // Always add print button after updating content
+    // Update table content
+    const fullTableHtml = tableHtml + rows + "</tbody></table>";
+
+    // Add some visual debugging styles to container
+    tableContainer.style.border = "3px solid #ff0000"; // Red border untuk debugging
+    tableContainer.style.padding = "15px";
+    tableContainer.style.margin = "10px 0";
+    tableContainer.style.backgroundColor = "#ffffcc"; // Yellow background
+    tableContainer.style.minHeight = "200px";
+    tableContainer.style.display = "block";
+    tableContainer.style.visibility = "visible";
+
+    tableContainer.innerHTML = fullTableHtml;
+
+    // Find or create button container (separate from table)
+    let buttonContainer =
+      currentForm.container.querySelector(".button-container");
+    if (!buttonContainer) {
+      buttonContainer = document.createElement("div");
+      buttonContainer.className = "button-container";
+      buttonContainer.style.marginTop = "10px";
+      currentForm.container.appendChild(buttonContainer);
+    }
+
+    // Clear existing print button and add new one
+    const existingPrintBtn = buttonContainer.querySelector(".print-button");
+    if (existingPrintBtn) {
+      existingPrintBtn.remove();
+    }
+
     const printBtn = document.createElement("button");
     printBtn.innerHTML = '<i class="bi bi-printer"></i> Download PDF';
     printBtn.className = "print-button btn btn-success";
     printBtn.style.cssText =
-      "margin-top: 10px; margin-left: 10px; margin-right: 10px; padding: 8px 15px;";
+      "margin-left: 10px; margin-right: 10px; padding: 8px 15px;";
     printBtn.onclick = () => this._handlePrintStock(category);
-    currentForm.container.appendChild(printBtn);
-
-    console.log("Table updated successfully");
-
-    console.log("Stock display updated successfully");
+    buttonContainer.appendChild(printBtn);
   }
 
   _handleRefreshStock(category) {
-    console.log(`=== Handling refresh for ${category} ===`);
-
     // Clean up any duplicate tables first
     this.cleanupStockDisplay(category);
 
@@ -121,8 +192,17 @@ export class BahanBakuView {
     });
     document.dispatchEvent(refreshEvent);
 
-    // Show loading state
-    const section = document.getElementById(`stock-${category}-section`);
+    // Show loading state - handle special case for banner sections
+    let sectionId;
+    if (category === "banner-in") {
+      sectionId = "stock-banner-section-in";
+    } else if (category === "banner-out") {
+      sectionId = "stock-banner-section-out";
+    } else {
+      sectionId = `stock-${category}-section`;
+    }
+
+    const section = document.getElementById(sectionId);
     if (section) {
       const resultsContainer = section.querySelector(".stock-results");
       if (resultsContainer) {
@@ -132,20 +212,15 @@ export class BahanBakuView {
   }
 
   _handlePrintStock(category) {
-    console.log(`=== Printing stock for ${category} ===`);
-
     try {
       // Use stored data instead of DOM parsing
       const stockData = this.stockData[category];
-      console.log("Stored stock data:", stockData);
 
       if (!stockData || !Array.isArray(stockData) || stockData.length === 0) {
         console.warn("No stock data available for PDF generation");
         alert("Tidak ada data untuk dicetak");
         return;
       }
-
-      console.log("Proceeding with PDF generation using stored data...");
 
       // Create PDF
       const doc = new window.jspdf.jsPDF();
@@ -156,9 +231,16 @@ export class BahanBakuView {
       doc.text("PT. GCI (Garasi Creasindo Indonesia)", 20, 20);
 
       // Add report title
-      const title = `Laporan Data Stock ${
-        category.charAt(0).toUpperCase() + category.slice(1)
-      }`;
+      let title = "";
+      if (category === "banner-out") {
+        title = "Laporan Data Stock Banner Out";
+      } else if (category === "banner-in") {
+        title = "Laporan Data Stock Banner In";
+      } else {
+        title = `Laporan Data Stock ${
+          category.charAt(0).toUpperCase() + category.slice(1)
+        }`;
+      }
       doc.setFontSize(14);
       doc.setFont(undefined, "normal");
       doc.text(title, 20, 32);
@@ -175,17 +257,32 @@ export class BahanBakuView {
       doc.text(`Waktu: ${currentTime}`, 20, 52);
 
       // Define table headers based on category
-      const headers = [
-        "No.",
-        "Jenis Kertas",
-        "Ukuran",
-        "Qty Last Month",
-        "Jumlah Masuk",
-        "Total",
-        "Tanggal",
-      ];
-      if (category === "produksi") {
-        headers.push("Remark");
+      let headers = [];
+      if (category === "banner-out") {
+        headers = [
+          "No.",
+          "Jenis Kertas",
+          "Ukuran",
+          "Total Masuk",
+          "Keluar (OK)",
+          "Keluar (NG)",
+          "Total Keluar",
+          "Sisa Stock",
+          "Tanggal",
+        ];
+      } else {
+        headers = [
+          "No.",
+          "Jenis Kertas",
+          "Ukuran",
+          "Qty Last Month",
+          "Jumlah Masuk",
+          "Total",
+          "Tanggal",
+        ];
+        if (category === "produksi") {
+          headers.push("Remark");
+        }
       }
 
       // Convert stored data to table format
@@ -193,27 +290,45 @@ export class BahanBakuView {
         const formattedDate = item.tanggal
           ? new Date(item.tanggal).toLocaleDateString("id-ID")
           : "";
-        const total =
-          (Number(item.qtyLastMonth) || 0) + (Number(item.jumlahMasuk) || 0);
 
-        const row = [
-          item.nomor || "",
-          item.jenisKertas || "",
-          item.ukuran || "",
-          item.qtyLastMonth || 0,
-          item.jumlahMasuk || 0,
-          total,
-          formattedDate,
-        ];
+        let row = [];
+        if (category === "banner-out") {
+          const totalKeluarOk = Number(item.totalKeluarOk) || 0;
+          const totalKeluarNg = Number(item.totalKeluarNg) || 0;
+          const totalKeluar = totalKeluarOk + totalKeluarNg;
+          const totalMasuk = Number(item.totalMasuk) || 0;
+          const sisaStock = totalMasuk - totalKeluar;
 
-        if (category === "produksi") {
-          row.push(item.remark || "-");
+          row = [
+            item.nomor || "",
+            item.jenisKertas || "",
+            item.ukuran || "",
+            totalMasuk,
+            totalKeluarOk,
+            totalKeluarNg,
+            totalKeluar,
+            sisaStock,
+            formattedDate,
+          ];
+        } else {
+          const total =
+            (Number(item.qtyLastMonth) || 0) + (Number(item.jumlahMasuk) || 0);
+          row = [
+            item.nomor || "",
+            item.jenisKertas || "",
+            item.ukuran || "",
+            item.qtyLastMonth || 0,
+            item.jumlahMasuk || 0,
+            total,
+            formattedDate,
+          ];
+          if (category === "produksi") {
+            row.push(item.remark || "-");
+          }
         }
 
         return row;
       });
-
-      console.log("Table data for PDF:", tableData);
 
       // Add total records info
       doc.text(`Total Record: ${tableData.length} item`, 20, 58);
@@ -266,7 +381,8 @@ export class BahanBakuView {
 
   _init() {
     this.stockForms = {
-      banner: this._initializeStockForm("stock-banner"),
+      "banner-in": this._initializeStockForm("stock-banner-in"),
+      "banner-out": this._initializeStockForm("stock-banner-out"),
       digital: this._initializeStockForm("stock-digital"),
       produksi: this._initializeStockForm("stock-produksi"),
     };
@@ -308,70 +424,133 @@ export class BahanBakuView {
     const container = document.createElement("div");
     container.className = "stock-results";
 
-    // Add refresh button for banner stock
-    if (formType === "stock-banner") {
+    // Banner stock forms tidak perlu refresh button
+    if (formType === "stock-banner-in") {
+      // PDF button akan ada di tampilan tabel langsung
+
+      // Add test data button for debugging
+      const testBtn = document.createElement("button");
+      testBtn.textContent = "🧪 Test Data";
+      testBtn.className = "btn btn-warning";
+      testBtn.onclick = () => {
+        console.log("🧪 Test data button clicked - showing sample data");
+        const sampleData = [
+          {
+            nomor: "001",
+            jenisKertas: "Art Paper",
+            ukuran: "A4",
+            qtyLastMonth: 100,
+            jumlahMasuk: 50,
+            tanggal: "2024-10-14",
+          },
+          {
+            nomor: "002",
+            jenisKertas: "HVS",
+            ukuran: "A3",
+            qtyLastMonth: 200,
+            jumlahMasuk: 75,
+            tanggal: "2024-10-14",
+          },
+        ];
+
+        // Force update display with sample data
+        this.updateStockDisplay("banner-in", sampleData);
+      };
+      buttonContainer.appendChild(testBtn);
+
+      // Add direct HTML injection test button
+      const directBtn = document.createElement("button");
+      directBtn.textContent = "🎯 Direct HTML";
+      directBtn.className = "btn btn-danger";
+      directBtn.style.marginLeft = "5px";
+      directBtn.onclick = () => {
+        console.log("🎯 Direct HTML test - bypassing all logic");
+        const tableContainer = container.querySelector(".table-container");
+        if (tableContainer) {
+          tableContainer.innerHTML = `
+            <h3 style="color: green;">✅ DIRECT HTML TEST BERHASIL!</h3>
+            <table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
+              <thead>
+                <tr style="background-color: #e7f3ff;">
+                  <th style="border: 2px solid #333; padding: 10px;">No.</th>
+                  <th style="border: 2px solid #333; padding: 10px;">Jenis</th>
+                  <th style="border: 2px solid #333; padding: 10px;">Ukuran</th>
+                  <th style="border: 2px solid #333; padding: 10px;">Last Month</th>
+                  <th style="border: 2px solid #333; padding: 10px;">Masuk</th>
+                  <th style="border: 2px solid #333; padding: 10px;">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="border: 2px solid #333; padding: 10px;">001</td>
+                  <td style="border: 2px solid #333; padding: 10px;">Art Paper</td>
+                  <td style="border: 2px solid #333; padding: 10px;">A4</td>
+                  <td style="border: 2px solid #333; padding: 10px;">100</td>
+                  <td style="border: 2px solid #333; padding: 10px;">50</td>
+                  <td style="border: 2px solid #333; padding: 10px; font-weight: bold;">150</td>
+                </tr>
+                <tr style="background-color: #f8f9fa;">
+                  <td style="border: 2px solid #333; padding: 10px;">002</td>
+                  <td style="border: 2px solid #333; padding: 10px;">HVS</td>
+                  <td style="border: 2px solid #333; padding: 10px;">A3</td>
+                  <td style="border: 2px solid #333; padding: 10px;">200</td>
+                  <td style="border: 2px solid #333; padding: 10px;">75</td>
+                  <td style="border: 2px solid #333; padding: 10px; font-weight: bold;">275</td>
+                </tr>
+              </tbody>
+            </table>
+            <p style="color: blue; font-weight: bold;">Jika tabel ini tampil, berarti masalah BUKAN di HTML/CSS!</p>
+          `;
+          console.log("✅ Direct HTML injected successfully");
+        } else {
+          console.error("❌ Table container not found for direct injection");
+        }
+      };
+      buttonContainer.appendChild(directBtn);
+
+      container.appendChild(buttonContainer);
+    } else if (formType === "stock-banner-out") {
+      const buttonContainer = document.createElement("div");
+      buttonContainer.style.marginBottom = "10px";
+
       const refreshBtn = document.createElement("button");
-      refreshBtn.textContent = "Refresh Data";
-      refreshBtn.className = "refresh-button";
-      refreshBtn.onclick = () => this._handleRefreshStock("banner");
-      container.appendChild(refreshBtn);
+      refreshBtn.textContent = "🔄 Refresh Data Out";
+      refreshBtn.className = "btn btn-primary refresh-button";
+      refreshBtn.onclick = () => this._handleRefreshStock("banner-out");
+      buttonContainer.appendChild(refreshBtn);
+
+      container.appendChild(buttonContainer);
     }
 
-    // Create table element
-    const table = document.createElement("table");
-    table.className = "table table-bordered";
+    // Create table container placeholder (will be filled by updateStockDisplay)
+    const tableContainer = document.createElement("div");
+    tableContainer.className = "table-container";
+    tableContainer.style.border = "1px dashed #ccc";
+    tableContainer.style.padding = "20px";
+    tableContainer.style.margin = "10px 0";
+    tableContainer.style.textAlign = "center";
+    tableContainer.style.backgroundColor = "#f9f9f9";
+    tableContainer.innerHTML = `
+      <div style="color: #666; font-style: italic;">
+        ⏳ Memuat data stock banner in...
+      </div>
+    `;
+    container.appendChild(tableContainer);
+    console.log(`✅ Created table container for ${formType}:`, tableContainer);
 
-    // Create table header
-    const thead = document.createElement("thead");
-    const headerRow = document.createElement("tr");
-    const headers = [
-      "No.",
-      "Jenis Kertas",
-      "Ukuran",
-      "Qty Last Month",
-      "Jumlah Masuk",
-      "Total",
-      "Tanggal",
-    ];
-
-    // Add Remark header for produksi
-    if (formType === "stock-produksi") {
-      headers.push("Remark");
-    }
-
-    headers.forEach((text) => {
-      const th = document.createElement("th");
-      th.textContent = text;
-      headerRow.appendChild(th);
-    });
-
-    thead.appendChild(headerRow);
-    table.appendChild(thead);
-
-    // Create table body
-    const tbody = document.createElement("tbody");
-    table.appendChild(tbody);
-
-    // Add table to container
-    container.appendChild(table);
-
-    // Add print button for all stock forms
-    const printBtn = document.createElement("button");
-    printBtn.innerHTML = '<i class="bi bi-printer"></i> Download PDF';
-    printBtn.className = "print-button btn btn-success";
-    printBtn.style.cssText =
-      "margin-top: 10px; margin-left: 10px; margin-right: 10px; padding: 8px 15px;";
-    printBtn.onclick = () =>
-      this._handlePrintStock(formType.replace("stock-", ""));
-    container.appendChild(printBtn);
+    // Create button container placeholder (will be filled by updateStockDisplay)
+    const buttonContainer = document.createElement("div");
+    buttonContainer.className = "button-container";
+    buttonContainer.style.marginTop = "10px";
+    container.appendChild(buttonContainer);
 
     // Add container to section
     section.appendChild(container);
 
     return {
       container,
-      tbody,
-      resultsBody: tbody, // Alias untuk compatibility
+      tbody: null, // Will be created by updateStockDisplay
+      resultsBody: null, // Will be created by updateStockDisplay
       form: container, // Alias untuk compatibility
     };
   }
@@ -870,41 +1049,287 @@ export class BahanBakuView {
     }
   }
 
-  updateStockBannerDisplay(data) {
-    console.log("=== Update Banner Display Called ===");
-    console.log("Data received:", JSON.stringify(data, null, 2));
-
-    // Pastikan stock form untuk banner ter-initialize dengan benar
-    this.stockForms.banner = this._initializeStockForm("stock-banner");
-
-    // Pastikan container dan table sudah ada
-    const section = document.getElementById("stock-banner-section");
+  updateStockBannerInDisplay(data) {
+    const section = document.getElementById("stock-banner-section-in");
     if (!section) {
-      console.error("stock-banner-section not found!");
+      console.error("Section stock-banner-section-in not found!");
       return;
     }
 
-    // Update display
-    this.updateStockDisplay("banner", data);
+    // Simpan data untuk PDF generation
+    this.stockData["banner-in"] = data;
 
-    console.log("Banner display update completed");
+    // DIRECT INJECTION - Skip complex initialization
+    console.log("� DIRECT TABLE INJECTION - Bypassing complex logic");
+
+    let tableHtml = `
+      <div class="stock-results">
+        <div class="table-header">
+          <h3>� List Stock Bahan Baku Banner In</h3>
+          <span class="record-count">Total: ${
+            Array.isArray(data) ? data.length : 0
+          } records</span>
+        </div>
+        <div class="results-table">
+          <table>
+            <thead>
+              <tr>
+                <th>No.</th>
+                <th>Jenis Kertas</th>
+                <th>Ukuran</th>
+                <th>Qty Last Month</th>
+                <th>Jumlah Masuk</th>
+                <th>Total</th>
+                <th>Tanggal</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+    `;
+
+    if (Array.isArray(data) && data.length > 0) {
+      data.forEach((item, index) => {
+        if (item && typeof item === "object") {
+          const formattedDate = item.tanggal
+            ? new Date(item.tanggal).toLocaleDateString("id-ID")
+            : "";
+          const total =
+            (Number(item.qtyLastMonth) || 0) + (Number(item.jumlahMasuk) || 0);
+
+          tableHtml += `
+            <tr data-id="${item.id || item.timestamp}" data-type="banner-in">
+              <td><strong>${item.nomor || ""}</strong></td>
+              <td class="editable" data-field="jenisKertas" data-type="text" data-value="${
+                item.jenisKertas || ""
+              }">${item.jenisKertas || ""}</td>
+              <td class="editable" data-field="ukuran" data-type="text" data-value="${
+                item.ukuran || ""
+              }">${item.ukuran || ""}</td>
+              <td class="editable text-center" data-field="qtyLastMonth" data-type="number" data-value="${
+                item.qtyLastMonth || 0
+              }">${item.qtyLastMonth || 0}</td>
+              <td class="editable text-center" data-field="jumlahMasuk" data-type="number" data-value="${
+                item.jumlahMasuk || 0
+              }">${item.jumlahMasuk || 0}</td>
+              <td class="text-center"><strong style="color: #007bff;">${total}</strong></td>
+              <td class="editable text-center" data-field="tanggal" data-type="date" data-value="${
+                item.tanggal || ""
+              }">${formattedDate}</td>
+              <td class="action-cell">
+                <button class="btn btn-sm btn-primary edit-btn" data-id="${
+                  item.id || item.timestamp
+                }" data-type="banner-in" title="Edit">
+                  <i class="bi bi-pencil"></i> Edit
+                </button>
+                <button class="btn btn-sm btn-success save-btn d-none" data-id="${
+                  item.id || item.timestamp
+                }" data-type="banner-in" title="Simpan" style="display: none;">
+                  <i class="bi bi-check"></i> Simpan
+                </button>
+                <button class="btn btn-sm btn-secondary cancel-btn d-none" data-id="${
+                  item.id || item.timestamp
+                }" data-type="banner-in" title="Batal" style="display: none;">
+                  <i class="bi bi-x"></i> Batal
+                </button>
+                <button class="btn btn-sm btn-danger delete-btn" data-id="${
+                  item.id || item.timestamp
+                }" data-type="banner-in" title="Hapus">
+                  <i class="bi bi-trash"></i> Hapus
+                </button>
+              </td>
+            </tr>
+          `;
+        }
+      });
+    } else {
+      tableHtml += `
+        <tr>
+          <td colspan="8" class="text-center">
+            <em style="color: #666;">Tidak ada data stock banner in</em>
+          </td>
+        </tr>
+      `;
+    }
+
+    tableHtml += `
+          </tbody>
+        </table>
+        <div style="margin-top: 15px; display: flex; gap: 10px;">
+          <button id="banner-in-pdf-btn" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            � Generate PDF
+          </button>
+        </div>
+      </div>
+    `;
+
+    // Direct injection to section
+    console.log("� Injecting HTML directly to section");
+    section.innerHTML = tableHtml;
+
+    // Tambahkan event listener untuk PDF button
+    const pdfButton = document.getElementById("banner-in-pdf-btn");
+    if (pdfButton) {
+      pdfButton.addEventListener("click", () => {
+        this._handlePrintStock("banner-in");
+      });
+    }
+
+    // Tambahkan event listener untuk button edit dan delete
+    this._attachStockActionListeners(section, "banner-in");
+  }
+
+  updateStockBannerOutDisplay(data) {
+    console.log("=== updateStockBannerOutDisplay called ===");
+    console.log("Data received:", data);
+    console.log("Data type:", typeof data);
+    console.log("Is array:", Array.isArray(data));
+    console.log(
+      "Data length:",
+      Array.isArray(data) ? data.length : "Not array"
+    );
+
+    const section = document.getElementById("stock-banner-section-out");
+    if (!section) {
+      console.error("Section stock-banner-section-out not found!");
+      return;
+    }
+    console.log("Section found:", section);
+
+    // Simpan data untuk PDF generation
+    this.stockData["banner-out"] = data;
+
+    let tableHtml = `
+      <div class="stock-results">
+        <div class="table-header">
+          <h3>📤 List Stock Bahan Baku Banner Out</h3>
+          <span class="record-count">Total: ${
+            Array.isArray(data) ? data.length : 0
+          } records</span>
+        </div>
+        <div class="results-table">
+          <table>
+            <thead>
+              <tr>
+                <th>No.</th>
+                <th>Jenis Kertas</th>
+                <th>Ukuran</th>
+                <th>Total Masuk</th>
+                <th>Keluar (OK)</th>
+                <th>Keluar (NG)</th>
+                <th>Total Keluar</th>
+                <th>Sisa Stock</th>
+                <th>Tanggal</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+    `;
+
+    if (Array.isArray(data) && data.length > 0) {
+      data.forEach((item, index) => {
+        if (item && typeof item === "object") {
+          const formattedDate = item.tanggal
+            ? new Date(item.tanggal).toLocaleDateString("id-ID")
+            : "";
+          const totalKeluarOk = Number(item.totalKeluarOk) || 0;
+          const totalKeluarNg = Number(item.totalKeluarNg) || 0;
+          const totalKeluar = totalKeluarOk + totalKeluarNg;
+          const totalMasuk = Number(item.totalMasuk) || 0;
+          const sisaStock = totalMasuk - totalKeluar;
+
+          tableHtml += `
+            <tr data-id="${item.id || item.timestamp}" data-type="banner-out">
+              <td>${item.nomor || ""}</td>
+              <td class="editable" data-field="jenisKertas" data-type="text" data-value="${
+                item.jenisKertas || ""
+              }">${item.jenisKertas || ""}</td>
+              <td class="editable" data-field="ukuran" data-type="text" data-value="${
+                item.ukuran || ""
+              }">${item.ukuran || ""}</td>
+              <td class="editable text-center" data-field="totalMasuk" data-type="number" data-value="${totalMasuk}">${totalMasuk}</td>
+              <td class="editable text-center" data-field="totalKeluarOk" data-type="number" data-value="${totalKeluarOk}">${totalKeluarOk}</td>
+              <td class="editable text-center" data-field="totalKeluarNg" data-type="number" data-value="${totalKeluarNg}">${totalKeluarNg}</td>
+              <td class="text-center"><strong>${totalKeluar}</strong></td>
+              <td class="text-center"><strong style="color: ${
+                sisaStock < 0 ? "#dc3545" : "#28a745"
+              };">${sisaStock}</strong></td>
+              <td class="editable text-center" data-field="tanggal" data-type="date" data-value="${
+                item.tanggal || ""
+              }">${formattedDate}</td>
+              <td class="action-cell">
+                <button class="btn btn-sm btn-primary edit-btn" data-id="${
+                  item.id || item.timestamp
+                }" data-type="banner-out" title="Edit">
+                  <i class="bi bi-pencil"></i> Edit
+                </button>
+                <button class="btn btn-sm btn-success save-btn d-none" data-id="${
+                  item.id || item.timestamp
+                }" data-type="banner-out" title="Simpan" style="display: none;">
+                  <i class="bi bi-check"></i> Simpan
+                </button>
+                <button class="btn btn-sm btn-secondary cancel-btn d-none" data-id="${
+                  item.id || item.timestamp
+                }" data-type="banner-out" title="Batal" style="display: none;">
+                  <i class="bi bi-x"></i> Batal
+                </button>
+                <button class="btn btn-sm btn-danger delete-btn" data-id="${
+                  item.id || item.timestamp
+                }" data-type="banner-out" title="Hapus">
+                  <i class="bi bi-trash"></i> Hapus
+                </button>
+              </td>
+            </tr>
+          `;
+        }
+      });
+    } else {
+      console.log("No data found - showing empty message");
+      tableHtml += `
+        <tr>
+          <td colspan="10" class="text-center">
+            <em style="color: #666;">Tidak ada data stock banner out</em>
+          </td>
+        </tr>
+      `;
+    }
+
+    tableHtml += `
+            </tbody>
+          </table>
+        </div>
+        <div class="table-actions">
+          <button id="banner-out-pdf-btn" class="btn btn-success">
+            📄 Generate PDF
+          </button>
+        </div>
+      </div>
+    `;
+
+    section.innerHTML = tableHtml;
+
+    // Tambahkan event listener untuk PDF button
+    const pdfButton = document.getElementById("banner-out-pdf-btn");
+    if (pdfButton) {
+      pdfButton.addEventListener("click", () => {
+        this._handlePrintStock("banner-out");
+      });
+    }
+
+    // Tambahkan event listener untuk button edit dan delete
+    this._attachStockActionListeners(section, "banner-out");
   }
 
   updateStockDigitalDisplay(data) {
-    console.log("=== Update Digital Display Called ===");
     this.stockForms.digital = this._initializeStockForm("stock-digital"); // Re-initialize form
     this.updateStockDisplay("digital", data);
   }
 
   updateStockProduksiDisplay(data) {
-    console.log("=== Update Produksi Display Called ===");
     this.stockForms.produksi = this._initializeStockForm("stock-produksi"); // Re-initialize form
     this.updateStockDisplay("produksi", data);
   }
 
   bindInOutSubmit(handler) {
-    console.log("=== Setting up form-submit event handler ===");
-
     // Initialize event listeners for buttons first
     this._initializeEventListeners();
 
@@ -917,7 +1342,6 @@ export class BahanBakuView {
     // Create new handler
     this._formSubmitHandler = async (event) => {
       try {
-        console.log("=== Form Submit Event Triggered ===");
         console.log("Event details:", JSON.stringify(event.detail, null, 2));
         const formData = event.detail;
         console.log("Processing form data for category:", formData.category);
@@ -979,8 +1403,6 @@ export class BahanBakuView {
   }
 
   async initializeAutoNumbers() {
-    console.log("=== Initializing auto numbers for all forms ===");
-
     // Set current date as default for date inputs and update auto numbers
     const currentDate = new Date().toISOString().split("T")[0];
 
@@ -1046,5 +1468,366 @@ export class BahanBakuView {
     }
     this.stockSubmitHandlers[category] = handler;
     console.log(`Stock submit handler bound for ${category}`);
+  }
+
+  // Method untuk attach event listener ke action buttons
+  _attachStockActionListeners(section, category) {
+    if (!section) return;
+
+    // Remove existing listeners to avoid duplicates
+    const existingHandler = section._stockActionHandler;
+    if (existingHandler) {
+      section.removeEventListener("click", existingHandler);
+    }
+
+    // Create new handler function - like RekapView
+    const handler = (e) => {
+      const target = e.target.closest("button");
+      if (!target) return;
+
+      const id = target.dataset.id;
+      const type = target.dataset.type;
+
+      console.log("Stock action clicked:", {
+        id,
+        idType: typeof id,
+        type,
+        action: target.className,
+        buttonDataset: target.dataset,
+      });
+
+      if (target.classList.contains("edit-btn")) {
+        this.toggleEditMode(
+          section.querySelector(`tr[data-id="${id}"][data-type="${type}"]`),
+          true
+        );
+        if (this.stockEditHandlers && this.stockEditHandlers[type]) {
+          this.stockEditHandlers[type](id, type);
+        }
+      } else if (target.classList.contains("save-btn")) {
+        this.saveEdit(id, type);
+      } else if (target.classList.contains("cancel-btn")) {
+        this.cancelEdit(id, type);
+      } else if (target.classList.contains("delete-btn")) {
+        this._confirmStockDelete(id, type, category);
+      }
+    };
+
+    // Store handler reference on section to prevent duplicates
+    section._stockActionHandler = handler;
+    section.addEventListener("click", handler);
+  }
+
+  // Method untuk memulai mode edit
+  _startStockEdit(id, type, section) {
+    const row = section.querySelector(
+      `tr[data-id="${id}"][data-type="${type}"]`
+    );
+    if (!row) return;
+
+    this._toggleStockEditMode(row, true);
+  }
+
+  // Method untuk menyimpan edit
+  _saveStockEdit(id, type, section) {
+    const row = section.querySelector(
+      `tr[data-id="${id}"][data-type="${type}"]`
+    );
+    if (!row) return;
+
+    // Collect edited data
+    const editedData = {};
+    const editableCells = row.querySelectorAll(
+      ".editable input, .editable select"
+    );
+
+    editableCells.forEach((input) => {
+      const field = input.getAttribute("data-field");
+      editedData[field] = input.value;
+    });
+
+    // Call presenter handler if available
+    if (this.stockEditHandlers && this.stockEditHandlers[type]) {
+      this.stockEditHandlers[type](id, editedData);
+    } else {
+      console.log("Saving stock data:", id, editedData);
+      // Temporary: just exit edit mode
+      this._toggleStockEditMode(row, false);
+    }
+  }
+
+  // Method untuk membatalkan edit
+  _cancelStockEdit(id, type, section) {
+    const row = section.querySelector(
+      `tr[data-id="${id}"][data-type="${type}"]`
+    );
+    if (!row) return;
+
+    this._toggleStockEditMode(row, false);
+  }
+
+  // Method untuk konfirmasi delete
+  _confirmStockDelete(id, type, category) {
+    console.log("🔍 _confirmStockDelete called with:", {
+      id,
+      idType: typeof id,
+      idValue: id,
+      type,
+      category,
+      handlers: Object.keys(this.stockDeleteHandlers || {}),
+    });
+
+    // Prevent multiple confirmation dialogs
+    if (this._confirmingDelete) {
+      console.log("Confirmation already in progress, ignoring...");
+      return;
+    }
+
+    this._confirmingDelete = true;
+
+    // Small delay to prevent event bubbling issues
+    setTimeout(() => {
+      if (confirm("Apakah Anda yakin ingin menghapus data ini?")) {
+        if (this.stockDeleteHandlers && this.stockDeleteHandlers[type]) {
+          console.log("🗑️ Calling delete handler for:", { id, type, category });
+          this.stockDeleteHandlers[type](id);
+        } else {
+          console.log(
+            "❌ No delete handler found for:",
+            type,
+            "Available handlers:",
+            Object.keys(this.stockDeleteHandlers || {})
+          );
+          alert("Fitur delete akan diimplementasikan oleh presenter");
+        }
+      }
+
+      // Reset confirmation flag after a delay
+      setTimeout(() => {
+        this._confirmingDelete = false;
+      }, 500);
+    }, 50);
+  }
+
+  // Method untuk toggle edit mode
+  _toggleStockEditMode(row, isEdit) {
+    const editableCells = row.querySelectorAll(".editable");
+    const editBtn = row.querySelector(".edit-btn");
+    const saveBtn = row.querySelector(".save-btn");
+    const cancelBtn = row.querySelector(".cancel-btn");
+    const deleteBtn = row.querySelector(".delete-btn");
+
+    if (isEdit) {
+      row.setAttribute("data-editing", "true");
+
+      editableCells.forEach((cell) => {
+        const field = cell.getAttribute("data-field");
+        const type = cell.getAttribute("data-type");
+        const value = cell.getAttribute("data-value");
+        const originalContent = cell.innerHTML;
+
+        cell.setAttribute("data-original", originalContent);
+
+        let input;
+        if (type === "select") {
+          const options = cell.getAttribute("data-options").split(",");
+          input = document.createElement("select");
+          input.className = "form-control form-control-sm";
+          options.forEach((option) => {
+            const optionEl = document.createElement("option");
+            optionEl.value = option;
+            optionEl.textContent = option;
+            if (option === value) optionEl.selected = true;
+            input.appendChild(optionEl);
+          });
+        } else if (type === "date") {
+          input = document.createElement("input");
+          input.type = "date";
+          input.className = "form-control form-control-sm";
+          input.value = value;
+        } else if (type === "number") {
+          input = document.createElement("input");
+          input.type = "number";
+          input.className = "form-control form-control-sm";
+          input.value = value || 0;
+        } else {
+          input = document.createElement("input");
+          input.type = "text";
+          input.className = "form-control form-control-sm";
+          input.value = value || "";
+        }
+
+        input.setAttribute("data-field", field);
+        cell.innerHTML = "";
+        cell.appendChild(input);
+      });
+
+      editBtn.style.display = "none";
+      saveBtn.style.display = "inline-block";
+      cancelBtn.style.display = "inline-block";
+      deleteBtn.style.display = "none";
+    } else {
+      row.removeAttribute("data-editing");
+
+      editableCells.forEach((cell) => {
+        const originalContent = cell.getAttribute("data-original");
+        if (originalContent) {
+          cell.innerHTML = originalContent;
+          cell.removeAttribute("data-original");
+        }
+      });
+
+      editBtn.style.display = "inline-block";
+      saveBtn.style.display = "none";
+      cancelBtn.style.display = "none";
+      deleteBtn.style.display = "inline-block";
+    }
+  }
+
+  // Binding handlers from presenter
+  bindStockEditHandler(type, handler) {
+    if (!this.stockEditHandlers) {
+      this.stockEditHandlers = {};
+    }
+    this.stockEditHandlers[type] = handler;
+  }
+
+  bindStockDeleteHandler(type, handler) {
+    if (!this.stockDeleteHandlers) {
+      this.stockDeleteHandlers = {};
+    }
+    this.stockDeleteHandlers[type] = handler;
+  }
+
+  // Toggle edit mode - like RekapView
+  toggleEditMode(row, isEdit) {
+    if (!row) return;
+
+    const editableCells = row.querySelectorAll(".editable");
+    const editBtn = row.querySelector(".edit-btn");
+    const saveBtn = row.querySelector(".save-btn");
+    const cancelBtn = row.querySelector(".cancel-btn");
+    const deleteBtn = row.querySelector(".delete-btn");
+
+    if (isEdit) {
+      row.setAttribute("data-editing", "true");
+
+      editableCells.forEach((cell) => {
+        const field = cell.getAttribute("data-field");
+        const type = cell.getAttribute("data-type") || "text";
+        const value =
+          cell.getAttribute("data-value") || cell.textContent.trim();
+        const originalContent = cell.innerHTML;
+
+        cell.setAttribute("data-original", originalContent);
+
+        let input;
+        if (type === "select") {
+          const options = cell.getAttribute("data-options");
+          if (options) {
+            input = document.createElement("select");
+            input.className = "form-control form-control-sm";
+            options.split(",").forEach((option) => {
+              const optionEl = document.createElement("option");
+              optionEl.value = option.trim();
+              optionEl.textContent = option.trim();
+              if (option.trim() === value) optionEl.selected = true;
+              input.appendChild(optionEl);
+            });
+          }
+        } else if (type === "date") {
+          input = document.createElement("input");
+          input.type = "date";
+          input.className = "form-control form-control-sm";
+          input.value = value;
+        } else if (type === "number") {
+          input = document.createElement("input");
+          input.type = "number";
+          input.className = "form-control form-control-sm";
+          input.value = value;
+        } else {
+          input = document.createElement("input");
+          input.type = "text";
+          input.className = "form-control form-control-sm";
+          input.value = value;
+        }
+
+        if (input) {
+          input.setAttribute("data-field", field);
+          cell.innerHTML = "";
+          cell.appendChild(input);
+        }
+      });
+
+      // Show/hide buttons - properly handle d-none class with !important
+      if (editBtn) {
+        editBtn.classList.add("d-none");
+      }
+      if (saveBtn) {
+        saveBtn.classList.remove("d-none");
+        saveBtn.style.setProperty("display", "inline-block", "important");
+      }
+      if (cancelBtn) {
+        cancelBtn.classList.remove("d-none");
+        cancelBtn.style.setProperty("display", "inline-block", "important");
+      }
+      if (deleteBtn) {
+        deleteBtn.classList.add("d-none");
+      }
+    } else {
+      row.removeAttribute("data-editing");
+
+      editableCells.forEach((cell) => {
+        const originalContent = cell.getAttribute("data-original");
+        if (originalContent) {
+          cell.innerHTML = originalContent;
+        }
+      });
+
+      // Show/hide buttons - restore original state
+      if (editBtn) {
+        editBtn.classList.remove("d-none");
+        editBtn.style.setProperty("display", "inline-block", "important");
+      }
+      if (saveBtn) {
+        saveBtn.classList.add("d-none");
+      }
+      if (cancelBtn) {
+        cancelBtn.classList.add("d-none");
+      }
+      if (deleteBtn) {
+        deleteBtn.classList.remove("d-none");
+        deleteBtn.style.setProperty("display", "inline-block", "important");
+      }
+    }
+  }
+
+  // Bind handler untuk save action
+  bindStockSaveHandler(handler) {
+    this.stockSaveHandler = handler;
+  }
+
+  // Bind handler untuk cancel action
+  bindStockCancelHandler(handler) {
+    this.stockCancelHandler = handler;
+  }
+
+  // Method saveEdit dan cancelEdit seperti di RekapView
+  saveEdit(id, type) {
+    if (this.stockSaveHandler) {
+      this.stockSaveHandler(id, type);
+    }
+  }
+
+  cancelEdit(id, type) {
+    const row = document.querySelector(
+      `tr[data-id="${id}"][data-type="${type}"]`
+    );
+    if (row) {
+      this.toggleEditMode(row, false);
+    }
+    if (this.stockCancelHandler) {
+      this.stockCancelHandler(id, type);
+    }
   }
 }

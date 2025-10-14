@@ -426,10 +426,6 @@ export class RekapView {
 
   downloadPDF() {
     try {
-      console.log("=== Generating PDF ===");
-      console.log("Current data:", this.currentData);
-      console.log("Current type:", this.currentType);
-
       if (!this.currentData || this.currentData.length === 0) {
         alert("Tidak ada data untuk dicetak");
         return;
@@ -490,8 +486,6 @@ export class RekapView {
       } else {
         this.generateDailyReportPDF(doc);
       }
-
-      console.log("PDF generation completed");
     } catch (error) {
       console.error("Error generating PDF:", error);
       alert("Gagal membuat PDF: " + error.message);

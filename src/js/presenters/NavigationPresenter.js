@@ -15,18 +15,12 @@ export class NavigationPresenter {
   }
 
   showPage(pageId) {
-    console.log("NavigationPresenter: showPage called with:", pageId);
-    this.view.showPage(pageId);
-    console.log("NavigationPresenter: showPage completed");
-  }
+        this.view.showPage(pageId);
+      }
 
   showDefaultSection() {
-    console.log("NavigationPresenter: showDefaultSection called");
-    // Show landing page as default section after login
+        // Show landing page as default section after login
     // Make sure we're on dashboard page first
     this.view.showSection("landing-page");
-    console.log(
-      "NavigationPresenter: showDefaultSection completed - landing page shown"
-    );
-  }
+      }
 }

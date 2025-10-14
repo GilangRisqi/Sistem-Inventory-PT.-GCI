@@ -1,5 +1,3 @@
-console.log("=== APP.JS FILE LOADED ===");
-
 // Import Bootstrap
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 
@@ -34,13 +32,12 @@ import * as db from "./db.js";
 
 class App {
   constructor() {
-    console.log("App constructor - initialization will happen in init()");
+    // App initialization
   }
 
   async initDatabase() {
     try {
       await db.openDB();
-      console.log("Database connection established");
     } catch (error) {
       console.error("Error initializing database:", error);
       throw error;
@@ -48,17 +45,10 @@ class App {
   }
 
   bindEvents() {
-    console.log("App: Setting up event listeners");
     document.addEventListener("loginSuccess", () => {
-      console.log("App: loginSuccess event received, redirecting to dashboard");
-      console.log(
-        "App: navigationPresenter exists:",
-        !!this.navigationPresenter
-      );
       try {
         this.navigationPresenter.showPage("dashboard");
         this.navigationPresenter.showDefaultSection();
-        console.log("App: Dashboard redirect completed");
       } catch (error) {
         console.error("App: Error during dashboard redirect:", error);
       }
@@ -70,22 +60,18 @@ class App {
 
     // Online/Offline handling
     window.addEventListener("online", () => {
-      console.log("Back online");
       db.processSyncQueue();
     });
 
     window.addEventListener("offline", () => {
-      console.log("Gone offline");
+      // Handle offline state
     });
   }
 
   async init() {
     try {
-      console.log("App init method called");
-
       // Initialize Database first
       await db.openDB();
-      console.log("Database initialized successfully");
 
       // Initialize Models
       try {
@@ -112,20 +98,14 @@ class App {
       this.rekapView = new RekapView();
 
       // Initialize Presenters
-      console.log("Creating LoginPresenter...");
       this.loginPresenter = new LoginPresenter(this.loginView);
-      console.log(" LoginPresenter created");
 
-      console.log("Creating NavigationPresenter...");
       this.navigationPresenter = new NavigationPresenter(this.navigationView);
-      console.log(" NavigationPresenter created");
 
-      console.log("Creating HeaderPresenter...");
       this.headerPresenter = new HeaderPresenter(
         this.headerView,
         this.navigationView
       );
-      console.log(" HeaderPresenter created");
 
       try {
         this.bahanBakuPresenter = new BahanBakuPresenter(
@@ -137,33 +117,25 @@ class App {
         return;
       }
 
-      console.log("Creating DailyReportPresenter...");
       this.dailyReportPresenter = new DailyReportPresenter(
         this.dailyReportModel,
         this.dailyReportView
       );
-      console.log(" DailyReportPresenter created");
 
-      console.log("Creating IridesseReportPresenter...");
       this.iridesseReportPresenter = new IridesseReportPresenter(
         this.iridesseReportModel,
         this.iridesseReportView
       );
-      console.log(" IridesseReportPresenter created");
 
-      console.log("Creating RekapPresenter...");
       this.rekapPresenter = new RekapPresenter(
         this.bahanBakuModel,
         this.dailyReportModel,
         this.iridesseReportModel,
         this.rekapView
       );
-      console.log(" RekapPresenter created");
 
       // Bind event listeners
-      console.log("App: About to bind events");
       this.bindEvents();
-      console.log("App: Events bound successfully");
     } catch (error) {
       console.error("Error initializing app:", error);
     }
@@ -172,11 +144,8 @@ class App {
 
 // Initialize app when DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("=== DOM CONTENT LOADED ===");
   try {
-    console.log("Creating app instance...");
     const app = new App();
-    console.log("App instance created, calling init...");
     app.init();
   } catch (error) {
     console.error("FATAL ERROR during app initialization:", error);
@@ -188,11 +157,7 @@ if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
       .register("/sw.js")
-      .then((registration) => {
-        console.log("ServiceWorker registration successful");
-      })
-      .catch((err) => {
-        console.log("ServiceWorker registration failed: ", err);
-      });
+      .then((registration) => {})
+      .catch((err) => {});
   });
 }

@@ -7,7 +7,9 @@ export class NavigationView {
 
     this.sections = {
       "landing-page": document.getElementById("landing-page-section"),
-      "stock-banner": document.getElementById("stock-banner-section"),
+      "stock-banner": document.getElementById("stock-banner-section-in"), // Default to In section
+      "stock-banner-in": document.getElementById("stock-banner-section-in"),
+      "stock-banner-out": document.getElementById("stock-banner-section-out"),
       "stock-digital": document.getElementById("stock-digital-section"),
       "stock-produksi": document.getElementById("stock-produksi-section"),
       "in-banner": document.getElementById("in-banner-section"),
@@ -199,16 +201,51 @@ export class NavigationView {
       if (section) section.style.display = "none";
     });
 
-    const section = this.sections[sectionId];
+    // Special handling for stock-banner to show both In and Out sections
+    if (sectionId === "stock-banner") {
+      const bannerInSection = this.sections["stock-banner-in"];
+      const bannerOutSection = this.sections["stock-banner-out"];
 
-    if (section) {
-      section.style.display = "block";
-    } else {
-      console.warn(
-        "NavigationView: Section not found for sectionId:",
-        sectionId
+      if (bannerInSection) bannerInSection.style.display = "block";
+      if (bannerOutSection) bannerOutSection.style.display = "block";
+
+      // Dispatch events for both sections to load data
+      document.dispatchEvent(
+        new CustomEvent("section-activated", {
+          detail: { sectionId: "stock-banner-in" },
+        })
       );
+      document.dispatchEvent(
+        new CustomEvent("section-activated", {
+          detail: { sectionId: "stock-banner-out" },
+        })
+      );
+    } else {
+      const section = this.sections[sectionId];
+
+      if (section) {
+        section.style.display = "block";
+
+        // Dispatch section activation event
+        document.dispatchEvent(
+          new CustomEvent("section-activated", {
+            detail: { sectionId },
+          })
+        );
+      } else {
+        console.warn(
+          "NavigationView: Section not found for sectionId:",
+          sectionId
+        );
+      }
     }
+
+    // Dispatch navigation changed event for all cases
+    document.dispatchEvent(
+      new CustomEvent("navigation-changed", {
+        detail: { sectionId },
+      })
+    );
   }
 
   showLandingPage() {

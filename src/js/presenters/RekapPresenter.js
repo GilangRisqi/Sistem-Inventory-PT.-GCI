@@ -36,7 +36,6 @@ export class RekapPresenter {
 
   async handleEditRecord(id, type) {
     try {
-      // Find the row element
       const row = document.querySelector(
         `tr[data-id="${id}"][data-type="${type}"]`
       );
@@ -45,7 +44,6 @@ export class RekapPresenter {
         return;
       }
 
-      // Toggle to edit mode
       this.toggleEditMode(row, true);
     } catch (error) {
       this.view.showError("Gagal masuk mode edit: " + error.message);
@@ -69,8 +67,6 @@ export class RekapPresenter {
 
       await model.delete(id);
       this.view.showSuccess("Data berhasil dihapus!");
-
-      // Refresh the table
       this.refreshCurrentTable();
     } catch (error) {
       this.view.showError("Gagal menghapus data: " + error.message);
@@ -85,7 +81,6 @@ export class RekapPresenter {
     const deleteBtn = row.querySelector(".delete-btn");
 
     if (isEdit) {
-      // Store original values for cancel functionality
       row.setAttribute("data-editing", "true");
 
       editableCells.forEach((cell) => {
@@ -94,10 +89,8 @@ export class RekapPresenter {
         const value = cell.getAttribute("data-value");
         const originalContent = cell.innerHTML;
 
-        // Store original content
         cell.setAttribute("data-original", originalContent);
 
-        // Create input element based on type
         let input;
         if (type === "select") {
           const options = cell.getAttribute("data-options").split(",");
@@ -138,13 +131,11 @@ export class RekapPresenter {
         cell.appendChild(input);
       });
 
-      // Toggle buttons - dalam mode edit hanya tampilkan Simpan dan Batal
       editBtn.style.display = "none";
       saveBtn.style.display = "inline-block";
       cancelBtn.style.display = "inline-block";
-      deleteBtn.style.display = "none"; // Sembunyikan tombol hapus saat edit
+      deleteBtn.style.display = "none";
     } else {
-      // Exit edit mode
       row.removeAttribute("data-editing");
 
       editableCells.forEach((cell) => {
@@ -155,11 +146,10 @@ export class RekapPresenter {
         }
       });
 
-      // Toggle buttons - kembali ke mode normal dengan Edit dan Hapus
       editBtn.style.display = "inline-block";
       saveBtn.style.display = "none";
       cancelBtn.style.display = "none";
-      deleteBtn.style.display = "inline-block"; // Tampilkan kembali tombol hapus
+      deleteBtn.style.display = "inline-block";
     }
   }
 
@@ -173,7 +163,6 @@ export class RekapPresenter {
         return;
       }
 
-      // Collect data from inputs
       const data = {};
       const inputs = row.querySelectorAll(".editable input, .editable select");
 
@@ -182,25 +171,18 @@ export class RekapPresenter {
         data[field] = input.value;
       });
 
-      // Get model
       let model;
       if (type === "iridesse-report") {
         model = this.iridesseReportModel;
-        // Calculate only totalCetak for Iridesse (billing and gap are now manual input)
         data.totalCetak =
           (Number(data.jumlahCetak) || 0) - (Number(data.ng) || 0);
-        // billing and gap akan diambil dari input manual
       } else {
         model = this.dailyReportModel;
-        // Calculate totals for Daily Report
         data.totalQtyCetakAll =
           (Number(data.qtyCetakOk) || 0) + (Number(data.qtyCetakNg) || 0);
       }
 
-      // Update data
       await model.update(id, data);
-
-      // Exit edit mode and refresh table
       this.view.showSuccess("Data berhasil diperbarui!");
       this.refreshCurrentTable();
     } catch (error) {
@@ -219,7 +201,6 @@ export class RekapPresenter {
 
   async refreshCurrentTable() {
     if (this.currentTipe && this.currentData.length > 0) {
-      // Re-generate the report with current parameters
       const periodeInput = document.getElementById("rekap-periode");
       if (periodeInput && periodeInput.value) {
         const [year, month] = periodeInput.value.split("-");

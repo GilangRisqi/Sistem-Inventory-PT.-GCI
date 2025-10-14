@@ -117,7 +117,6 @@ export class BahanBakuView {
         <input type="text" id="${sectionId}-remark" name="remark" />
       </div>
     `
-    );
   }
 
   _generateOutForm(sectionId) {
@@ -355,7 +354,6 @@ export class BahanBakuView {
 
           const formEvent = new CustomEvent("form-submit", {
             detail: formData,
-          });
           document.dispatchEvent(formEvent);
 
           this.resetForm(category, "in");
@@ -365,8 +363,6 @@ export class BahanBakuView {
           console.error("Error submitting form:", error);
           this.showError("Gagal menyimpan data: " + error.message);
         }
-      });
-    });
 
     // Initialize "out" form handlers
     ["out-banner", "out-digital", "out-produksi"].forEach((formType) => {
@@ -422,7 +418,6 @@ export class BahanBakuView {
 
           const formEvent = new CustomEvent("form-submit", {
             detail: formData,
-          });
           document.dispatchEvent(formEvent);
 
           this.resetForm(category, "out");
@@ -431,8 +426,6 @@ export class BahanBakuView {
           console.error("Error submitting form:", error);
           this.showError("Gagal menyimpan data: " + error.message);
         }
-      });
-    });
   }
 
   resetForm(category, type) {
@@ -486,7 +479,6 @@ export class BahanBakuView {
         ${category === "produksi" ? `<td>${item.remark || "-"}</td>` : ""}
       `;
       stockForm.resultsBody.appendChild(row);
-    });
   }
 
   updateStockBannerDisplay(data) {

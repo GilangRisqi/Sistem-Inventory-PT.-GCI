@@ -81,3 +81,236 @@
     margin: 0.1rem;
   }
 }
+
+/* Improved Banner Out Table Layout */
+.stock-results {
+  max-width: 100%;
+  overflow-x: auto;
+  box-sizing: border-box;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #dc3545;
+}
+
+.table-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.record-count {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.results-table {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.results-table table {
+  width: 100%;
+  min-width: 800px; /* Minimum width to prevent cramping */
+  border-collapse: collapse;
+  margin: 0;
+  background: white;
+  border: 1px solid #dee2e6;
+}
+
+.results-table th {
+  background-color: #dc3545;
+  color: white;
+  padding: 12px 8px;
+  text-align: left;
+  border: 1px solid #dee2e6;
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.results-table td {
+  padding: 10px 8px;
+  border: 1px solid #dee2e6;
+  font-size: 0.85rem;
+}
+
+.table-actions {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-success {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #218838;
+}
+
+/* Banner In specific styling */
+#stock-banner-section-in .results-table th {
+  background-color: #007bff;
+}
+
+#stock-banner-section-out .results-table th {
+  background-color: #dc3545;
+}
+
+/* Mobile responsive improvements for Banner tables */
+@media (max-width: 768px) {
+  .table-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .table-header h3 {
+    font-size: 1rem;
+  }
+
+  .record-count {
+    font-size: 0.8rem;
+  }
+
+  .results-table th,
+  .results-table td {
+    padding: 6px 4px;
+    font-size: 0.75rem;
+  }
+
+  .table-actions {
+    justify-content: center;
+  }
+
+  .btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+}
+
+/* Action buttons styling */
+.action-cell {
+  white-space: nowrap;
+  padding: 8px !important;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  margin: 0.1rem;
+  border-radius: 3px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+}
+
+.btn-success {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #218838;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+}
+
+.d-none {
+  display: none !important;
+}
+
+/* Form controls for inline editing */
+.form-control {
+  width: 100%;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+}
+
+.form-control-sm {
+  padding: 0.125rem 0.25rem;
+  font-size: 0.7rem;
+}
+
+.form-control:focus {
+  border-color: #007bff;
+  outline: 0;
+  box-shadow: 0 0 0 0.1rem rgba(0, 123, 255, 0.25);
+}
+
+/* Editable cells styling */
+.editable {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.editable:hover {
+  background-color: #f8f9fa;
+}
+
+tr[data-editing="true"] .editable {
+  background-color: #fff3cd;
+}
+
+/* Bootstrap icons fallback */
+.bi-pencil::before {
+  content: "✏️";
+}
+.bi-check::before {
+  content: "✓";
+}
+.bi-x::before {
+  content: "✗";
+}
+.bi-trash::before {
+  content: "🗑️";
+}

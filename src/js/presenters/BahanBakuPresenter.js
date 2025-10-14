@@ -11,12 +11,78 @@ export class BahanBakuPresenter {
       const { category } = event.detail;
       console.log(`Handling refresh request for ${category}`);
       try {
-        if (category === "banner") {
-          await this.loadBannerStockData();
+        if (category === "banner-in") {
+          await this.loadBannerInStockData();
+        } else if (category === "banner-out") {
+          await this.loadBannerOutStockData();
         }
       } catch (error) {
         console.error("Error refreshing data:", error);
         this.view.showError("Gagal memperbarui data");
+      }
+    });
+
+    // Listen for section activation events
+    document.addEventListener("section-activated", async (event) => {
+      const { sectionId } = event.detail;
+      console.log(`Section activated: ${sectionId}`);
+
+      try {
+        if (sectionId === "stock-banner-in") {
+          console.log("Loading data for stock-banner-in section...");
+          await this.loadBannerInStockData();
+        } else if (sectionId === "stock-banner-out") {
+          console.log("Loading data for stock-banner-out section...");
+          await this.loadBannerOutStockData();
+        }
+      } catch (error) {
+        console.error("Error loading section data:", error);
+        this.view.showError("Gagal memuat data section");
+      }
+    });
+
+    // Also listen for when navigation shows stock-banner sections
+    document.addEventListener("navigation-changed", async (event) => {
+      const { sectionId } = event.detail;
+      console.log(`Navigation changed to: ${sectionId}`);
+
+      if (sectionId === "stock-banner") {
+        console.log(
+          "Stock banner sections activated, loading both IN and OUT data..."
+        );
+        setTimeout(async () => {
+          await this.loadBannerInStockData();
+          await this.loadBannerOutStockData();
+        }, 100);
+      }
+    });
+
+    // Listen for debug database check
+    document.addEventListener("debug-db-check", async (event) => {
+      const { category } = event.detail;
+      console.log(`🔍 Debug DB check requested for: ${category}`);
+
+      try {
+        const allRecords = await this.model.getAllRecords();
+        console.log("🗄️ All IndexedDB Records:");
+        console.log("📊 Stock records:", allRecords.stock);
+        console.log("📋 Transaction records:", allRecords.transactions);
+        console.log("📈 Stats:", {
+          totalStock: allRecords.stockCount,
+          totalTransactions: allRecords.transactionCount,
+          bannerStocks: allRecords.stock.filter((s) => s.category === "banner")
+            .length,
+        });
+
+        // Debug transaction data specifically for numbering
+        console.log("🔍 Debugging transaction numbering...");
+        await this.model.debugTransactionData();
+
+        // Also try to force reload the banner data
+        console.log("🔄 Force reloading banner data...");
+        await this.loadBannerInStockData();
+      } catch (error) {
+        console.error("🚨 Debug check error:", error);
       }
     });
 
@@ -36,6 +102,9 @@ export class BahanBakuPresenter {
 
     console.log("Handlers bound successfully");
 
+    // Setup reset numbering handler
+    this.setupResetNumberingHandler();
+
     // Initial setup with delay to ensure DOM is ready
     setTimeout(async () => {
       console.log("Setting up handlers and loading initial data...");
@@ -46,35 +115,49 @@ export class BahanBakuPresenter {
       // Bind in/out form handlers
       this.bindInOutHandlers();
 
+      // Bind stock action handlers
+      this.bindStockActionHandlers();
+
       // Initialize auto numbers for all forms
       await this.view.initializeAutoNumbers();
 
-      // Load initial stock data
-      this.loadBannerStockData();
+      // Load initial stock data (including banner sections)
+      console.log("🚀 Loading initial stock data...");
+      this.loadBannerInStockData();
+      this.loadBannerOutStockData();
       this.loadDigitalStockData();
       this.loadProduksiStockData();
     }, 500);
   }
 
-  async loadBannerStockData() {
+  async loadBannerInStockData() {
     try {
-      console.log("=== Loading Banner Stock Data ===");
-      console.log("1. Requesting data from model...");
+      console.log("=== Loading Banner In Stock Data (Simplified) ===");
       const stockData = await this.model.getCurrentBannerStock();
-      console.log("2. Data received from model:", stockData);
-      console.log("3. Updating view with data...");
+      console.log("📊 Banner stock data received:", stockData);
+      console.log(
+        "📈 Data count:",
+        Array.isArray(stockData) ? stockData.length : "Not an array"
+      );
 
-      // Pastikan view stock form sudah ter-initialize
-      if (!this.view.stockForms.banner) {
-        console.log("Stock banner form not initialized, initializing now...");
-        this.view.stockForms.banner =
-          this.view._initializeStockForm("stock-banner");
-      }
-
-      this.view.updateStockBannerDisplay(stockData);
-      console.log("4. View update complete");
+      this.view.updateStockBannerInDisplay(stockData);
+      console.log("✅ Banner In view update complete");
     } catch (error) {
-      console.error("Error loading banner stock:", error);
+      console.error("Error loading banner in stock:", error);
+      this.view.showError(error.message);
+    }
+  }
+
+  async loadBannerOutStockData() {
+    try {
+      console.log("=== Loading Banner Out Stock Data (From Transactions) ===");
+      const stockData = await this.model.getCurrentBannerOutStock();
+      console.log("📊 Banner out stock data received:", stockData);
+
+      this.view.updateStockBannerOutDisplay(stockData);
+      console.log("✅ Banner Out view update complete");
+    } catch (error) {
+      console.error("Error loading banner out stock:", error);
       this.view.showError(error.message);
     }
   }
@@ -106,19 +189,15 @@ export class BahanBakuPresenter {
   }
 
   bindInOutHandlers() {
-    console.log("Binding in/out handlers in presenter");
-
     this.view.bindInOutSubmit(async (data) => {
-      console.log(`=== Handler called for ${data.type} with data: ===`, data);
       try {
         if (data.type.startsWith("in-")) {
-          console.log("Processing IN submission...");
           await this.handleInSubmit(data.category, data);
 
           // Refresh the appropriate stock display
           if (data.category === "banner") {
-            console.log("Refreshing banner stock display...");
-            await this.loadBannerStockData();
+            await this.loadBannerInStockData();
+            await this.loadBannerOutStockData();
           } else if (data.category === "digital") {
             await this.loadDigitalStockData();
           } else if (data.category === "produksi") {
@@ -127,7 +206,6 @@ export class BahanBakuPresenter {
 
           return true;
         } else if (data.type.startsWith("out-")) {
-          console.log("Processing OUT submission...");
           return await this.handleOutSubmit(data.category, data);
         }
       } catch (error) {
@@ -150,17 +228,11 @@ export class BahanBakuPresenter {
 
   async handleInSubmit(category, formData) {
     try {
-      console.log("=== Handle In Submit (Presenter) ===>");
-      console.log("Category:", category);
-      console.log("Form Data:", JSON.stringify(formData, null, 2));
-
       // Validasi data sebelum menyimpan
       if (!formData || !formData.data) {
         console.error("Invalid form data:", formData);
         throw new Error("Data tidak valid");
       }
-
-      console.log("Data validation passed, proceeding to save...");
 
       // Get next auto number before saving
       const nextNumber = await this.model.getNextNumber(
@@ -168,7 +240,6 @@ export class BahanBakuPresenter {
         "in",
         formData.data.tanggal
       );
-      console.log(`Auto-generated number: ${nextNumber}`);
 
       // Override nomor with auto-generated number
       formData.data.nomor = nextNumber;
@@ -176,25 +247,16 @@ export class BahanBakuPresenter {
       // Tambahkan timestamp
       formData.data.timestamp = new Date().toISOString();
 
-      console.log("Validation passed, saving data with auto number...");
-      console.log(
-        "Final data to save:",
-        JSON.stringify(formData.data, null, 2)
-      );
-
       // Simpan data
       const savedId = await this.model.addStock(category, formData);
-      console.log(`Data saved successfully with ID: ${savedId}`);
 
       // Berikan delay untuk memastikan data tersimpan di IndexedDB
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Refresh stock display terlebih dahulu
-      console.log(`Refreshing ${category} stock display immediately...`);
       await this._refreshStockDisplay(category);
 
       // Reset form dan tampilkan pesan sukses setelah refresh selesai
-      console.log("Resetting form and showing success message...");
       this.view.resetForm(category, "in");
 
       // Re-initialize auto numbers after reset
@@ -203,11 +265,9 @@ export class BahanBakuPresenter {
       this.view.showSuccess(
         `Input ${category} berhasil disimpan dengan nomor ${nextNumber}!`
       );
-      console.log("Form reset and success message displayed");
 
       // Schedule additional refresh untuk memastikan data ter-update
       setTimeout(async () => {
-        console.log(`Executing delayed refresh for ${category}...`);
         await this._refreshStockDisplay(category);
       }, 1000);
 
@@ -221,15 +281,14 @@ export class BahanBakuPresenter {
 
   async _refreshStockDisplay(category) {
     try {
-      console.log(`=== Refreshing ${category} display ===`);
       if (category === "banner") {
-        await this.loadBannerStockData();
+        await this.loadBannerInStockData();
+        await this.loadBannerOutStockData();
       } else if (category === "digital") {
         await this.loadDigitalStockData();
       } else if (category === "produksi") {
         await this.loadProduksiStockData();
       }
-      console.log(`${category} stock display refreshed successfully`);
     } catch (error) {
       console.error(`Error refreshing ${category} display:`, error);
       throw error;
@@ -238,27 +297,18 @@ export class BahanBakuPresenter {
 
   async handleOutSubmit(category, formData) {
     try {
-      console.log("handleOutSubmit called with:", { category, formData });
-
       // Get next auto number before saving
       const nextNumber = await this.model.getNextNumber(
         category,
         "out",
         formData.data.tanggal
       );
-      console.log(`Auto-generated number for OUT: ${nextNumber}`);
 
       // Override nomor with auto-generated number
       formData.data.nomor = nextNumber;
 
-      console.log(
-        "Final OUT data to save:",
-        JSON.stringify(formData.data, null, 2)
-      );
-
       // Simpan data
-      await this.model.reduceStock(category, formData);
-      console.log("Stock reduced successfully");
+      await this.model.reduceStock(category, formData.data);
 
       // Reset form dan tampilkan pesan sukses
       this.view.resetForm(category, "out");
@@ -271,17 +321,16 @@ export class BahanBakuPresenter {
       );
 
       // Refresh stock display dengan delay kecil
-      console.log(`Refreshing ${category} stock display...`);
       setTimeout(async () => {
         try {
           if (category === "banner") {
-            await this.loadBannerStockData();
+            await this.loadBannerInStockData();
+            await this.loadBannerOutStockData();
           } else if (category === "digital") {
             await this.loadDigitalStockData();
           } else if (category === "produksi") {
             await this.loadProduksiStockData();
           }
-          console.log(`${category} stock display refreshed successfully`);
         } catch (error) {
           console.error(`Error refreshing ${category} display:`, error);
         }
@@ -293,5 +342,183 @@ export class BahanBakuPresenter {
       this.view.showError(error.message);
       throw error;
     }
+  }
+
+  // Bind stock action handlers for edit and delete
+  bindStockActionHandlers() {
+    console.log("Binding stock action handlers...");
+
+    // Bind edit handlers
+    this.view.bindStockEditHandler(
+      "banner-in",
+      this.handleBannerInEdit.bind(this)
+    );
+    this.view.bindStockEditHandler(
+      "banner-out",
+      this.handleBannerOutEdit.bind(this)
+    );
+
+    // Bind save edit handlers
+    this.view.bindStockSaveHandler(this.handleSaveInlineEdit.bind(this));
+
+    // Bind cancel edit handlers
+    this.view.bindStockCancelHandler(this.handleCancelInlineEdit.bind(this));
+
+    // Bind delete handlers
+    this.view.bindStockDeleteHandler(
+      "banner-in",
+      this.handleBannerInDelete.bind(this)
+    );
+    this.view.bindStockDeleteHandler(
+      "banner-out",
+      this.handleBannerOutDelete.bind(this)
+    );
+
+    console.log("Stock action handlers bound successfully");
+  }
+
+  // Handler untuk edit Banner In - simplified like RekapPresenter
+  async handleBannerInEdit(id, type) {
+    try {
+      const row = document.querySelector(
+        `tr[data-id="${id}"][data-type="${type}"]`
+      );
+      if (!row) {
+        this.view.showError("Row tidak ditemukan!");
+        return;
+      }
+
+      this.view.toggleEditMode(row, true);
+    } catch (error) {
+      this.view.showError("Gagal masuk mode edit: " + error.message);
+    }
+  }
+
+  // Handler untuk edit Banner Out - simplified like RekapPresenter
+  async handleBannerOutEdit(id, type) {
+    try {
+      const row = document.querySelector(
+        `tr[data-id="${id}"][data-type="${type}"]`
+      );
+      if (!row) {
+        this.view.showError("Row tidak ditemukan!");
+        return;
+      }
+
+      this.view.toggleEditMode(row, true);
+    } catch (error) {
+      this.view.showError("Gagal masuk mode edit: " + error.message);
+    }
+  }
+
+  // Handler untuk save inline edit - like RekapPresenter
+  async handleSaveInlineEdit(id, type) {
+    try {
+      const row = document.querySelector(
+        `tr[data-id="${id}"][data-type="${type}"]`
+      );
+      if (!row) {
+        this.view.showError("Row tidak ditemukan!");
+        return;
+      }
+
+      const data = {};
+      const inputs = row.querySelectorAll(".editable input, .editable select");
+
+      inputs.forEach((input) => {
+        const field = input.getAttribute("data-field");
+        data[field] = input.value;
+      });
+
+      // Update data in appropriate store based on type
+      if (type === "banner-in") {
+        // Banner In uses stock store
+        await this.model.updateStockRecord(id, data);
+      } else if (type === "banner-out") {
+        // Banner Out uses transactions store
+        await this.model.updateTransactionRecord(id, data);
+      }
+
+      // Exit edit mode first before refreshing (like RekapPresenter)
+      this.view.toggleEditMode(row, false);
+
+      this.view.showSuccess("Data berhasil diperbarui!");
+
+      // Refresh the appropriate table after exiting edit mode
+      if (type === "banner-in") {
+        await this.loadBannerInStockData();
+      } else if (type === "banner-out") {
+        await this.loadBannerOutStockData();
+      }
+    } catch (error) {
+      this.view.showError("Gagal menyimpan perubahan: " + error.message);
+    }
+  }
+
+  // Handler untuk cancel inline edit
+  handleCancelInlineEdit(id, type) {
+    const row = document.querySelector(
+      `tr[data-id="${id}"][data-type="${type}"]`
+    );
+    if (row) {
+      this.view.toggleEditMode(row, false);
+    }
+  }
+
+  // Handler untuk delete Banner In - simplified like RekapPresenter
+  async handleBannerInDelete(id) {
+    try {
+      console.log("🗑️ Deleting Banner In:", id);
+
+      // Delete from stock store (Banner In uses stock data)
+      await this.model.deleteStockRecord(id);
+      this.view.showSuccess("Data Banner In berhasil dihapus!");
+      await this.loadBannerInStockData();
+      console.log("✅ Banner In deleted and display refreshed");
+    } catch (error) {
+      console.error("❌ Error deleting Banner In:", error);
+      this.view.showError("Gagal menghapus data Banner In");
+    }
+  }
+
+  // Handler untuk delete Banner Out - simplified like RekapPresenter
+  async handleBannerOutDelete(id) {
+    try {
+      console.log("🗑️ Deleting Banner Out:", id);
+
+      // Simple delete like in rekap laporan
+      await this.model.deleteTransactionRecord(id);
+      this.view.showSuccess("Data Banner Out berhasil dihapus!");
+      await this.loadBannerOutStockData();
+      console.log("✅ Banner Out deleted and display refreshed");
+    } catch (error) {
+      console.error("❌ Error deleting Banner Out:", error);
+      this.view.showError("Gagal menghapus data Banner Out");
+    }
+  }
+
+  // Setup reset numbering handler for troubleshooting
+  setupResetNumberingHandler() {
+    document.addEventListener("reset-numbering", async () => {
+      console.log("🔄 Resetting numbering sequences...");
+
+      try {
+        // Reset In Banner to start from 1
+        await this.model.resetNumbering("banner", "in", 1);
+        console.log("✅ In Banner numbering reset to start from 1");
+
+        // Reset Out Banner to start from 1
+        await this.model.resetNumbering("banner", "out", 1);
+        console.log("✅ Out Banner numbering reset to start from 1");
+
+        console.log("🎉 All numbering sequences reset completed!");
+
+        // Reload data to reflect changes
+        await this.loadBannerInStockData();
+        await this.loadBannerOutStockData();
+      } catch (error) {
+        console.error("🚨 Error resetting numbering:", error);
+      }
+    });
   }
 }
