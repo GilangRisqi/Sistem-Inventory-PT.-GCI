@@ -16,21 +16,47 @@ export class RekapPresenter {
 
   async handleGenerateRekap({ tipe, startDate, endDate }) {
     try {
+      console.log(`🔍 Generating rekap for type: ${tipe}`);
+      console.log(
+        `📅 Date range: ${startDate.toISOString().split("T")[0]} to ${
+          endDate.toISOString().split("T")[0]
+        }`
+      );
+
       let model;
       if (tipe === "bahan-baku") {
         model = this.bahanBakuModel;
+        console.log("📊 Using BahanBakuModel");
       } else if (tipe === "iridesse-report") {
         model = this.iridesseReportModel;
+        console.log("📊 Using IridesseReportModel");
       } else {
         model = this.dailyReportModel;
+        console.log("📊 Using DailyReportModel");
       }
 
+      console.log("🔄 Calling getByDateRange...");
       const data = await model.getByDateRange(startDate, endDate);
+      console.log(`✅ Retrieved ${data.length} records`);
+
+      if (data.length > 0) {
+        console.log("📋 Sample record:", data[0]);
+      } else {
+        console.warn("⚠️ No data found for the selected period");
+      }
+
       this.currentData = data;
       this.currentTipe = tipe;
       this.view.displayTable(data, tipe);
+
+      if (data.length === 0) {
+        this.view.showError(
+          `Tidak ada data ${tipe} untuk periode yang dipilih. Pastikan Anda telah menginput data pada menu yang sesuai.`
+        );
+      }
     } catch (error) {
-      this.view.showError(error.message);
+      console.error("❌ Error in handleGenerateRekap:", error);
+      this.view.showError(`Gagal generate laporan: ${error.message}`);
     }
   }
 

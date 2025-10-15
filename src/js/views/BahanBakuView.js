@@ -236,6 +236,14 @@ export class BahanBakuView {
         title = "Laporan Data Stock Banner Out";
       } else if (category === "banner-in") {
         title = "Laporan Data Stock Banner In";
+      } else if (category === "digital-in") {
+        title = "Laporan Data Stock Digital In";
+      } else if (category === "digital-out") {
+        title = "Laporan Data Stock Digital Out";
+      } else if (category === "produksi-in") {
+        title = "Laporan Data Stock Produksi In";
+      } else if (category === "produksi-out") {
+        title = "Laporan Data Stock Produksi Out";
       } else {
         title = `Laporan Data Stock ${
           category.charAt(0).toUpperCase() + category.slice(1)
@@ -258,7 +266,11 @@ export class BahanBakuView {
 
       // Define table headers based on category
       let headers = [];
-      if (category === "banner-out") {
+      if (
+        category === "banner-out" ||
+        category === "digital-out" ||
+        category === "produksi-out"
+      ) {
         headers = [
           "No.",
           "Jenis Kertas",
@@ -280,7 +292,7 @@ export class BahanBakuView {
           "Total",
           "Tanggal",
         ];
-        if (category === "produksi") {
+        if (category === "produksi" || category === "produksi-in") {
           headers.push("Remark");
         }
       }
@@ -292,7 +304,11 @@ export class BahanBakuView {
           : "";
 
         let row = [];
-        if (category === "banner-out") {
+        if (
+          category === "banner-out" ||
+          category === "digital-out" ||
+          category === "produksi-out"
+        ) {
           const totalKeluarOk = Number(item.totalKeluarOk) || 0;
           const totalKeluarNg = Number(item.totalKeluarNg) || 0;
           const totalKeluar = totalKeluarOk + totalKeluarNg;
@@ -322,7 +338,7 @@ export class BahanBakuView {
             total,
             formattedDate,
           ];
-          if (category === "produksi") {
+          if (category === "produksi" || category === "produksi-in") {
             row.push(item.remark || "-");
           }
         }
@@ -383,7 +399,6 @@ export class BahanBakuView {
     this.stockForms = {
       "banner-in": this._initializeStockForm("stock-banner-in"),
       "banner-out": this._initializeStockForm("stock-banner-out"),
-      digital: this._initializeStockForm("stock-digital"),
       produksi: this._initializeStockForm("stock-produksi"),
     };
 
@@ -588,6 +603,11 @@ export class BahanBakuView {
       }
 
       section.appendChild(form);
+
+      // Initialize auto numbering setelah form dibuat
+      setTimeout(async () => {
+        await this._setupAutoNumberingForForm(sectionId);
+      }, 100);
     }
 
     return this._getFormElements(section, sectionId);
@@ -1019,6 +1039,26 @@ export class BahanBakuView {
         if (type === "in" && formType[type].total) {
           formType[type].total.textContent = "0";
         }
+
+        // Auto-update nomor setelah reset form
+        setTimeout(async () => {
+          const sectionId = `${type}-${category}`;
+          const currentDate = new Date().toISOString().split("T")[0];
+
+          // Set default date
+          const dateInput = document.getElementById(`${sectionId}-tanggal`);
+          if (dateInput && !dateInput.value) {
+            dateInput.value = currentDate;
+          }
+
+          // Update auto number
+          await this.updateAutoNumberForSection(
+            sectionId,
+            category,
+            type,
+            currentDate
+          );
+        }, 100);
       }
     }
   }
@@ -1319,14 +1359,660 @@ export class BahanBakuView {
     this._attachStockActionListeners(section, "banner-out");
   }
 
-  updateStockDigitalDisplay(data) {
-    this.stockForms.digital = this._initializeStockForm("stock-digital"); // Re-initialize form
-    this.updateStockDisplay("digital", data);
+  // New methods for Digital In and Out sections
+  updateStockDigitalInDisplay(data) {
+    console.log("=== Updating Digital In Display ===");
+    console.log("Digital In data received:", data);
+
+    const section = document.getElementById("stock-digital-section-in");
+    if (!section) {
+      console.error("Digital In section not found");
+      return;
+    }
+
+    // Store data for PDF generation
+    this.stockData["digital-in"] = data;
+
+    // Remove any unwanted stock-results containers
+    const unwantedContainers = section.querySelectorAll(".stock-results");
+    unwantedContainers.forEach((container) => {
+      console.log("Removing unwanted stock-results container from Digital In");
+      container.remove();
+    });
+
+    let tableHtml = `
+        <div class="results-summary">
+          <span class="results-count">Menampilkan ${
+            Array.isArray(data) ? data.length : 0
+          } records</span>
+        </div>
+        <div class="table-responsive" style="max-width: 100%; overflow-x: auto; margin: 15px 0; padding: 10px; border: 1px solid #dee2e6; border-radius: 8px; background-color: #fff;">
+          <table style="width: 100%; min-width: 800px; border-collapse: collapse; font-size: 14px;">
+            <thead>
+              <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 60px;">No.</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: left; font-weight: 600; min-width: 120px;">Jenis Kertas</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 80px;">Ukuran</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Qty Last Month</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Jumlah Masuk</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 80px;">Total</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Tanggal</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 120px;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+    `;
+
+    if (Array.isArray(data) && data.length > 0) {
+      data.forEach((item, index) => {
+        if (item && typeof item === "object") {
+          const formattedDate = item.tanggal
+            ? new Date(item.tanggal).toLocaleDateString("id-ID")
+            : "";
+          const total =
+            (Number(item.qtyLastMonth) || 0) + (Number(item.jumlahMasuk) || 0);
+
+          tableHtml += `
+            <tr data-id="${
+              item.id || item.timestamp
+            }" data-type="digital-in" style="border-bottom: 1px solid #dee2e6; ${
+            index % 2 === 0
+              ? "background-color: #f8f9fa;"
+              : "background-color: white;"
+          } transition: background-color 0.2s ease;">
+              <td style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;"><strong style="color: #495057;">${
+                item.nomor || ""
+              }</strong></td>
+              <td class="editable" data-field="jenisKertas" data-type="text" data-value="${
+                item.jenisKertas || ""
+              }" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">${
+            item.jenisKertas || ""
+          }</td>
+              <td class="editable" data-field="ukuran" data-type="text" data-value="${
+                item.ukuran || ""
+              }" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;">${
+            item.ukuran || ""
+          }</td>
+              <td class="editable text-center" data-field="qtyLastMonth" data-type="number" data-value="${
+                item.qtyLastMonth || 0
+              }" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;">${
+            item.qtyLastMonth || 0
+          }</td>
+              <td class="editable text-center" data-field="jumlahMasuk" data-type="number" data-value="${
+                item.jumlahMasuk || 0
+              }" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;">${
+            item.jumlahMasuk || 0
+          }</td>
+              <td style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;"><strong style="color: #007bff; font-size: 15px;">${total}</strong></td>
+              <td class="editable text-center" data-field="tanggal" data-type="date" data-value="${
+                item.tanggal || ""
+              }" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center; font-size: 13px;">${formattedDate}</td>
+              <td class="action-cell" style="border: 1px solid #dee2e6; padding: 8px; text-align: center; white-space: nowrap;">
+                <div style="display: flex; gap: 4px; justify-content: center; flex-wrap: wrap;">
+                  <button class="btn btn-sm btn-primary edit-btn" data-id="${
+                    item.id || item.timestamp
+                  }" data-type="digital-in" title="Edit" style="padding: 4px 8px; font-size: 11px;">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn btn-sm btn-success save-btn d-none" data-id="${
+                    item.id || item.timestamp
+                  }" data-type="digital-in" title="Simpan" style="display: none; padding: 4px 8px; font-size: 11px;">
+                    <i class="bi bi-check"></i>
+                  </button>
+                  <button class="btn btn-sm btn-secondary cancel-btn d-none" data-id="${
+                    item.id || item.timestamp
+                  }" data-type="digital-in" title="Batal" style="display: none; padding: 4px 8px; font-size: 11px;">
+                    <i class="bi bi-x"></i>
+                  </button>
+                  <button class="btn btn-sm btn-danger delete-btn" data-id="${
+                    item.id || item.timestamp
+                  }" data-type="digital-in" title="Hapus" style="padding: 4px 8px; font-size: 11px;">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }
+      });
+    } else {
+      tableHtml += `
+        <tr>
+          <td colspan="8" style="border: 1px solid #dee2e6; padding: 30px; text-align: center; background-color: #f8f9fa;">
+            <em style="color: #6c757d; font-size: 14px;">📋 Tidak ada data stock digital in</em>
+          </td>
+        </tr>
+      `;
+    }
+
+    tableHtml += `
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top: 15px; display: flex; gap: 10px;">
+          <button id="digital-in-pdf-btn" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 500; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.2s ease;">
+            <i class="bi bi-file-earmark-pdf"></i> Generate PDF
+          </button>
+        </div>
+    `;
+
+    // Set innerHTML directly to the section since it doesn't have .results container
+    section.innerHTML =
+      `
+      <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <h2 style="margin: 0; font-size: 18px; font-weight: 600; display: flex; align-items: center;">
+          <i class="bi bi-arrow-down-circle" style="margin-right: 10px; font-size: 20px;"></i>
+          📥 List Stock Bahan Baku Digital In
+        </h2>
+      </div>
+    ` + tableHtml;
+
+    // Tambahkan event listener untuk PDF button
+    const digitalInPdfButton = document.getElementById("digital-in-pdf-btn");
+    if (digitalInPdfButton) {
+      digitalInPdfButton.addEventListener("click", () => {
+        this._handlePrintStock("digital-in");
+      });
+    }
+
+    // Attach event listeners untuk action buttons
+    this._attachStockActionListeners(section, "digital-in");
+    console.log("✅ Digital In display updated successfully");
   }
 
-  updateStockProduksiDisplay(data) {
-    this.stockForms.produksi = this._initializeStockForm("stock-produksi"); // Re-initialize form
-    this.updateStockDisplay("produksi", data);
+  updateStockDigitalOutDisplay(data) {
+    console.log("=== Updating Digital Out Display ===");
+    console.log("Digital Out data received:", data);
+
+    const section = document.getElementById("stock-digital-section-out");
+    if (!section) {
+      console.error("Digital Out section not found");
+      return;
+    }
+
+    // Store data for PDF generation
+    this.stockData["digital-out"] = data;
+
+    // Remove any unwanted stock-results containers
+    const unwantedContainers = section.querySelectorAll(".stock-results");
+    unwantedContainers.forEach((container) => {
+      console.log("Removing unwanted stock-results container from Digital Out");
+      container.remove();
+    });
+
+    let tableHtml = `
+        <div class="results-summary">
+          <span class="results-count">Menampilkan ${
+            Array.isArray(data) ? data.length : 0
+          } records</span>
+        </div>
+        <div class="table-responsive" style="max-width: 100%; overflow-x: auto; margin: 15px 0; padding: 10px; border: 1px solid #dee2e6; border-radius: 8px; background-color: #fff;">
+          <table style="width: 100%; min-width: 1000px; border-collapse: collapse; font-size: 14px;">
+            <thead>
+              <tr style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 60px;">No.</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: left; font-weight: 600; min-width: 120px;">Jenis Kertas</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 80px;">Ukuran</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Total Masuk</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Keluar (OK)</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Keluar (NG)</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Total Keluar</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 80px;">Sisa Stock</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Tanggal</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 120px;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+    `;
+
+    if (Array.isArray(data) && data.length > 0) {
+      data.forEach((item, index) => {
+        if (item && typeof item === "object") {
+          const formattedDate = item.tanggal
+            ? new Date(item.tanggal).toLocaleDateString("id-ID")
+            : "";
+
+          const totalKeluarOk = Number(item.totalKeluarOk) || 0;
+          const totalKeluarNg = Number(item.totalKeluarNg) || 0;
+          const totalKeluar = totalKeluarOk + totalKeluarNg;
+          const totalMasuk = Number(item.totalMasuk) || 0;
+          const sisaStock = totalMasuk - totalKeluar;
+
+          tableHtml += `
+            <tr data-id="${
+              item.id || item.timestamp
+            }" data-type="digital-out" style="border-bottom: 1px solid #dee2e6; ${
+            index % 2 === 0
+              ? "background-color: #f8f9fa;"
+              : "background-color: white;"
+          } transition: background-color 0.2s ease;">
+              <td style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;"><strong style="color: #495057;">${
+                item.nomor || ""
+              }</strong></td>
+              <td class="editable" data-field="jenisKertas" data-type="text" data-value="${
+                item.jenisKertas || ""
+              }" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;" title="${
+            item.jenisKertas || ""
+          }">${item.jenisKertas || ""}</td>
+              <td class="editable" data-field="ukuran" data-type="text" data-value="${
+                item.ukuran || ""
+              }" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;">${
+            item.ukuran || ""
+          }</td>
+              <td class="editable text-center" data-field="totalMasuk" data-type="number" data-value="${totalMasuk}" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;">${totalMasuk}</td>
+              <td class="editable text-center" data-field="totalKeluarOk" data-type="number" data-value="${totalKeluarOk}" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;">${totalKeluarOk}</td>
+              <td class="editable text-center" data-field="totalKeluarNg" data-type="number" data-value="${totalKeluarNg}" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;">${totalKeluarNg}</td>
+              <td style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;"><strong style="color: #dc3545; font-size: 15px;">${totalKeluar}</strong></td>
+              <td style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;"><strong style="color: ${
+                sisaStock < 0 ? "#dc3545" : "#28a745"
+              }; font-size: 15px;">${sisaStock}</strong></td>
+              <td class="editable text-center" data-field="tanggal" data-type="date" data-value="${
+                item.tanggal || ""
+              }" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center; font-size: 13px;">${formattedDate}</td>
+              <td class="action-cell" style="border: 1px solid #dee2e6; padding: 8px; text-align: center; white-space: nowrap;">
+                <div style="display: flex; gap: 4px; justify-content: center; flex-wrap: wrap;">
+                  <button class="btn btn-sm btn-primary edit-btn" data-id="${
+                    item.id || item.timestamp
+                  }" data-type="digital-out" title="Edit" style="padding: 4px 8px; font-size: 11px;">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn btn-sm btn-success save-btn d-none" data-id="${
+                    item.id || item.timestamp
+                  }" data-type="digital-out" title="Simpan" style="display: none; padding: 4px 8px; font-size: 11px;">
+                    <i class="bi bi-check"></i>
+                  </button>
+                  <button class="btn btn-sm btn-secondary cancel-btn d-none" data-id="${
+                    item.id || item.timestamp
+                  }" data-type="digital-out" title="Batal" style="display: none; padding: 4px 8px; font-size: 11px;">
+                    <i class="bi bi-x"></i>
+                  </button>
+                  <button class="btn btn-sm btn-danger delete-btn" data-id="${
+                    item.id || item.timestamp
+                  }" data-type="digital-out" title="Hapus" style="padding: 4px 8px; font-size: 11px;">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }
+      });
+    } else {
+      tableHtml += `
+        <tr>
+          <td colspan="10" style="border: 1px solid #dee2e6; padding: 30px; text-align: center; background-color: #f8f9fa;">
+            <em style="color: #6c757d; font-size: 14px;">📋 Tidak ada data stock digital out</em>
+          </td>
+        </tr>
+      `;
+    }
+
+    tableHtml += `
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top: 15px; display: flex; gap: 10px;">
+          <button id="digital-out-pdf-btn" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 500; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.2s ease;">
+            <i class="bi bi-file-earmark-pdf"></i> Generate PDF
+          </button>
+        </div>
+    `;
+
+    // Set innerHTML directly to the section since it doesn't have .results container
+    section.innerHTML =
+      `
+      <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 15px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <h2 style="margin: 0; font-size: 18px; font-weight: 600; display: flex; align-items: center;">
+          <i class="bi bi-arrow-up-circle" style="margin-right: 10px; font-size: 20px;"></i>
+          📤 List Stock Bahan Baku Digital Out
+        </h2>
+      </div>
+    ` + tableHtml;
+
+    // Tambahkan event listener untuk PDF button
+    const digitalOutPdfButton = document.getElementById("digital-out-pdf-btn");
+    if (digitalOutPdfButton) {
+      digitalOutPdfButton.addEventListener("click", () => {
+        this._handlePrintStock("digital-out");
+      });
+    }
+
+    // Attach event listeners untuk action buttons
+    this._attachStockActionListeners(section, "digital-out");
+    console.log("✅ Digital Out display updated successfully");
+  }
+
+  // New methods for Produksi In and Out sections
+  updateStockProduksiInDisplay(data) {
+    console.log("=== Updating Produksi In Display ===");
+    console.log("Produksi In data received:", data);
+
+    const section = document.getElementById("stock-produksi-section-in");
+    if (!section) {
+      console.error("Produksi In section not found");
+      return;
+    }
+
+    // Store data for PDF generation
+    this.stockData["produksi-in"] = data;
+
+    // Remove any unwanted stock-results containers
+    const unwantedContainers = section.querySelectorAll(".stock-results");
+    unwantedContainers.forEach((container) => {
+      console.log("Removing unwanted stock-results container from Produksi In");
+      container.remove();
+    });
+
+    let tableHtml = `
+        <div class="results-summary">
+          <span class="results-count">Menampilkan ${
+            Array.isArray(data) ? data.length : 0
+          } records</span>
+        </div>
+        <div class="table-responsive" style="max-width: 100%; overflow-x: auto; margin: 15px 0; padding: 10px; border: 1px solid #dee2e6; border-radius: 8px; background-color: #fff;">
+          <table style="width: 100%; min-width: 900px; border-collapse: collapse; font-size: 14px;">
+            <thead>
+              <tr style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 60px;">No.</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: left; font-weight: 600; min-width: 120px;">Jenis Kertas</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 80px;">Ukuran</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Qty Last Month</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Jumlah Masuk</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 80px;">Total</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Tanggal</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Remark</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 120px;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+    `;
+
+    if (Array.isArray(data) && data.length > 0) {
+      data.forEach((item, index) => {
+        if (item && typeof item === "object") {
+          const formattedDate = item.tanggal
+            ? new Date(item.tanggal).toLocaleDateString("id-ID")
+            : "";
+          const total =
+            (Number(item.qtyLastMonth) || 0) + (Number(item.jumlahMasuk) || 0);
+
+          tableHtml += `
+            <tr data-id="${
+              item.id || item.timestamp
+            }" data-type="produksi-in" style="border-bottom: 1px solid #dee2e6; ${
+            index % 2 === 0
+              ? "background-color: #f8f9fa;"
+              : "background-color: white;"
+          } transition: background-color 0.2s ease;">
+              <td style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;"><strong style="color: #495057;">${
+                item.nomor || ""
+              }</strong></td>
+              <td class="editable" data-field="jenisKertas" data-type="text" data-value="${
+                item.jenisKertas || ""
+              }" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">${
+            item.jenisKertas || ""
+          }</td>
+              <td class="editable" data-field="ukuran" data-type="text" data-value="${
+                item.ukuran || ""
+              }" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;">${
+            item.ukuran || ""
+          }</td>
+              <td class="editable text-center" data-field="qtyLastMonth" data-type="number" data-value="${
+                item.qtyLastMonth || 0
+              }" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;">${
+            item.qtyLastMonth || 0
+          }</td>
+              <td class="editable text-center" data-field="jumlahMasuk" data-type="number" data-value="${
+                item.jumlahMasuk || 0
+              }" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;">${
+            item.jumlahMasuk || 0
+          }</td>
+              <td style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;"><strong style="color: #007bff; font-size: 15px;">${total}</strong></td>
+              <td class="editable text-center" data-field="tanggal" data-type="date" data-value="${
+                item.tanggal || ""
+              }" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center; font-size: 13px;">${formattedDate}</td>
+              <td class="editable" data-field="remark" data-type="text" data-value="${
+                item.remark || ""
+              }" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: left; max-width: 100px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${
+            item.remark || "-"
+          }</td>
+              <td class="action-cell" style="border: 1px solid #dee2e6; padding: 8px; text-align: center; white-space: nowrap;">
+                <div style="display: flex; gap: 4px; justify-content: center; flex-wrap: wrap;">
+                  <button class="btn btn-sm btn-primary edit-btn" data-id="${
+                    item.id || item.timestamp
+                  }" data-type="produksi-in" title="Edit" style="padding: 4px 8px; font-size: 11px;">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn btn-sm btn-success save-btn d-none" data-id="${
+                    item.id || item.timestamp
+                  }" data-type="produksi-in" title="Simpan" style="display: none; padding: 4px 8px; font-size: 11px;">
+                    <i class="bi bi-check"></i>
+                  </button>
+                  <button class="btn btn-sm btn-secondary cancel-btn d-none" data-id="${
+                    item.id || item.timestamp
+                  }" data-type="produksi-in" title="Batal" style="display: none; padding: 4px 8px; font-size: 11px;">
+                    <i class="bi bi-x"></i>
+                  </button>
+                  <button class="btn btn-sm btn-danger delete-btn" data-id="${
+                    item.id || item.timestamp
+                  }" data-type="produksi-in" title="Hapus" style="padding: 4px 8px; font-size: 11px;">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }
+      });
+    } else {
+      tableHtml += `
+        <tr>
+          <td colspan="9" style="border: 1px solid #dee2e6; padding: 30px; text-align: center; background-color: #f8f9fa;">
+            <em style="color: #6c757d; font-size: 14px;">📋 Tidak ada data stock produksi in</em>
+          </td>
+        </tr>
+      `;
+    }
+
+    tableHtml += `
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top: 15px; display: flex; gap: 10px;">
+          <button id="produksi-in-pdf-btn" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 500; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.2s ease;">
+            <i class="bi bi-file-earmark-pdf"></i> Generate PDF
+          </button>
+        </div>
+    `;
+
+    // Set innerHTML directly to the section since it doesn't have .results container
+    section.innerHTML =
+      `
+      <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 15px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <h2 style="margin: 0; font-size: 18px; font-weight: 600; display: flex; align-items: center;">
+          <i class="bi bi-arrow-down-circle" style="margin-right: 10px; font-size: 20px;"></i>
+          🏭 List Stock Bahan Baku Produksi In
+        </h2>
+      </div>
+    ` + tableHtml;
+
+    // Tambahkan event listener untuk PDF button
+    const produksiInPdfButton = document.getElementById("produksi-in-pdf-btn");
+    if (produksiInPdfButton) {
+      produksiInPdfButton.addEventListener("click", () => {
+        this._handlePrintStock("produksi-in");
+      });
+    }
+
+    // Attach event listeners untuk action buttons
+    this._attachStockActionListeners(section, "produksi-in");
+    console.log("✅ Produksi In display updated successfully");
+  }
+
+  updateStockProduksiOutDisplay(data) {
+    console.log("=== Updating Produksi Out Display ===");
+    console.log("Produksi Out data received:", data);
+
+    const section = document.getElementById("stock-produksi-section-out");
+    if (!section) {
+      console.error("Produksi Out section not found");
+      return;
+    }
+
+    // Store data for PDF generation
+    this.stockData["produksi-out"] = data;
+
+    // Remove any unwanted stock-results containers
+    const unwantedContainers = section.querySelectorAll(".stock-results");
+    unwantedContainers.forEach((container) => {
+      console.log(
+        "Removing unwanted stock-results container from Produksi Out"
+      );
+      container.remove();
+    });
+
+    let tableHtml = `
+        <div class="results-summary">
+          <span class="results-count">Menampilkan ${
+            Array.isArray(data) ? data.length : 0
+          } records</span>
+        </div>
+        <div class="table-responsive" style="max-width: 100%; overflow-x: auto; margin: 15px 0; padding: 10px; border: 1px solid #dee2e6; border-radius: 8px; background-color: #fff;">
+          <table style="width: 100%; min-width: 1000px; border-collapse: collapse; font-size: 14px;">
+            <thead>
+              <tr style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333;">
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 60px;">No.</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: left; font-weight: 600; min-width: 120px;">Jenis Kertas</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 80px;">Ukuran</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Total Masuk</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Keluar (OK)</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Keluar (NG)</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Total Keluar</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 80px;">Sisa Stock</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Tanggal</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 120px;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+    `;
+
+    if (Array.isArray(data) && data.length > 0) {
+      data.forEach((item, index) => {
+        if (item && typeof item === "object") {
+          const formattedDate = item.tanggal
+            ? new Date(item.tanggal).toLocaleDateString("id-ID")
+            : "";
+
+          const totalKeluarOk = Number(item.totalKeluarOk) || 0;
+          const totalKeluarNg = Number(item.totalKeluarNg) || 0;
+          const totalKeluar = totalKeluarOk + totalKeluarNg;
+          const totalMasuk = Number(item.totalMasuk) || 0;
+          const sisaStock = totalMasuk - totalKeluar;
+
+          tableHtml += `
+            <tr data-id="${
+              item.id || item.timestamp
+            }" data-type="produksi-out" style="border-bottom: 1px solid #dee2e6; ${
+            index % 2 === 0
+              ? "background-color: #f8f9fa;"
+              : "background-color: white;"
+          } transition: background-color 0.2s ease;">
+              <td style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;"><strong style="color: #495057;">${
+                item.nomor || ""
+              }</strong></td>
+              <td class="editable" data-field="jenisKertas" data-type="text" data-value="${
+                item.jenisKertas || ""
+              }" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">${
+            item.jenisKertas || ""
+          }</td>
+              <td class="editable" data-field="ukuran" data-type="text" data-value="${
+                item.ukuran || ""
+              }" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;">${
+            item.ukuran || ""
+          }</td>
+              <td class="editable text-center" data-field="totalMasuk" data-type="number" data-value="${totalMasuk}" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;">${totalMasuk}</td>
+              <td class="editable text-center" data-field="totalKeluarOk" data-type="number" data-value="${totalKeluarOk}" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;">${totalKeluarOk}</td>
+              <td class="editable text-center" data-field="totalKeluarNg" data-type="number" data-value="${totalKeluarNg}" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;">${totalKeluarNg}</td>
+              <td style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;"><strong style="color: #dc3545; font-size: 15px;">${totalKeluar}</strong></td>
+              <td style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;"><strong style="color: ${
+                sisaStock < 0 ? "#dc3545" : "#28a745"
+              }; font-size: 15px;">${sisaStock}</strong></td>
+              <td class="editable text-center" data-field="tanggal" data-type="date" data-value="${
+                item.tanggal || ""
+              }" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center; font-size: 13px;">${formattedDate}</td>
+              <td class="action-cell" style="border: 1px solid #dee2e6; padding: 8px; text-align: center; white-space: nowrap;">
+                <div style="display: flex; gap: 4px; justify-content: center; flex-wrap: wrap;">
+                  <button class="btn btn-sm btn-primary edit-btn" data-id="${
+                    item.id || item.timestamp
+                  }" data-type="produksi-out" title="Edit" style="padding: 4px 8px; font-size: 11px;">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn btn-sm btn-success save-btn d-none" data-id="${
+                    item.id || item.timestamp
+                  }" data-type="produksi-out" title="Simpan" style="display: none; padding: 4px 8px; font-size: 11px;">
+                    <i class="bi bi-check"></i>
+                  </button>
+                  <button class="btn btn-sm btn-secondary cancel-btn d-none" data-id="${
+                    item.id || item.timestamp
+                  }" data-type="produksi-out" title="Batal" style="display: none; padding: 4px 8px; font-size: 11px;">
+                    <i class="bi bi-x"></i>
+                  </button>
+                  <button class="btn btn-sm btn-danger delete-btn" data-id="${
+                    item.id || item.timestamp
+                  }" data-type="produksi-out" title="Hapus" style="padding: 4px 8px; font-size: 11px;">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }
+      });
+    } else {
+      tableHtml += `
+        <tr>
+          <td colspan="10" style="border: 1px solid #dee2e6; padding: 30px; text-align: center; background-color: #f8f9fa;">
+            <em style="color: #6c757d; font-size: 14px;">📋 Tidak ada data stock produksi out</em>
+          </td>
+        </tr>
+      `;
+    }
+
+    tableHtml += `
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top: 15px; display: flex; gap: 10px;">
+          <button id="produksi-out-pdf-btn" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 500; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.2s ease;">
+            <i class="bi bi-file-earmark-pdf"></i> Generate PDF
+          </button>
+        </div>
+    `;
+
+    // Set innerHTML directly to the section since it doesn't have .results container
+    section.innerHTML =
+      `
+      <div style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333; padding: 15px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <h2 style="margin: 0; font-size: 18px; font-weight: 600; display: flex; align-items: center;">
+          <i class="bi bi-arrow-up-circle" style="margin-right: 10px; font-size: 20px;"></i>
+          🏭 List Stock Bahan Baku Produksi Out
+        </h2>
+      </div>
+    ` + tableHtml;
+
+    // Tambahkan event listener untuk PDF button
+    const produksiOutPdfButton = document.getElementById(
+      "produksi-out-pdf-btn"
+    );
+    if (produksiOutPdfButton) {
+      produksiOutPdfButton.addEventListener("click", () => {
+        this._handlePrintStock("produksi-out");
+      });
+    }
+
+    // Attach event listeners untuk action buttons
+    this._attachStockActionListeners(section, "produksi-out");
+    console.log("✅ Produksi Out display updated successfully");
   }
 
   bindInOutSubmit(handler) {
@@ -1457,6 +2143,49 @@ export class BahanBakuView {
       document.dispatchEvent(event);
     } catch (error) {
       console.error(`Error updating auto number for ${sectionId}:`, error);
+    }
+  }
+
+  async _setupAutoNumberingForForm(sectionId) {
+    try {
+      console.log(`=== Setting up auto numbering for: ${sectionId} ===`);
+
+      // Parse category and type from sectionId (e.g., "in-banner" -> category: "banner", type: "in")
+      const [type, category] = sectionId.split("-");
+      const currentDate = new Date().toISOString().split("T")[0];
+
+      // Set default date
+      const dateInput = document.getElementById(`${sectionId}-tanggal`);
+      if (dateInput && !dateInput.value) {
+        dateInput.value = currentDate;
+      }
+
+      // Initial auto number load
+      await this.updateAutoNumberForSection(
+        sectionId,
+        category,
+        type,
+        currentDate
+      );
+
+      // Setup date change listener for auto number update
+      if (dateInput) {
+        dateInput.addEventListener("change", async () => {
+          const selectedDate = dateInput.value;
+          if (selectedDate) {
+            await this.updateAutoNumberForSection(
+              sectionId,
+              category,
+              type,
+              selectedDate
+            );
+          }
+        });
+      }
+
+      console.log(`✅ Auto numbering setup completed for: ${sectionId}`);
+    } catch (error) {
+      console.error(`Error setting up auto numbering for ${sectionId}:`, error);
     }
   }
 

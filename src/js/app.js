@@ -112,6 +112,16 @@ class App {
           this.bahanBakuModel,
           this.bahanBakuView
         );
+
+        // Initialize auto numbers setelah presenter dibuat
+        setTimeout(async () => {
+          try {
+            await this.bahanBakuView.initializeAutoNumbers();
+            console.log("🔢 Auto numbers initialized in app.js");
+          } catch (error) {
+            console.error("Error initializing auto numbers in app.js:", error);
+          }
+        }, 1000);
       } catch (error) {
         console.error("BahanBakuPresenter creation error:", error);
         return;

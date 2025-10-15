@@ -7,7 +7,18 @@ export class RekapView {
     this.generateBtn = document.getElementById("generate-rekap");
     this.tipeSelect = document.getElementById("rekap-tipe");
     this.periodeInput = document.getElementById("rekap-periode");
-    this.tableContainer = document.querySelector(".table-container");
+
+    // Cari table-container yang spesifik di dalam rekap-section
+    const rekapSection = document.getElementById("rekap-section");
+    this.tableContainer = rekapSection
+      ? rekapSection.querySelector(".table-container")
+      : null;
+
+    // Fallback jika tidak ditemukan di rekap-section
+    if (!this.tableContainer) {
+      this.tableContainer = document.querySelector(".table-container");
+    }
+
     this.currentData = []; // Store current table data for PDF generation
     this.currentType = ""; // Store current table type
   }
@@ -52,8 +63,9 @@ export class RekapView {
 
   generateBahanBakuTable(data) {
     return `
-            <table>
-                <thead>
+            <div class="table-responsive">
+              <table class="table table-bordered table-striped table-hover">
+                  <thead class="table-dark">
                     <tr>
                         <th>Tanggal</th>
                         <th>Jenis Bahan</th>
@@ -78,123 +90,152 @@ export class RekapView {
                     `
                       )
                       .join("")}
-                </tbody>
-            </table>
+                  </tbody>
+              </table>
+            </div>
         `;
   }
 
   generateDailyReportTable(data) {
-    return `
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>No.</th>
-                        <th>Tanggal</th>
-                        <th>Qty PO</th>
-                        <th>Jenis Bahan</th>
-                        <th>Jenis Pekerjaan</th>
-                        <th>Client</th>
-                        <th>Spesifikasi</th>
-                        <th>Qty Cetak OK</th>
-                        <th>Qty Cetak NG</th>
-                        <th>Total Qty</th>
-                        <th>Satuan Cetak</th>
-                        <th>Waktu Start</th>
-                        <th>Waktu Finish</th>
-                        <th>No. SPK</th>
-                        <th>Keterangan</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${data
-                      .map(
-                        (item) => `
-                        <tr data-id="${
-                          item.id
-                        }" data-type="daily-report" class="table-row">
-                            <td class="editable" data-field="nomor" data-type="text" data-value="${
-                              item.nomor || ""
-                            }">${item.nomor || "-"}</td>
-                            <td class="editable" data-field="tanggal" data-type="date" data-value="${this.formatDateForInput(
-                              item.tanggal
-                            )}">${new Date(item.tanggal).toLocaleDateString(
-                          "id-ID"
-                        )}</td>
-                            <td class="editable" data-field="qtyPo" data-type="number" data-value="${
-                              item.qtyPo || 0
-                            }">${(item.qtyPo || 0).toLocaleString()}</td>
-                            <td class="editable" data-field="jenisBahan" data-type="text" data-value="${
-                              item.jenisBahan || ""
-                            }">${item.jenisBahan || "-"}</td>
-                            <td class="editable" data-field="jenisPekerjaan" data-type="text" data-value="${
-                              item.jenisPekerjaan || ""
-                            }">${item.jenisPekerjaan || "-"}</td>
-                            <td class="editable" data-field="client" data-type="text" data-value="${
-                              item.client || ""
-                            }">${item.client || "-"}</td>
-                            <td class="editable" data-field="spesifikasi" data-type="text" data-value="${
-                              item.spesifikasi || ""
-                            }">${item.spesifikasi || "-"}</td>
-                            <td class="editable" data-field="qtyCetakOk" data-type="number" data-value="${
-                              item.qtyCetakOk || 0
-                            }">${(item.qtyCetakOk || 0).toLocaleString()}</td>
-                            <td class="editable" data-field="qtyCetakNg" data-type="number" data-value="${
-                              item.qtyCetakNg || 0
-                            }">${(item.qtyCetakNg || 0).toLocaleString()}</td>
-                            <td class="non-editable"><strong>${(
-                              item.totalQtyCetakAll || 0
-                            ).toLocaleString()}</strong></td>
-                            <td class="editable" data-field="satuanCetak" data-type="text" data-value="${
-                              item.satuanCetak || "LEMBAR PLANO"
-                            }">${item.satuanCetak || "LEMBAR PLANO"}</td>
-                            <td class="editable" data-field="waktuStart" data-type="time" data-value="${
-                              item.waktuStart || ""
-                            }">${item.waktuStart || "-"}</td>
-                            <td class="editable" data-field="waktuFinish" data-type="time" data-value="${
-                              item.waktuFinish || ""
-                            }">${item.waktuFinish || "-"}</td>
-                            <td class="editable" data-field="noSpk" data-type="text" data-value="${
-                              item.noSpk || ""
-                            }">${item.noSpk || "-"}</td>
-                            <td class="editable" data-field="keterangan" data-type="text" data-value="${
-                              item.keterangan || ""
-                            }">${item.keterangan || "-"}</td>
-                            <td class="action-cell">
-                                <button class="btn btn-sm btn-primary edit-btn" data-id="${
-                                  item.id
-                                }" data-type="daily-report" title="Edit">
-                                    <i class="bi bi-pencil"></i> Edit
-                                </button>
-                                <button class="btn btn-sm btn-success save-btn d-none" data-id="${
-                                  item.id
-                                }" data-type="daily-report" title="Simpan" style="display: none;">
-                                    <i class="bi bi-check"></i> Simpan
-                                </button>
-                                <button class="btn btn-sm btn-secondary cancel-btn d-none" data-id="${
-                                  item.id
-                                }" data-type="daily-report" title="Batal" style="display: none;">
-                                    <i class="bi bi-x"></i> Batal
-                                </button>
-                                <button class="btn btn-sm btn-danger delete-btn" data-id="${
-                                  item.id
-                                }" data-type="daily-report" title="Hapus">
-                                    <i class="bi bi-trash"></i> Hapus
-                                </button>
-                            </td>
-                        </tr>
-                        `
-                      )
-                      .join("")}
-                </tbody>
-            </table>
-        `;
+    try {
+      const tableHtml = `
+        <div class="table-responsive">
+          <table class="table table-bordered table-striped table-hover" style="width: 100%; max-width: 100%; border-collapse: collapse; table-layout: auto; font-size: 14px;">
+            <thead class="table-dark">
+            <tr>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 80px;">No.</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 80px;">Tanggal</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 80px;">Qty PO</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 80px;">Jenis Bahan</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 80px;">Jenis Pekerjaan</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 80px;">Client</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 80px;">Spesifikasi</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 80px;">Qty Cetak OK</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 80px;">Qty Cetak NG</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 80px;">Total Qty</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 80px;">Satuan Cetak</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 80px;">Waktu Start</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 80px;">Waktu Finish</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 80px;">No. SPK</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 80px;">Keterangan</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 120px;">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data
+              .map(
+                (item) => `
+              <tr data-id="${
+                item.id
+              }" data-type="daily-report" class="table-row">
+                <td class="editable" data-field="nomor" data-type="number" data-value="${
+                  item.nomor || 0
+                }" style="padding: 6px 4px; font-size: 12px; text-align: center; max-width: 50px;">${
+                  item.nomor || "-"
+                }</td>
+                <td class="editable" data-field="tanggal" data-type="date" data-value="${this.formatDateForInput(
+                  item.tanggal
+                )}" style="padding: 6px 4px; font-size: 12px; text-align: left; max-width: 100px;">${new Date(
+                  item.tanggal
+                ).toLocaleDateString("id-ID")}</td>
+                <td class="editable" data-field="qtyPo" data-type="number" data-value="${
+                  item.qtyPo || 0
+                }" style="padding: 6px 4px; font-size: 12px; text-align: right; max-width: 100px;">${(
+                  item.qtyPo || 0
+                ).toLocaleString()}</td>
+                <td class="editable" data-field="jenisBahan" data-type="text" data-value="${
+                  item.jenisBahan || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: left; max-width: 150px;">${
+                  item.jenisBahan || "-"
+                }</td>
+                <td class="editable" data-field="jenisPekerjaan" data-type="text" data-value="${
+                  item.jenisPekerjaan || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: left; max-width: 150px;">${
+                  item.jenisPekerjaan || "-"
+                }</td>
+                <td class="editable" data-field="client" data-type="text" data-value="${
+                  item.client || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: left; max-width: 150px;">${
+                  item.client || "-"
+                }</td>
+                <td class="editable" data-field="spesifikasi" data-type="text" data-value="${
+                  item.spesifikasi || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: left; max-width: 150px;">${
+                  item.spesifikasi || "-"
+                }</td>
+                <td class="editable" data-field="qtyCetakOk" data-type="number" data-value="${
+                  item.qtyCetakOk || 0
+                }" style="padding: 6px 4px; font-size: 12px; text-align: right; max-width: 100px;">${(
+                  item.qtyCetakOk || 0
+                ).toLocaleString()}</td>
+                <td class="editable" data-field="qtyCetakNg" data-type="number" data-value="${
+                  item.qtyCetakNg || 0
+                }" style="padding: 6px 4px; font-size: 12px; text-align: right; max-width: 100px;">${(
+                  item.qtyCetakNg || 0
+                ).toLocaleString()}</td>
+                <td class="non-editable" style="padding: 6px 4px; font-size: 12px; text-align: right; max-width: 100px;"><strong>${(
+                  item.totalQtyCetakAll || 0
+                ).toLocaleString()}</strong></td>
+                <td class="editable" data-field="satuanCetak" data-type="select" data-value="${
+                  item.satuanCetak || "LEMBAR PLANO"
+                }" data-options="LEMBAR PLANO,METER,ROLL,PCS,SET" style="padding: 6px 4px; font-size: 12px; text-align: left; max-width: 150px;">${
+                  item.satuanCetak || "LEMBAR PLANO"
+                }</td>
+                <td class="editable" data-field="waktuStart" data-type="time" data-value="${
+                  item.waktuStart || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: left; max-width: 150px;">${
+                  item.waktuStart || "-"
+                }</td>
+                <td class="editable" data-field="waktuFinish" data-type="time" data-value="${
+                  item.waktuFinish || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: left; max-width: 150px;">${
+                  item.waktuFinish || "-"
+                }</td>
+                <td class="editable" data-field="noSpk" data-type="text" data-value="${
+                  item.noSpk || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: left; max-width: 150px;">${
+                  item.noSpk || "-"
+                }</td>
+                <td class="editable" data-field="keterangan" data-type="text" data-value="${
+                  item.keterangan || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: left; max-width: 150px;">${
+                  item.keterangan || "-"
+                }</td>
+                <td style="padding: 6px 4px; font-size: 12px; text-align: center; max-width: 120px;">
+                  <button class="btn btn-sm btn-primary edit-btn" data-id="${
+                    item.id
+                  }" data-type="daily-report">Edit</button>
+                  <button class="btn btn-sm btn-success save-btn d-none" data-id="${
+                    item.id
+                  }" data-type="daily-report" style="display: none;">Simpan</button>
+                  <button class="btn btn-sm btn-secondary cancel-btn d-none" data-id="${
+                    item.id
+                  }" data-type="daily-report" style="display: none;">Batal</button>
+                  <button class="btn btn-sm btn-danger delete-btn" data-id="${
+                    item.id
+                  }" data-type="daily-report">Hapus</button>
+                </td>
+              </tr>
+            `
+              )
+              .join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      return tableHtml;
+    } catch (error) {
+      console.error("❌ Error generating daily report table:", error);
+      return "<p>Error generating table</p>";
+    }
   }
 
   generateIridesseReportTable(data) {
     return `
-            <table class="table table-bordered">
-                <thead>
+            <div class="table-responsive">
+              <table class="table table-bordered table-striped table-hover">
+                  <thead class="table-dark">
                     <tr>
                         <th>Tanggal</th>
                         <th>No. SPK</th>
@@ -326,8 +367,9 @@ export class RekapView {
                           `;
                       })
                       .join("")}
-                </tbody>
-            </table>
+                  </tbody>
+              </table>
+            </div>
         `;
   }
 
@@ -348,6 +390,11 @@ export class RekapView {
   }
 
   displayTable(data, tipe) {
+    if (!this.tableContainer) {
+      console.error("❌ Table container not found!");
+      return;
+    }
+
     let html = "";
 
     // Store data for PDF generation
@@ -364,7 +411,22 @@ export class RekapView {
 
     // Add download PDF button
     const downloadBtn = this.createDownloadButton(tipe);
-    this.tableContainer.innerHTML = downloadBtn + html;
+    const finalHtml = downloadBtn + html;
+
+    // Clear any existing content first and force visibility
+    this.tableContainer.innerHTML = "";
+    this.tableContainer.style.display = "block";
+    this.tableContainer.style.visibility = "visible";
+    this.tableContainer.style.height = "auto";
+    this.tableContainer.style.overflow = "auto";
+    this.tableContainer.style.overflowX = "auto";
+    this.tableContainer.style.minHeight = "200px";
+    this.tableContainer.style.maxWidth = "100%";
+
+    // Set the HTML content
+    this.tableContainer.innerHTML = finalHtml;
+
+    // No additional JavaScript styling needed - all styling is inline to prevent flicker
 
     // Attach event listeners after table is rendered
     this.attachEventListeners();
@@ -422,6 +484,234 @@ export class RekapView {
     };
 
     this.tableContainer.addEventListener("click", this.handleTableClick);
+  }
+
+  startEdit(id, type) {
+    let row; // Declare row variable outside try block
+
+    try {
+      console.log(`Starting edit for ${type} with id: ${id}`);
+      console.log(
+        "Available rows in table:",
+        this.tableContainer.querySelectorAll("tr[data-id]").length
+      );
+
+      // Find the row being edited
+      row = this.tableContainer.querySelector(
+        `tr[data-id="${id}"][data-type="${type}"]`
+      );
+      console.log("Found row:", !!row);
+      if (!row) {
+        console.error(`Row not found for id: ${id}, type: ${type}`);
+        console.log(
+          "All rows with data-id:",
+          Array.from(this.tableContainer.querySelectorAll("tr[data-id]")).map(
+            (r) => ({
+              id: r.getAttribute("data-id"),
+              type: r.getAttribute("data-type"),
+            })
+          )
+        );
+        alert(`Baris tidak ditemukan untuk ID: ${id}`);
+        return;
+      }
+
+      // Show save/cancel buttons, hide edit button for this row
+      const editBtn = row.querySelector(".edit-btn");
+      const saveBtn = row.querySelector(".save-btn");
+      const cancelBtn = row.querySelector(".cancel-btn");
+
+      console.log("Buttons found:", {
+        editBtn: !!editBtn,
+        saveBtn: !!saveBtn,
+        cancelBtn: !!cancelBtn,
+      });
+
+      if (editBtn) {
+        editBtn.style.display = "none";
+      }
+
+      if (saveBtn) {
+        saveBtn.style.display = "inline-block";
+        saveBtn.classList.remove("d-none");
+      } else {
+        console.warn("Save button not found for row:", id);
+      }
+
+      if (cancelBtn) {
+        cancelBtn.style.display = "inline-block";
+        cancelBtn.classList.remove("d-none");
+      } else {
+        console.warn("Cancel button not found for row:", id);
+      }
+
+      // Make editable cells into input fields
+      if (type === "iridesse-report" || type === "daily-report") {
+        const editableCells = row.querySelectorAll(".editable");
+        console.log("Found editable cells:", editableCells.length);
+        editableCells.forEach((cell, index) => {
+          console.log(`Processing cell ${index}:`, {
+            element: cell,
+            dataset: cell.dataset,
+            textContent: cell.textContent.trim(),
+            hasEditableClass: cell.classList.contains("editable"),
+          });
+
+          const value = cell.dataset.value || cell.textContent.trim();
+          const field = cell.dataset.field;
+          const dataType = cell.dataset.type;
+
+          console.log(`Cell ${index} data:`, { value, field, dataType });
+
+          let input;
+          if (dataType === "select") {
+            const options = cell.dataset.options
+              ? cell.dataset.options.split(",")
+              : [];
+            input = document.createElement("select");
+            input.className = "form-control form-control-sm";
+            options.forEach((option) => {
+              const opt = document.createElement("option");
+              opt.value = option;
+              opt.textContent = option;
+              if (option === value) opt.selected = true;
+              input.appendChild(opt);
+            });
+          } else if (dataType === "date") {
+            input = document.createElement("input");
+            input.type = "date";
+            input.value = value;
+            input.className = "form-control form-control-sm";
+          } else if (dataType === "time") {
+            input = document.createElement("input");
+            input.type = "time";
+            input.value = value;
+            input.className = "form-control form-control-sm";
+          } else if (dataType === "number") {
+            input = document.createElement("input");
+            input.type = "number";
+            input.value = value;
+            input.className = "form-control form-control-sm";
+          } else {
+            input = document.createElement("input");
+            input.type = "text";
+            input.value = value;
+            input.className = "form-control form-control-sm";
+          }
+
+          input.dataset.originalValue = value;
+          input.dataset.field = field;
+          console.log(`Created input for field ${field}:`, input);
+
+          cell.innerHTML = "";
+          cell.appendChild(input);
+          console.log(`Cell ${field} after input added:`, cell.innerHTML);
+        });
+      }
+    } catch (error) {
+      console.error("Error in startEdit:", error);
+      alert(`Gagal masuk mode edit: ${error.message}`);
+      return;
+    }
+  }
+
+  saveEdit(id, type) {
+    console.log(`Saving edit for ${type} with id: ${id}`);
+
+    if (type === "iridesse-report" || type === "daily-report") {
+      const row = this.tableContainer.querySelector(
+        `tr[data-id="${id}"][data-type="${type}"]`
+      );
+      if (!row) return;
+
+      // Collect changed data
+      const updatedData = { id };
+      const inputs = row.querySelectorAll(".editable input, .editable select");
+
+      inputs.forEach((input) => {
+        const field = input.dataset.field;
+        const newValue = input.value;
+        const originalValue = input.dataset.originalValue;
+
+        if (newValue !== originalValue) {
+          updatedData[field] = newValue;
+        }
+      });
+
+      // Call the save handler if exists
+      if (this.saveHandler && Object.keys(updatedData).length > 1) {
+        this.saveHandler(id, type, updatedData);
+      }
+    }
+
+    // Reset to view mode
+    this.cancelEdit(id, type);
+  }
+
+  cancelEdit(id, type) {
+    console.log(`Cancelling edit for ${type} with id: ${id}`);
+
+    // Find the row being edited
+    const row = this.tableContainer.querySelector(
+      `tr[data-id="${id}"][data-type="${type}"]`
+    );
+    if (!row) return;
+
+    // Show edit button, hide save/cancel buttons
+    const editBtn = row.querySelector(".edit-btn");
+    const saveBtn = row.querySelector(".save-btn");
+    const cancelBtn = row.querySelector(".cancel-btn");
+
+    if (editBtn) editBtn.style.display = "inline-block";
+    if (saveBtn) {
+      saveBtn.style.display = "none";
+      saveBtn.classList.add("d-none");
+    }
+    if (cancelBtn) {
+      cancelBtn.style.display = "none";
+      cancelBtn.classList.add("d-none");
+    }
+
+    // Restore original cell content
+    if (type === "iridesse-report" || type === "daily-report") {
+      const editableCells = row.querySelectorAll(".editable");
+      editableCells.forEach((cell) => {
+        const input = cell.querySelector("input, select");
+        if (input) {
+          const originalValue = input.dataset.originalValue || "";
+          const field = input.dataset.field;
+
+          // Restore original display value
+          if (type === "iridesse-report" && field === "status") {
+            const statusClass =
+              originalValue === "SELESAI"
+                ? "bg-success"
+                : originalValue === "PENDING"
+                ? "bg-warning"
+                : "bg-secondary";
+            cell.innerHTML = `<span class="badge ${statusClass}">${
+              originalValue || "-"
+            }</span>`;
+          } else if (field === "tanggal") {
+            const date = originalValue ? new Date(originalValue) : null;
+            cell.textContent = date ? date.toLocaleDateString("id-ID") : "-";
+          } else if (
+            field.includes("Billing") ||
+            field === "jumlahCetak" ||
+            field === "ng" ||
+            field === "qtyPo" ||
+            field === "qtyCetakOk" ||
+            field === "qtyCetakNg" ||
+            field === "nomor"
+          ) {
+            const numValue = Number(originalValue) || 0;
+            cell.textContent = numValue.toLocaleString();
+          } else {
+            cell.textContent = originalValue || "-";
+          }
+        }
+      });
+    }
   }
 
   downloadPDF() {

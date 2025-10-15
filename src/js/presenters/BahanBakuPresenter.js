@@ -6,6 +6,16 @@ export class BahanBakuPresenter {
 
     console.log("Presenter created with model:", !!model, "view:", !!view);
 
+    // Initialize auto numbering setelah DOM ready
+    setTimeout(async () => {
+      try {
+        await this.view.initializeAutoNumbers();
+        console.log("✅ Auto numbers initialized successfully");
+      } catch (error) {
+        console.error("Error initializing auto numbers:", error);
+      }
+    }, 500);
+
     // Listen for refresh events
     document.addEventListener("refresh-stock", async (event) => {
       const { category } = event.detail;
@@ -54,6 +64,22 @@ export class BahanBakuPresenter {
           await this.loadBannerInStockData();
           await this.loadBannerOutStockData();
         }, 100);
+      } else if (sectionId === "stock-digital") {
+        console.log(
+          "Stock digital sections activated, loading both IN and OUT data..."
+        );
+        setTimeout(async () => {
+          await this.loadDigitalInStockData();
+          await this.loadDigitalOutStockData();
+        }, 100);
+      } else if (sectionId === "stock-produksi") {
+        console.log(
+          "Stock produksi sections activated, loading both IN and OUT data..."
+        );
+        setTimeout(async () => {
+          await this.loadProduksiInStockData();
+          await this.loadProduksiOutStockData();
+        }, 100);
       }
     });
 
@@ -100,6 +126,89 @@ export class BahanBakuPresenter {
       }
     });
 
+    // Listen for update auto numbers events
+    document.addEventListener("update-auto-numbers", async (event) => {
+      const { sectionId } = event.detail;
+      console.log(`🔢 Update auto numbers requested for: ${sectionId}`);
+
+      try {
+        // Parse category and type from sectionId
+        const [type, category] = sectionId.split("-");
+        const currentDate = new Date().toISOString().split("T")[0];
+
+        // Get and update auto number
+        const nextNumber = await this.model.getNextNumber(
+          category,
+          type,
+          currentDate
+        );
+        await this.view.updateAutoNumber(sectionId, nextNumber);
+
+        console.log(`✅ Auto number updated for ${sectionId}: ${nextNumber}`);
+      } catch (error) {
+        console.error(`❌ Error updating auto number for ${sectionId}:`, error);
+      }
+    });
+
+    // Listen for debug hidden records
+    document.addEventListener("debug-hidden-records", async (event) => {
+      const { category, type, date } = event.detail;
+      console.log(`🕵️ Debug hidden records requested for: ${category}-${type}`);
+
+      try {
+        const result = await this.model.debugHiddenRecords(
+          category,
+          type,
+          date
+        );
+        console.log("🔍 Hidden records debug result:", result);
+
+        // Show alert with summary
+        alert(`Debug Results for ${category}-${type}:
+        
+Total Transactions: ${result.totalTransactions}
+Category Records: ${result.categoryRecords}  
+Matching Records: ${result.matchingRecords}
+
+Check console for detailed information.`);
+      } catch (error) {
+        console.error("Error debugging hidden records:", error);
+        alert("Error debugging records: " + error.message);
+      }
+    });
+
+    // Listen for clear category records
+    document.addEventListener("clear-category-records", async (event) => {
+      const { category } = event.detail;
+      console.log(`🗑️ Clear category records requested for: ${category}`);
+
+      if (
+        confirm(
+          `Are you sure you want to clear ALL records for category "${category}"? This cannot be undone!`
+        )
+      ) {
+        try {
+          await this.model.clearCategoryRecords(category);
+          alert(`All records for category "${category}" have been cleared.`);
+
+          // Refresh displays
+          if (category === "produksi") {
+            await this.loadProduksiInStockData();
+            await this.loadProduksiOutStockData();
+          } else if (category === "banner") {
+            await this.loadBannerInStockData();
+            await this.loadBannerOutStockData();
+          } else if (category === "digital") {
+            await this.loadDigitalInStockData();
+            await this.loadDigitalOutStockData();
+          }
+        } catch (error) {
+          console.error("Error clearing category records:", error);
+          alert("Error clearing records: " + error.message);
+        }
+      }
+    });
+
     console.log("Handlers bound successfully");
 
     // Setup reset numbering handler
@@ -125,8 +234,10 @@ export class BahanBakuPresenter {
       console.log("🚀 Loading initial stock data...");
       this.loadBannerInStockData();
       this.loadBannerOutStockData();
-      this.loadDigitalStockData();
-      this.loadProduksiStockData();
+      this.loadDigitalInStockData();
+      this.loadDigitalOutStockData();
+      this.loadProduksiInStockData();
+      this.loadProduksiOutStockData();
     }, 500);
   }
 
@@ -162,20 +273,62 @@ export class BahanBakuPresenter {
     }
   }
 
-  async loadDigitalStockData() {
+  async loadDigitalInStockData() {
     try {
+      console.log("=== Loading Digital In Stock Data ===");
       const stockData = await this.model.getCurrentDigitalStock();
-      this.view.updateStockDigitalDisplay(stockData);
+      console.log("📊 Digital In stock data received:", stockData);
+      console.log(
+        "📈 Data count:",
+        Array.isArray(stockData) ? stockData.length : "Not an array"
+      );
+
+      this.view.updateStockDigitalInDisplay(stockData);
+      console.log("✅ Digital In view update complete");
     } catch (error) {
+      console.error("Error loading digital in stock:", error);
       this.view.showError(error.message);
     }
   }
 
-  async loadProduksiStockData() {
+  async loadDigitalOutStockData() {
     try {
-      const stockData = await this.model.getCurrentProduksiStock();
-      this.view.updateStockProduksiDisplay(stockData);
+      console.log("=== Loading Digital Out Stock Data ===");
+      const stockData = await this.model.getCurrentDigitalOutStock();
+      console.log("📊 Digital Out stock data received:", stockData);
+
+      this.view.updateStockDigitalOutDisplay(stockData);
+      console.log("✅ Digital Out view update complete");
     } catch (error) {
+      console.error("Error loading digital out stock:", error);
+      this.view.showError(error.message);
+    }
+  }
+
+  async loadProduksiInStockData() {
+    try {
+      console.log("=== Loading Produksi In Stock Data ===");
+      const stockData = await this.model.getCurrentProduksiStock();
+      console.log("📊 Produksi In stock data received:", stockData);
+
+      this.view.updateStockProduksiInDisplay(stockData);
+      console.log("✅ Produksi In view update complete");
+    } catch (error) {
+      console.error("Error loading produksi in stock:", error);
+      this.view.showError(error.message);
+    }
+  }
+
+  async loadProduksiOutStockData() {
+    try {
+      console.log("=== Loading Produksi Out Stock Data ===");
+      const stockData = await this.model.getCurrentProduksiOutStock();
+      console.log("📊 Produksi Out stock data received:", stockData);
+
+      this.view.updateStockProduksiOutDisplay(stockData);
+      console.log("✅ Produksi Out view update complete");
+    } catch (error) {
+      console.error("Error loading produksi out stock:", error);
       this.view.showError(error.message);
     }
   }
@@ -199,9 +352,11 @@ export class BahanBakuPresenter {
             await this.loadBannerInStockData();
             await this.loadBannerOutStockData();
           } else if (data.category === "digital") {
-            await this.loadDigitalStockData();
+            await this.loadDigitalInStockData();
+            await this.loadDigitalOutStockData();
           } else if (data.category === "produksi") {
-            await this.loadProduksiStockData();
+            await this.loadProduksiInStockData();
+            await this.loadProduksiOutStockData();
           }
 
           return true;
@@ -285,9 +440,11 @@ export class BahanBakuPresenter {
         await this.loadBannerInStockData();
         await this.loadBannerOutStockData();
       } else if (category === "digital") {
-        await this.loadDigitalStockData();
+        await this.loadDigitalInStockData();
+        await this.loadDigitalOutStockData();
       } else if (category === "produksi") {
-        await this.loadProduksiStockData();
+        await this.loadProduksiInStockData();
+        await this.loadProduksiOutStockData();
       }
     } catch (error) {
       console.error(`Error refreshing ${category} display:`, error);
@@ -327,9 +484,11 @@ export class BahanBakuPresenter {
             await this.loadBannerInStockData();
             await this.loadBannerOutStockData();
           } else if (category === "digital") {
-            await this.loadDigitalStockData();
+            await this.loadDigitalInStockData();
+            await this.loadDigitalOutStockData();
           } else if (category === "produksi") {
-            await this.loadProduksiStockData();
+            await this.loadProduksiInStockData();
+            await this.loadProduksiOutStockData();
           }
         } catch (error) {
           console.error(`Error refreshing ${category} display:`, error);
@@ -357,6 +516,22 @@ export class BahanBakuPresenter {
       "banner-out",
       this.handleBannerOutEdit.bind(this)
     );
+    this.view.bindStockEditHandler(
+      "digital-in",
+      this.handleDigitalInEdit.bind(this)
+    );
+    this.view.bindStockEditHandler(
+      "digital-out",
+      this.handleDigitalOutEdit.bind(this)
+    );
+    this.view.bindStockEditHandler(
+      "produksi-in",
+      this.handleProduksiInEdit.bind(this)
+    );
+    this.view.bindStockEditHandler(
+      "produksi-out",
+      this.handleProduksiOutEdit.bind(this)
+    );
 
     // Bind save edit handlers
     this.view.bindStockSaveHandler(this.handleSaveInlineEdit.bind(this));
@@ -372,6 +547,22 @@ export class BahanBakuPresenter {
     this.view.bindStockDeleteHandler(
       "banner-out",
       this.handleBannerOutDelete.bind(this)
+    );
+    this.view.bindStockDeleteHandler(
+      "digital-in",
+      this.handleDigitalInDelete.bind(this)
+    );
+    this.view.bindStockDeleteHandler(
+      "digital-out",
+      this.handleDigitalOutDelete.bind(this)
+    );
+    this.view.bindStockDeleteHandler(
+      "produksi-in",
+      this.handleProduksiInDelete.bind(this)
+    );
+    this.view.bindStockDeleteHandler(
+      "produksi-out",
+      this.handleProduksiOutDelete.bind(this)
     );
 
     console.log("Stock action handlers bound successfully");
@@ -431,11 +622,16 @@ export class BahanBakuPresenter {
       });
 
       // Update data in appropriate store based on type
-      if (type === "banner-in") {
-        // Banner In uses stock store
+      if (type === "banner-in" || type === "digital-in") {
+        // Banner In and Digital In use stock store
         await this.model.updateStockRecord(id, data);
-      } else if (type === "banner-out") {
-        // Banner Out uses transactions store
+      } else if (
+        type === "banner-out" ||
+        type === "digital-out" ||
+        type === "produksi-in" ||
+        type === "produksi-out"
+      ) {
+        // Banner Out, Digital Out, Produksi In, and Produksi Out use transactions store
         await this.model.updateTransactionRecord(id, data);
       }
 
@@ -449,6 +645,14 @@ export class BahanBakuPresenter {
         await this.loadBannerInStockData();
       } else if (type === "banner-out") {
         await this.loadBannerOutStockData();
+      } else if (type === "digital-in") {
+        await this.loadDigitalInStockData();
+      } else if (type === "digital-out") {
+        await this.loadDigitalOutStockData();
+      } else if (type === "produksi-in") {
+        await this.loadProduksiInStockData();
+      } else if (type === "produksi-out") {
+        await this.loadProduksiOutStockData();
       }
     } catch (error) {
       this.view.showError("Gagal menyimpan perubahan: " + error.message);
@@ -497,6 +701,66 @@ export class BahanBakuPresenter {
     }
   }
 
+  // Handler untuk edit Digital In
+  async handleDigitalInEdit(id, type) {
+    try {
+      const row = document.querySelector(
+        `tr[data-id="${id}"][data-type="${type}"]`
+      );
+      if (row) {
+        this.view.toggleEditMode(row, true);
+      }
+    } catch (error) {
+      console.error("Error editing digital in:", error);
+    }
+  }
+
+  // Handler untuk edit Digital Out
+  async handleDigitalOutEdit(id, type) {
+    try {
+      const row = document.querySelector(
+        `tr[data-id="${id}"][data-type="${type}"]`
+      );
+      if (row) {
+        this.view.toggleEditMode(row, true);
+      }
+    } catch (error) {
+      console.error("Error editing digital out:", error);
+    }
+  }
+
+  // Handler untuk delete Digital In
+  async handleDigitalInDelete(id) {
+    try {
+      console.log("🗑️ Deleting Digital In:", id);
+
+      // Digital In uses stock store like Banner In
+      await this.model.deleteStockRecord(id);
+      this.view.showSuccess("Data Digital In berhasil dihapus!");
+      await this.loadDigitalInStockData();
+      console.log("✅ Digital In deleted and display refreshed");
+    } catch (error) {
+      console.error("❌ Error deleting Digital In:", error);
+      this.view.showError("Gagal menghapus data Digital In");
+    }
+  }
+
+  // Handler untuk delete Digital Out
+  async handleDigitalOutDelete(id) {
+    try {
+      console.log("🗑️ Deleting Digital Out:", id);
+
+      // Digital Out uses transactions store like Banner Out
+      await this.model.deleteTransactionRecord(id);
+      this.view.showSuccess("Data Digital Out berhasil dihapus!");
+      await this.loadDigitalOutStockData();
+      console.log("✅ Digital Out deleted and display refreshed");
+    } catch (error) {
+      console.error("❌ Error deleting Digital Out:", error);
+      this.view.showError("Gagal menghapus data Digital Out");
+    }
+  }
+
   // Setup reset numbering handler for troubleshooting
   setupResetNumberingHandler() {
     document.addEventListener("reset-numbering", async () => {
@@ -520,5 +784,65 @@ export class BahanBakuPresenter {
         console.error("🚨 Error resetting numbering:", error);
       }
     });
+  }
+
+  // Handler untuk edit Produksi In
+  async handleProduksiInEdit(id, type) {
+    try {
+      const row = document.querySelector(
+        `tr[data-id="${id}"][data-type="${type}"]`
+      );
+      if (row) {
+        this.view.toggleEditMode(row, true);
+      }
+    } catch (error) {
+      console.error("Error editing produksi in:", error);
+    }
+  }
+
+  // Handler untuk edit Produksi Out
+  async handleProduksiOutEdit(id, type) {
+    try {
+      const row = document.querySelector(
+        `tr[data-id="${id}"][data-type="${type}"]`
+      );
+      if (row) {
+        this.view.toggleEditMode(row, true);
+      }
+    } catch (error) {
+      console.error("Error editing produksi out:", error);
+    }
+  }
+
+  // Handler untuk delete Produksi In
+  async handleProduksiInDelete(id) {
+    try {
+      console.log("🗑️ Deleting Produksi In:", id);
+
+      // Produksi In uses transactions store like Digital In
+      await this.model.deleteTransactionRecord(id);
+      this.view.showSuccess("Data Produksi In berhasil dihapus!");
+      await this.loadProduksiInStockData();
+      console.log("✅ Produksi In deleted and display refreshed");
+    } catch (error) {
+      console.error("❌ Error deleting Produksi In:", error);
+      this.view.showError("Gagal menghapus data Produksi In");
+    }
+  }
+
+  // Handler untuk delete Produksi Out
+  async handleProduksiOutDelete(id) {
+    try {
+      console.log("🗑️ Deleting Produksi Out:", id);
+
+      // Produksi Out uses transactions store like Digital Out
+      await this.model.deleteTransactionRecord(id);
+      this.view.showSuccess("Data Produksi Out berhasil dihapus!");
+      await this.loadProduksiOutStockData();
+      console.log("✅ Produksi Out deleted and display refreshed");
+    } catch (error) {
+      console.error("❌ Error deleting Produksi Out:", error);
+      this.view.showError("Gagal menghapus data Produksi Out");
+    }
   }
 }

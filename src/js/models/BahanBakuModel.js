@@ -92,16 +92,150 @@ export class BahanBakuModel {
   }
 
   async getCurrentDigitalStock() {
+    console.log("=== getCurrentDigitalStock called ===");
+
+    // Debug: Check all records in stock store
+    const allStockRecords = await db.getRecords(this.storeNames.stock);
+    console.log("🗃️ All stock records in database:", allStockRecords.length);
+    console.log("📋 All stock records:", allStockRecords);
+
+    // Check specifically for digital records
+    const digitalRecords = allStockRecords.filter(
+      (record) => record.category === "digital"
+    );
+    console.log("📊 Digital records found:", digitalRecords.length);
+    console.log("🔍 Digital records details:", digitalRecords);
+
     const data = await this.getCurrentStock("digital");
+    console.log("✅ getCurrentStock result:", data);
     return data;
+  }
+
+  async getCurrentDigitalOutStock() {
+    try {
+      console.log("=== getCurrentDigitalOutStock called ===");
+
+      // Force refresh DB connection to ensure fresh data after delete
+      await db.forceRefreshDB();
+
+      const transactions = await db.getRecords(this.storeNames.transactions);
+
+      console.log("📊 Total transactions in DB:", transactions.length);
+
+      // Filter untuk digital out transactions
+      const digitalOutTransactions = transactions.filter(
+        (transaction) =>
+          transaction.category === "digital" && transaction.type === "out"
+      );
+
+      console.log(
+        "🎯 Digital Out transactions found:",
+        digitalOutTransactions.length
+      );
+      console.log(
+        "📋 Digital Out IDs:",
+        digitalOutTransactions.map((t) => t.id)
+      );
+      console.log("📋 Digital Out detailed records:", digitalOutTransactions);
+
+      // Format data untuk tampilan - sesuai dengan form digital out yang sebenarnya
+      return digitalOutTransactions.map((transaction) => ({
+        id: transaction.id,
+        nomor: transaction.nomor,
+        jenisKertas: transaction.jenisKertas,
+        ukuran: transaction.ukuran,
+        totalMasuk: transaction.totalMasuk,
+        totalKeluarOk: transaction.totalKeluarOk,
+        totalKeluarNg: transaction.totalKeluarNg,
+        totalKeluar: transaction.totalKeluar,
+        sisaStock: transaction.sisaStock,
+        tanggal: transaction.tanggal,
+        timestamp: transaction.timestamp,
+      }));
+    } catch (error) {
+      console.error("Error getting digital out stock:", error);
+      return [];
+    }
   }
 
   async getCurrentProduksiStock() {
-    const data = await this.getCurrentStock("produksi");
-    return data;
+    try {
+      await db.openDB();
+      const records = await db.getRecords(this.storeNames.transactions);
+      console.log("🔍 All transaction records for Produksi In:", records);
+
+      // Filter untuk kategori produksi dan type in (handle both old and new format)
+      const produksiInRecords = records.filter(
+        (record) =>
+          record &&
+          record.category === "produksi" &&
+          (record.type === "in-produksi" || record.type === "in")
+      );
+
+      console.log("📊 Filtered Produksi In records:", produksiInRecords);
+
+      // Transform data untuk display
+      const transformedData = produksiInRecords.map((record) => ({
+        id: record.id,
+        timestamp: record.timestamp,
+        nomor: record.data?.nomor || record.nomor,
+        jenisKertas: record.data?.jenisKertas || record.jenisKertas,
+        ukuran: record.data?.ukuran || record.ukuran,
+        qtyLastMonth: record.data?.qtyLastMonth || record.qtyLastMonth || 0,
+        jumlahMasuk: record.data?.jumlahMasuk || record.jumlahMasuk || 0,
+        total: record.data?.total || record.total || 0,
+        tanggal: record.data?.tanggal || record.tanggal,
+        remark: record.data?.remark || record.remark || "",
+      }));
+
+      console.log("🎯 Final Produksi In data:", transformedData);
+      return transformedData;
+    } catch (error) {
+      console.error("Error getting current produksi in stock:", error);
+      throw error;
+    }
   }
 
-  // Debug method to get all records
+  async getCurrentProduksiOutStock() {
+    try {
+      await db.openDB();
+      const records = await db.getRecords(this.storeNames.transactions);
+      console.log("🔍 All transaction records:", records);
+
+      // Filter untuk kategori produksi dan type out (handle both old and new format)
+      const produksiOutRecords = records.filter(
+        (record) =>
+          record &&
+          record.category === "produksi" &&
+          (record.type === "out-produksi" || record.type === "out")
+      );
+
+      console.log("📊 Filtered Produksi Out records:", produksiOutRecords);
+
+      // Transform data untuk display
+      const transformedData = produksiOutRecords.map((record) => ({
+        id: record.id,
+        timestamp: record.timestamp,
+        nomor: record.data?.nomor || record.nomor,
+        jenisKertas: record.data?.jenisKertas || record.jenisKertas,
+        ukuran: record.data?.ukuran || record.ukuran,
+        totalMasuk: record.data?.totalMasuk || record.totalMasuk || 0,
+        totalKeluarOk: record.data?.totalKeluarOk || record.totalKeluarOk || 0,
+        totalKeluarNg: record.data?.totalKeluarNg || record.totalKeluarNg || 0,
+        totalKeluar: record.data?.totalKeluar || record.totalKeluar || 0,
+        sisaStock: record.data?.sisaStock || record.sisaStock || 0,
+        tanggal: record.data?.tanggal || record.tanggal,
+      }));
+
+      console.log("🎯 Final Produksi Out data:", transformedData);
+      return transformedData;
+    } catch (error) {
+      console.error("Error getting current produksi out stock:", error);
+      throw error;
+    }
+  }
+
+  // Debug method to get all records with detailed filtering info
   async getAllRecords() {
     try {
       await db.openDB();
@@ -270,8 +404,8 @@ export class BahanBakuModel {
 
       const transactionData = {
         category,
-        type: "out",
-        ...data,
+        type: `out-${category}`,
+        data: data,
         timestamp: new Date().toISOString(),
       };
 
@@ -330,12 +464,8 @@ export class BahanBakuModel {
     try {
       const transactionData = {
         category,
-        type,
-        nomor: data.nomor,
-        jenisKertas: data.jenisKertas,
-        ukuran: data.ukuran,
-        quantity: type === "in" ? data.jumlahMasuk : data.jumlahKeluar,
-        tanggal: data.tanggal,
+        type: `${type}-${category}`,
+        data: data,
         timestamp: new Date().toISOString(),
       };
 
@@ -432,16 +562,22 @@ export class BahanBakuModel {
         // Debug: show what we're checking
         if (record.category === category) {
           console.log(
-            `Record ${index}: category=${record.category}, type=${record.type}, nomor=${record.nomor}, tanggal=${record.tanggal}`
+            `Record ${index}: category=${record.category}, type=${
+              record.type
+            }, nomor=${record.data?.nomor || record.nomor}, tanggal=${
+              record.data?.tanggal || record.tanggal
+            }`
           );
         }
 
-        if (
-          record.category === category &&
-          record.type === type &&
-          record.tanggal
-        ) {
-          const recordDate = new Date(record.tanggal);
+        // Check for both new format (type: "in-category") and old format (type: "in")
+        const isMatchingType =
+          record.type === `${type}-${category}` || record.type === type;
+        const recordTanggal = record.data?.tanggal || record.tanggal;
+        const recordNomor = record.data?.nomor || record.nomor;
+
+        if (record.category === category && isMatchingType && recordTanggal) {
+          const recordDate = new Date(recordTanggal);
           const recordMonth = recordDate.getMonth() + 1;
           const recordYear = recordDate.getFullYear();
 
@@ -451,13 +587,13 @@ export class BahanBakuModel {
 
           if (recordMonth === currentMonth && recordYear === currentYear) {
             relevantRecords.push({
-              nomor: record.nomor,
+              nomor: recordNomor,
               source: "transaction",
-              date: record.tanggal,
+              date: recordTanggal,
               type: record.type,
             });
             console.log(
-              `✅ Added record: nomor=${record.nomor}, type=${record.type}`
+              `✅ Added record: nomor=${recordNomor}, type=${record.type}`
             );
           }
         }
@@ -465,27 +601,141 @@ export class BahanBakuModel {
 
       console.log(`🎯 Relevant records for ${key}:`, relevantRecords);
 
-      // Find the highest number used this month
-      let maxNumber = 0;
+      // NEW LOGIC: Gap filling - find the smallest available number
+      const existingNumbers = [];
       relevantRecords.forEach((record) => {
         const num = Number(record.nomor);
-        if (!isNaN(num) && num > maxNumber) {
-          maxNumber = num;
+        if (!isNaN(num) && num > 0) {
+          existingNumbers.push(num);
         }
       });
 
-      const nextNumber = maxNumber + 1;
+      // Sort numbers to find gaps
+      existingNumbers.sort((a, b) => a - b);
+
       console.log(
-        `📊 Max number found for ${key}: ${maxNumber}, next number: ${nextNumber}`
+        `🔢 Existing numbers sorted: [${existingNumbers.join(", ")}]`
+      );
+
+      // Find the first gap or next available number
+      let nextNumber = 1;
+
+      if (existingNumbers.length === 0) {
+        // No existing numbers, start from 1
+        nextNumber = 1;
+        console.log(`📊 No existing numbers, starting from 1`);
+      } else {
+        // Look for gaps in sequence
+        for (
+          let i = 1;
+          i <= existingNumbers[existingNumbers.length - 1] + 1;
+          i++
+        ) {
+          if (!existingNumbers.includes(i)) {
+            nextNumber = i;
+            console.log(`🔍 Found gap at number: ${nextNumber}`);
+            break;
+          }
+        }
+      }
+
+      console.log(
+        `✅ Next available number for ${category}-${type} bulan ${currentMonth}/${currentYear}: ${nextNumber}`
       );
       console.log(
-        `✅ Penomoran ${category}-${type} bulan ${currentMonth}/${currentYear}: ${nextNumber}`
+        `📋 Gap analysis: existing [${existingNumbers.join(
+          ", "
+        )}] → next: ${nextNumber}`
       );
 
       return nextNumber;
     } catch (error) {
       console.error("Error getting next number:", error);
       return 1; // Default to 1 if there's an error
+    }
+  }
+
+  // Debug method to check hidden records for specific category and type
+  async debugHiddenRecords(category, type, date = null) {
+    try {
+      const targetDate = date ? new Date(date) : new Date();
+      const currentMonth = targetDate.getMonth() + 1;
+      const currentYear = targetDate.getFullYear();
+
+      console.log(`🕵️ DEBUGGING HIDDEN RECORDS FOR ${category}-${type}`);
+      console.log(`Target month/year: ${currentMonth}/${currentYear}`);
+
+      const transactionRecords = await db.getRecords(
+        this.storeNames.transactions
+      );
+
+      console.log(`📊 Total transactions in DB: ${transactionRecords.length}`);
+
+      // Show ALL records for this category
+      const categoryRecords = transactionRecords.filter(
+        (r) => r.category === category
+      );
+      console.log(`📋 All ${category} records:`, categoryRecords.length);
+
+      categoryRecords.forEach((record, index) => {
+        const recordTanggal = record.data?.tanggal || record.tanggal;
+        const recordNomor = record.data?.nomor || record.nomor;
+        const recordDate = recordTanggal ? new Date(recordTanggal) : null;
+        const recordMonth = recordDate ? recordDate.getMonth() + 1 : "N/A";
+        const recordYear = recordDate ? recordDate.getFullYear() : "N/A";
+
+        console.log(`${index + 1}. ID: ${record.id || record.timestamp}`);
+        console.log(`   Type: ${record.type}`);
+        console.log(`   Nomor: ${recordNomor}`);
+        console.log(`   Tanggal: ${recordTanggal}`);
+        console.log(`   Month/Year: ${recordMonth}/${recordYear}`);
+        console.log(`   Data Structure:`, record.data ? "NESTED" : "FLAT");
+        console.log(`   Raw Record:`, record);
+        console.log("---");
+      });
+
+      // Check what would match for current numbering
+      const expectedType1 = `${type}-${category}`;
+      const expectedType2 = type;
+
+      console.log(
+        `🎯 Looking for types: "${expectedType1}" OR "${expectedType2}"`
+      );
+
+      const matchingRecords = categoryRecords.filter((record) => {
+        const isMatchingType =
+          record.type === expectedType1 || record.type === expectedType2;
+        const recordTanggal = record.data?.tanggal || record.tanggal;
+
+        if (isMatchingType && recordTanggal) {
+          const recordDate = new Date(recordTanggal);
+          const recordMonth = recordDate.getMonth() + 1;
+          const recordYear = recordDate.getFullYear();
+          return recordMonth === currentMonth && recordYear === currentYear;
+        }
+        return false;
+      });
+
+      console.log(
+        `✅ Matching records for numbering: ${matchingRecords.length}`
+      );
+      matchingRecords.forEach((record, index) => {
+        const recordNomor = record.data?.nomor || record.nomor;
+        console.log(
+          `${index + 1}. Nomor: ${recordNomor}, Type: ${record.type}`
+        );
+      });
+
+      return {
+        totalTransactions: transactionRecords.length,
+        categoryRecords: categoryRecords.length,
+        matchingRecords: matchingRecords.length,
+        allCategoryRecords: categoryRecords,
+        matchingNumberRecords: matchingRecords,
+      };
+    } catch (error) {
+      console.error("Error in debugHiddenRecords:", error);
+      return null;
     }
   }
 
@@ -654,12 +904,23 @@ export class BahanBakuModel {
           }
 
           // Merge existing data with updated data
+          // Handle nested data structure for new format
           const mergedData = {
             ...existingData,
-            ...updatedData,
             id: Number(id),
             updatedAt: new Date().toISOString(),
           };
+
+          // If existing data has nested 'data' property, update it
+          if (existingData.data) {
+            mergedData.data = {
+              ...existingData.data,
+              ...updatedData,
+            };
+          } else {
+            // For backward compatibility with flat structure
+            Object.assign(mergedData, updatedData);
+          }
 
           // Put the merged data back
           const putRequest = store.put(mergedData);
@@ -785,6 +1046,117 @@ export class BahanBakuModel {
     } catch (error) {
       console.error("❌ Error deleting transaction record:", error);
       throw new Error(`Gagal menghapus record: ${error.message}`);
+    }
+  }
+
+  // Method to clear all records for a specific category
+  async clearCategoryRecords(category) {
+    try {
+      console.log(`🗑️ CLEARING ALL RECORDS FOR CATEGORY: ${category}`);
+
+      const database = await db.openDB();
+
+      // Clear from transactions store
+      const transactionRecords = await db.getRecords(
+        this.storeNames.transactions
+      );
+      const categoryTransactions = transactionRecords.filter(
+        (r) => r.category === category
+      );
+
+      console.log(
+        `Found ${categoryTransactions.length} transaction records for ${category}`
+      );
+
+      for (const record of categoryTransactions) {
+        await this.deleteTransactionRecord(record.id || record.timestamp);
+        console.log(`Deleted transaction: ${record.id || record.timestamp}`);
+      }
+
+      // Clear from stock store
+      const stockRecords = await db.getRecords(this.storeNames.stock);
+      const categoryStocks = stockRecords.filter(
+        (r) => r.category === category
+      );
+
+      console.log(
+        `Found ${categoryStocks.length} stock records for ${category}`
+      );
+
+      for (const record of categoryStocks) {
+        await this.deleteStockRecord(record.id || record.timestamp);
+        console.log(`Deleted stock: ${record.id || record.timestamp}`);
+      }
+
+      console.log(`✅ All ${category} records cleared`);
+      return true;
+    } catch (error) {
+      console.error("Error clearing category records:", error);
+      throw error;
+    }
+  }
+
+  // Method untuk testing gap filling logic
+  async testGapFilling(category, type, date = null) {
+    try {
+      console.log(`🧪 TESTING GAP FILLING for ${category}-${type}`);
+
+      const targetDate = date ? new Date(date) : new Date();
+      const currentMonth = targetDate.getMonth() + 1;
+      const currentYear = targetDate.getFullYear();
+
+      const transactionRecords = await db.getRecords(
+        this.storeNames.transactions
+      );
+
+      // Get all numbers for this category/type/month
+      const numbers = [];
+      transactionRecords.forEach((record) => {
+        const isMatchingType =
+          record.type === `${type}-${category}` || record.type === type;
+        const recordTanggal = record.data?.tanggal || record.tanggal;
+        const recordNomor = record.data?.nomor || record.nomor;
+
+        if (record.category === category && isMatchingType && recordTanggal) {
+          const recordDate = new Date(recordTanggal);
+          const recordMonth = recordDate.getMonth() + 1;
+          const recordYear = recordDate.getFullYear();
+
+          if (recordMonth === currentMonth && recordYear === currentYear) {
+            const num = Number(recordNomor);
+            if (!isNaN(num) && num > 0) {
+              numbers.push(num);
+            }
+          }
+        }
+      });
+
+      numbers.sort((a, b) => a - b);
+      console.log(`📊 Current numbers: [${numbers.join(", ")}]`);
+
+      // Test gap detection
+      const gaps = [];
+      if (numbers.length > 0) {
+        for (let i = 1; i < numbers[numbers.length - 1]; i++) {
+          if (!numbers.includes(i)) {
+            gaps.push(i);
+          }
+        }
+      }
+
+      console.log(`🔍 Found gaps: [${gaps.join(", ")}]`);
+
+      const nextNumber = await this.getNextNumber(category, type, date);
+      console.log(`🎯 Next number will be: ${nextNumber}`);
+
+      return {
+        currentNumbers: numbers,
+        gaps: gaps,
+        nextNumber: nextNumber,
+      };
+    } catch (error) {
+      console.error("Error testing gap filling:", error);
+      return null;
     }
   }
 }

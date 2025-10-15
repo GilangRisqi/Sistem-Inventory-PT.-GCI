@@ -246,6 +246,29 @@ export class NavigationView {
         detail: { sectionId },
       })
     );
+
+    // Trigger auto numbering untuk form In/Out setelah section ditampilkan
+    setTimeout(() => {
+      const formSections = [
+        "in-banner",
+        "out-banner",
+        "in-digital",
+        "out-digital",
+        "in-produksi",
+        "out-produksi",
+      ];
+
+      if (formSections.includes(sectionId)) {
+        console.log(
+          `📋 Triggering auto number update for section: ${sectionId}`
+        );
+        document.dispatchEvent(
+          new CustomEvent("update-auto-numbers", {
+            detail: { sectionId },
+          })
+        );
+      }
+    }, 300);
   }
 
   showLandingPage() {

@@ -206,9 +206,77 @@ export const getRecordsByDateRange = async (storeName, startDate, endDate) => {
 
     request.onsuccess = () => {
       const results = request.result.filter((record) => {
-        const recordDate = new Date(record.tanggal);
-        return recordDate >= startDate && recordDate <= endDate;
+        // Handle different possible date field names and formats
+        const dateValue = record.tanggal || record.date || record.createdAt;
+
+        if (!dateValue) {
+          console.warn("No date field found in record:", record);
+          return false;
+        }
+
+        try {
+          let recordDate;
+
+          // Handle string dates in YYYY-MM-DD format
+          if (typeof dateValue === "string" && dateValue.includes("-")) {
+            recordDate = new Date(dateValue);
+          }
+          // Handle ISO string dates
+          else if (typeof dateValue === "string" && dateValue.includes("T")) {
+            recordDate = new Date(dateValue);
+          }
+          // Handle Date objects
+          else if (dateValue instanceof Date) {
+            recordDate = dateValue;
+          }
+          // Handle timestamp numbers
+          else if (typeof dateValue === "number") {
+            recordDate = new Date(dateValue);
+          }
+          // Try to parse as date
+          else {
+            recordDate = new Date(dateValue);
+          }
+
+          // Validate the date
+          if (isNaN(recordDate.getTime())) {
+            console.warn("Invalid date in record:", dateValue, record);
+            return false;
+          }
+
+          // Compare dates (ignore time part for day-level comparison)
+          const recordDateOnly = new Date(
+            recordDate.getFullYear(),
+            recordDate.getMonth(),
+            recordDate.getDate()
+          );
+          const startDateOnly = new Date(
+            startDate.getFullYear(),
+            startDate.getMonth(),
+            startDate.getDate()
+          );
+          const endDateOnly = new Date(
+            endDate.getFullYear(),
+            endDate.getMonth(),
+            endDate.getDate()
+          );
+
+          return (
+            recordDateOnly >= startDateOnly && recordDateOnly <= endDateOnly
+          );
+        } catch (error) {
+          console.error("Error processing date in record:", dateValue, error);
+          return false;
+        }
       });
+
+      console.log(
+        `getRecordsByDateRange: Found ${
+          results.length
+        } records in store ${storeName} between ${
+          startDate.toISOString().split("T")[0]
+        } and ${endDate.toISOString().split("T")[0]}`
+      );
       resolve(results);
     };
     request.onerror = () => reject(request.error);
