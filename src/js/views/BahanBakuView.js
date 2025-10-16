@@ -534,7 +534,33 @@ export class BahanBakuView {
       refreshBtn.onclick = () => this._handleRefreshStock("banner-out");
       buttonContainer.appendChild(refreshBtn);
 
+      // Add debug button to force load Banner Out data
+      const debugBtn = document.createElement("button");
+      debugBtn.textContent = "🐛 Debug Load Banner Out";
+      debugBtn.className = "btn btn-warning";
+      debugBtn.style.marginLeft = "5px";
+      debugBtn.onclick = () => {
+        console.log("🐛 Debug: Force loading Banner Out data...");
+        const event = new CustomEvent("force-load-banner-out", {
+          detail: { timestamp: Date.now() },
+        });
+        document.dispatchEvent(event);
+      };
+      buttonContainer.appendChild(debugBtn);
+
       container.appendChild(buttonContainer);
+
+      // Auto-trigger loading of Banner Out data when section is created
+      setTimeout(() => {
+        console.log("🚀 Auto-triggering Banner Out data load...");
+        const autoLoadEvent = new CustomEvent("force-load-banner-out", {
+          detail: {
+            source: "auto-init",
+            timestamp: Date.now(),
+          },
+        });
+        document.dispatchEvent(autoLoadEvent);
+      }, 500);
     }
 
     // Create table container placeholder (will be filled by updateStockDisplay)
@@ -1227,6 +1253,24 @@ export class BahanBakuView {
       "Data length:",
       Array.isArray(data) ? data.length : "Not array"
     );
+
+    // Debug: Log setiap item data secara detail
+    if (Array.isArray(data) && data.length > 0) {
+      console.log("🔍 Detailed data analysis:");
+      data.forEach((item, index) => {
+        console.log(`  Item ${index}:`, {
+          nomor: item.nomor,
+          jenisKertas: item.jenisKertas,
+          ukuran: item.ukuran,
+          totalMasuk: item.totalMasuk,
+          totalKeluarOk: item.totalKeluarOk,
+          totalKeluarNg: item.totalKeluarNg,
+          tanggal: item.tanggal,
+          id: item.id,
+          timestamp: item.timestamp,
+        });
+      });
+    }
 
     const section = document.getElementById("stock-banner-section-out");
     if (!section) {

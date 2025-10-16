@@ -24,10 +24,11 @@ export class BahanBakuModel {
 
       console.log("📊 Total transactions in DB:", transactions.length);
 
-      // Filter untuk banner out transactions
+      // Filter untuk banner out transactions - fix: type is saved as "out-banner"
       const bannerOutTransactions = transactions.filter(
         (transaction) =>
-          transaction.category === "banner" && transaction.type === "out"
+          transaction.category === "banner" &&
+          (transaction.type === "out" || transaction.type === "out-banner")
       );
 
       console.log(
@@ -39,6 +40,14 @@ export class BahanBakuModel {
         bannerOutTransactions.map((t) => t.id || t.timestamp)
       );
       console.log("📋 Banner Out detailed records:", bannerOutTransactions);
+
+      // DEBUG: Let's see what types are actually in the database
+      console.log("🔍 DEBUG: All transaction types in DB:");
+      transactions.forEach((t, index) => {
+        console.log(
+          `  Transaction ${index}: category="${t.category}", type="${t.type}"`
+        );
+      });
 
       // CRITICAL: Double-check by direct database query
       console.log("🔍 DOUBLE-CHECK: Querying database directly...");
@@ -54,7 +63,9 @@ export class BahanBakuModel {
         getAllRequest.onsuccess = (event) => {
           const allRecords = event.target.result;
           const directBannerOut = allRecords.filter(
-            (r) => r.category === "banner" && r.type === "out"
+            (r) =>
+              r.category === "banner" &&
+              (r.type === "out" || r.type === "out-banner")
           );
 
           console.log("🔍 DIRECT QUERY RESULTS:");
@@ -75,16 +86,43 @@ export class BahanBakuModel {
       const directResult = await directCheck;
 
       // Compare results
+      let resultTransactions;
       if (bannerOutTransactions.length !== directResult.length) {
         console.log(
           "⚠️ CRITICAL: Mismatch between getRecords and direct query!"
         );
         console.log("  getRecords result:", bannerOutTransactions.length);
         console.log("  Direct query result:", directResult.length);
-        return directResult; // Use direct query result
+        resultTransactions = directResult; // Use direct query result
+      } else {
+        resultTransactions = bannerOutTransactions;
       }
 
-      return bannerOutTransactions;
+      // Transform transaction format to flat data format for display
+      const transformedData = resultTransactions.map((transaction) => {
+        console.log("🔄 Transforming transaction:", transaction);
+
+        // Check if transaction has data property (nested structure) or if fields are at root level
+        const sourceData = transaction.data || transaction;
+
+        const transformed = {
+          id: transaction.id,
+          timestamp: transaction.timestamp,
+          nomor: sourceData.nomor,
+          jenisKertas: sourceData.jenisKertas,
+          ukuran: sourceData.ukuran,
+          totalMasuk: sourceData.totalMasuk,
+          totalKeluarOk: sourceData.totalKeluarOk,
+          totalKeluarNg: sourceData.totalKeluarNg,
+          tanggal: sourceData.tanggal,
+        };
+
+        console.log("✅ Transformed to:", transformed);
+        return transformed;
+      });
+
+      console.log("🎯 Final Banner Out data for display:", transformedData);
+      return transformedData;
     } catch (error) {
       console.error("Error getting banner out stock:", error);
       return [];
@@ -122,10 +160,11 @@ export class BahanBakuModel {
 
       console.log("📊 Total transactions in DB:", transactions.length);
 
-      // Filter untuk digital out transactions
+      // Filter untuk digital out transactions - fix: type is saved as "out-digital"
       const digitalOutTransactions = transactions.filter(
         (transaction) =>
-          transaction.category === "digital" && transaction.type === "out"
+          transaction.category === "digital" &&
+          (transaction.type === "out" || transaction.type === "out-digital")
       );
 
       console.log(
@@ -138,20 +177,31 @@ export class BahanBakuModel {
       );
       console.log("📋 Digital Out detailed records:", digitalOutTransactions);
 
-      // Format data untuk tampilan - sesuai dengan form digital out yang sebenarnya
-      return digitalOutTransactions.map((transaction) => ({
-        id: transaction.id,
-        nomor: transaction.nomor,
-        jenisKertas: transaction.jenisKertas,
-        ukuran: transaction.ukuran,
-        totalMasuk: transaction.totalMasuk,
-        totalKeluarOk: transaction.totalKeluarOk,
-        totalKeluarNg: transaction.totalKeluarNg,
-        totalKeluar: transaction.totalKeluar,
-        sisaStock: transaction.sisaStock,
-        tanggal: transaction.tanggal,
-        timestamp: transaction.timestamp,
-      }));
+      // Transform transaction format to flat data format for display
+      const transformedData = digitalOutTransactions.map((transaction) => {
+        console.log("🔄 Transforming digital out transaction:", transaction);
+
+        // Check if transaction has data property (nested structure) or if fields are at root level
+        const sourceData = transaction.data || transaction;
+
+        const transformed = {
+          id: transaction.id,
+          timestamp: transaction.timestamp,
+          nomor: sourceData.nomor,
+          jenisKertas: sourceData.jenisKertas,
+          ukuran: sourceData.ukuran,
+          totalMasuk: sourceData.totalMasuk,
+          totalKeluarOk: sourceData.totalKeluarOk,
+          totalKeluarNg: sourceData.totalKeluarNg,
+          tanggal: sourceData.tanggal,
+        };
+
+        console.log("✅ Transformed digital out to:", transformed);
+        return transformed;
+      });
+
+      console.log("🎯 Final Digital Out data for display:", transformedData);
+      return transformedData;
     } catch (error) {
       console.error("Error getting digital out stock:", error);
       return [];

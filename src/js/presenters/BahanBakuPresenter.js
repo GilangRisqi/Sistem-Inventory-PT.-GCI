@@ -44,6 +44,11 @@ export class BahanBakuPresenter {
         } else if (sectionId === "stock-banner-out") {
           console.log("Loading data for stock-banner-out section...");
           await this.loadBannerOutStockData();
+        } else if (sectionId === "stock-banner-section-out") {
+          console.log(
+            "Loading data for stock-banner-section-out (full section)..."
+          );
+          await this.loadBannerOutStockData();
         }
       } catch (error) {
         console.error("Error loading section data:", error);
@@ -109,6 +114,19 @@ export class BahanBakuPresenter {
         await this.loadBannerInStockData();
       } catch (error) {
         console.error("🚨 Debug check error:", error);
+      }
+    });
+
+    // Listen for force load Banner Out events
+    document.addEventListener("force-load-banner-out", async (event) => {
+      console.log("🐛 Force load Banner Out event received:", event.detail);
+      try {
+        console.log("🔄 Force loading Banner Out stock data...");
+        await this.loadBannerOutStockData();
+        console.log("✅ Force load Banner Out completed");
+      } catch (error) {
+        console.error("❌ Force load Banner Out failed:", error);
+        this.view.showError("Gagal memuat data Banner Out: " + error.message);
       }
     });
 

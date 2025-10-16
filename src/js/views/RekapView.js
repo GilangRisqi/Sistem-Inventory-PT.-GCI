@@ -434,7 +434,7 @@ export class RekapView {
 
   createDownloadButton(tipe) {
     const typeLabel =
-      tipe === "iridesse-report" ? "Iridesse" : "Daily Report Mesin";
+      tipe === "iridesse-report" ? "Iridesse" : "Daily Report Mesin Offset";
     return `
       <div style="margin-bottom: 15px;">
         <button id="download-pdf-btn" class="btn btn-success" style="margin-right: 10px;">
@@ -733,7 +733,7 @@ export class RekapView {
       const title =
         this.currentType === "iridesse-report"
           ? "Laporan Iridesse Report"
-          : "Laporan Daily Report Mesin";
+          : "Laporan Daily Report Mesin Offset";
       doc.setFontSize(14);
       doc.setFont(undefined, "normal");
       doc.text(title, 20, 32);
