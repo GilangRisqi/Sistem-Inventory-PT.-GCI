@@ -153,6 +153,17 @@
               <a href="#" data-page="daily-report">Daily Report Mesin Offset</a>
             </li>
             <li>
+              <a href="#" data-page="strapless-report"
+                >Daily Report Mesin Strapless</a
+              >
+            </li>
+            <li>
+              <a href="#" data-page="lipat-report">Daily Report Mesin Lipat</a>
+            </li>
+            <li>
+              <a href="#" data-page="lem-packing-report">Daily Report Mesin Lem Packing Case</a>
+            </li>
+            <li>
               <a href="#" data-page="iridesse-report">Laporan Iridesse</a>
             </li>
             <li><a href="#" data-page="rekap">Rekap Laporan</a></li>
@@ -383,6 +394,329 @@
           </form>
         </section>
 
+        <section id="strapless-report-section" class="content-section">
+          <h2>Input Daily Report Mesin Strapless</h2>
+          <form id="strapless-report-form">
+            <div class="form-group">
+              <label for="strapless-nomor">No.</label>
+              <input type="number" id="strapless-nomor" name="nomor" required />
+            </div>
+            <div class="form-group">
+              <label for="strapless-tanggal">Hari / Tanggal</label>
+              <input
+                type="date"
+                id="strapless-tanggal"
+                name="tanggal"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="strapless-operator">Operator</label>
+              <input
+                type="text"
+                id="strapless-operator"
+                name="operator"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="strapless-jenis-pekerjaan">Jenis Pekerjaan</label>
+              <input
+                type="text"
+                id="strapless-jenis-pekerjaan"
+                name="jenisPekerjaan"
+                required
+              />
+            </div>
+            <div class="form-row">
+              <div class="form-group half-width">
+                <label for="strapless-time-start">Time Start</label>
+                <input
+                  type="time"
+                  id="strapless-time-start"
+                  name="timeStart"
+                  required
+                />
+              </div>
+              <div class="form-group half-width">
+                <label for="strapless-time-finish">Time Finish</label>
+                <input
+                  type="time"
+                  id="strapless-time-finish"
+                  name="timeFinish"
+                  required
+                />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group half-width">
+                <label for="strapless-qty-ok">QTY OK</label>
+                <input
+                  type="number"
+                  id="strapless-qty-ok"
+                  name="qtyOk"
+                  min="0"
+                  required
+                />
+              </div>
+              <div class="form-group half-width">
+                <label for="strapless-qty-ng">QTY NG</label>
+                <input
+                  type="number"
+                  id="strapless-qty-ng"
+                  name="qtyNg"
+                  min="0"
+                  required
+                />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="strapless-satuan">Satuan</label>
+              <select id="strapless-satuan" name="satuan" required>
+                <option value="PCS">PCS</option>
+                <option value="LEMBAR">LEMBAR</option>
+                <option value="METER">METER</option>
+                <option value="ROLL">ROLL</option>
+                <option value="SET">SET</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="strapless-proses-selanjutnya"
+                >Proses Selanjutnya</label
+              >
+              <input
+                type="text"
+                id="strapless-proses-selanjutnya"
+                name="prosesSelanjutnya"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="strapless-keterangan">Keterangan / Problem</label>
+              <textarea
+                id="strapless-keterangan"
+                name="keterangan"
+                rows="4"
+              ></textarea>
+            </div>
+            <div class="total-qty-section">
+              <h3>TOTAL QTY</h3>
+              <div class="form-row">
+                <div class="form-group third-width">
+                  <label>OK</label>
+                  <div class="total-display" id="strapless-total-qty-ok">0</div>
+                </div>
+                <div class="form-group third-width">
+                  <label>NG</label>
+                  <div class="total-display" id="strapless-total-qty-ng">0</div>
+                </div>
+                <div class="form-group third-width">
+                  <label>TOTAL (OK + NG)</label>
+                  <div class="total-display" id="strapless-total-qty-all">
+                    0
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button type="submit">Simpan</button>
+          </form>
+        </section>
+
+        <section id="lipat-report-section" class="content-section">
+          <h2>Input Daily Report Mesin Lipat</h2>
+          <form id="lipat-report-form">
+            <div class="form-group">
+              <label for="lipat-nomor">No.</label>
+              <input type="number" id="lipat-nomor" name="nomor" required />
+            </div>
+            <div class="form-group">
+              <label for="lipat-tanggal">Hari / Tanggal</label>
+              <input type="date" id="lipat-tanggal" name="tanggal" required />
+            </div>
+            <div class="form-group">
+              <label for="lipat-operator">Operator</label>
+              <input type="text" id="lipat-operator" name="operator" required />
+            </div>
+            <div class="form-group">
+              <label for="lipat-jenis-pekerjaan">Jenis Pekerjaan</label>
+              <input
+                type="text"
+                id="lipat-jenis-pekerjaan"
+                name="jenisPekerjaan"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="lipat-produk">Produk</label>
+              <input type="text" id="lipat-produk" name="produk" required />
+            </div>
+            <div class="form-group">
+              <label for="lipat-terima-dari">Terima Dari</label>
+              <input
+                type="text"
+                id="lipat-terima-dari"
+                name="terimaDari"
+                required
+              />
+            </div>
+            <div class="form-row">
+              <div class="form-group half-width">
+                <label for="lipat-time-start">Time Start</label>
+                <input
+                  type="time"
+                  id="lipat-time-start"
+                  name="timeStart"
+                  required
+                />
+              </div>
+              <div class="form-group half-width">
+                <label for="lipat-time-finish">Time Finish</label>
+                <input
+                  type="time"
+                  id="lipat-time-finish"
+                  name="timeFinish"
+                  required
+                />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group half-width">
+                <label for="lipat-qty-ok">QTY OK</label>
+                <input
+                  type="number"
+                  id="lipat-qty-ok"
+                  name="qtyOk"
+                  min="0"
+                  required
+                />
+              </div>
+              <div class="form-group half-width">
+                <label for="lipat-qty-ng">QTY NG</label>
+                <input
+                  type="number"
+                  id="lipat-qty-ng"
+                  name="qtyNg"
+                  min="0"
+                  required
+                />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="lipat-satuan">Satuan</label>
+              <select id="lipat-satuan" name="satuan" required>
+                <option value="PCS">PCS</option>
+                <option value="LEMBAR">LEMBAR</option>
+                <option value="METER">METER</option>
+                <option value="ROLL">ROLL</option>
+                <option value="SET">SET</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="lipat-proses-selanjutnya">Proses Selanjutnya</label>
+              <input
+                type="text"
+                id="lipat-proses-selanjutnya"
+                name="prosesSelanjutnya"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="lipat-keterangan">Keterangan / Problem</label>
+              <textarea
+                id="lipat-keterangan"
+                name="keterangan"
+                rows="4"
+              ></textarea>
+            </div>
+            <div class="total-qty-section">
+              <h3>TOTAL QTY</h3>
+              <div class="form-row">
+                <div class="form-group third-width">
+                  <label>OK</label>
+                  <div class="total-display" id="lipat-total-qty-ok">0</div>
+                </div>
+                <div class="form-group third-width">
+                  <label>NG</label>
+                  <div class="total-display" id="lipat-total-qty-ng">0</div>
+                </div>
+                <div class="form-group third-width">
+                  <label>TOTAL (OK + NG)</label>
+                  <div class="total-display" id="lipat-total-qty-all">0</div>
+                </div>
+              </div>
+            </div>
+            <button type="submit">Simpan</button>
+          </form>
+        </section>
+
+        <section id="lem-packing-report-section" class="content-section">
+          <h2>Input Daily Report Mesin Lem Packing Case</h2>
+          <form id="lem-packing-report-form">
+            <div class="form-group">
+              <label for="lem-packing-nomor">No.</label>
+              <input type="number" id="lem-packing-nomor" name="nomor" required />
+            </div>
+            <div class="form-group">
+              <label for="lem-packing-tanggal">Hari / Tanggal</label>
+              <input type="date" id="lem-packing-tanggal" name="tanggal" required />
+            </div>
+            <div class="form-group">
+              <label for="lem-packing-operator">Operator</label>
+              <input type="text" id="lem-packing-operator" name="operator" required />
+            </div>
+            <div class="form-group">
+              <label for="lem-packing-jenis-pekerjaan">Jenis Pekerjaan</label>
+              <input type="text" id="lem-packing-jenis-pekerjaan" name="jenisPekerjaan" required />
+            </div>
+            <div class="form-row">
+              <div class="form-group half-width">
+                <label for="lem-packing-time-start">Time Start</label>
+                <input type="time" id="lem-packing-time-start" name="timeStart" required />
+              </div>
+              <div class="form-group half-width">
+                <label for="lem-packing-time-finish">Time Finish</label>
+                <input type="time" id="lem-packing-time-finish" name="timeFinish" required />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group half-width">
+                <label for="lem-packing-qty-ok">QTY OK</label>
+                <input type="number" id="lem-packing-qty-ok" name="qtyOk" min="0" required />
+              </div>
+              <div class="form-group half-width">
+                <label for="lem-packing-qty-ng">QTY NG</label>
+                <input type="number" id="lem-packing-qty-ng" name="qtyNg" min="0" required />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="lem-packing-no-spk">No. SPK</label>
+              <input type="text" id="lem-packing-no-spk" name="noSpk" required />
+            </div>
+            <div class="form-group">
+              <label for="lem-packing-keterangan">Keterangan / Problem</label>
+              <textarea id="lem-packing-keterangan" name="keterangan" rows="4"></textarea>
+            </div>
+            <div class="total-qty-section">
+              <h3>TOTAL QTY</h3>
+              <div class="form-row">
+                <div class="form-group third-width">
+                  <label>OK</label>
+                  <div class="total-display" id="lem-packing-total-qty-ok">0</div>
+                </div>
+                <div class="form-group third-width">
+                  <label>NG</label>
+                  <div class="total-display" id="lem-packing-total-qty-ng">0</div>
+                </div>
+                <div class="form-group third-width">
+                  <label>TOTAL (OK + NG)</label>
+                  <div class="total-display" id="lem-packing-total-qty-all">0</div>
+                </div>
+              </div>
+            </div>
+            <button type="submit">Simpan</button>
+          </form>
+        </section>
+
         <section id="rekap-section" class="content-section">
           <h2>Rekap Laporan</h2>
           <div class="rekap-controls">
@@ -391,6 +725,11 @@
               <select id="rekap-tipe">
                 <option value="bahan-baku">Bahan Baku</option>
                 <option value="daily-report">Daily Report Mesin Offset</option>
+                <option value="strapless-report">
+                  Daily Report Mesin Strapless
+                </option>
+                <option value="lipat-report">Daily Report Mesin Lipat</option>
+                <option value="lem-packing-report">Daily Report Mesin Lem Packing Case</option>
                 <option value="iridesse-report">Laporan Iridesse</option>
               </select>
             </div>

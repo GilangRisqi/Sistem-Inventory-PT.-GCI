@@ -1,8 +1,19 @@
 export class RekapPresenter {
-  constructor(bahanBakuModel, dailyReportModel, iridesseReportModel, view) {
+  constructor(
+    bahanBakuModel,
+    dailyReportModel,
+    iridesseReportModel,
+    straplessReportModel,
+    lipatReportModel,
+    lemPackingReportModel,
+    view
+  ) {
     this.bahanBakuModel = bahanBakuModel;
     this.dailyReportModel = dailyReportModel;
     this.iridesseReportModel = iridesseReportModel;
+    this.straplessReportModel = straplessReportModel;
+    this.lipatReportModel = lipatReportModel;
+    this.lemPackingReportModel = lemPackingReportModel;
     this.view = view;
     this.currentData = [];
     this.currentTipe = "";
@@ -30,6 +41,15 @@ export class RekapPresenter {
       } else if (tipe === "iridesse-report") {
         model = this.iridesseReportModel;
         console.log("📊 Using IridesseReportModel");
+      } else if (tipe === "strapless-report") {
+        model = this.straplessReportModel;
+        console.log("📊 Using StraplessReportModel");
+      } else if (tipe === "lipat-report") {
+        model = this.lipatReportModel;
+        console.log("📊 Using LipatReportModel");
+      } else if (tipe === "lem-packing-report") {
+        model = this.lemPackingReportModel;
+        console.log("📊 Using LemPackingReportModel");
       } else {
         model = this.dailyReportModel;
         console.log("📊 Using DailyReportModel");
@@ -87,6 +107,12 @@ export class RekapPresenter {
         model = this.iridesseReportModel;
       } else if (type === "daily-report") {
         model = this.dailyReportModel;
+      } else if (type === "strapless-report") {
+        model = this.straplessReportModel;
+      } else if (type === "lipat-report") {
+        model = this.lipatReportModel;
+      } else if (type === "lem-packing-report") {
+        model = this.lemPackingReportModel;
       } else {
         return;
       }
@@ -202,6 +228,15 @@ export class RekapPresenter {
         model = this.iridesseReportModel;
         data.totalCetak =
           (Number(data.jumlahCetak) || 0) - (Number(data.ng) || 0);
+      } else if (type === "strapless-report") {
+        model = this.straplessReportModel;
+        data.totalQty = (Number(data.qtyOk) || 0) + (Number(data.qtyNg) || 0);
+      } else if (type === "lipat-report") {
+        model = this.lipatReportModel;
+        data.totalQty = (Number(data.qtyOk) || 0) + (Number(data.qtyNg) || 0);
+      } else if (type === "lem-packing-report") {
+        model = this.lemPackingReportModel;
+        data.totalQty = (Number(data.qtyOk) || 0) + (Number(data.qtyNg) || 0);
       } else {
         model = this.dailyReportModel;
         data.totalQtyCetakAll =

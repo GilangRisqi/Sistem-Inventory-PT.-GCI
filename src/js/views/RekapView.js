@@ -540,6 +540,591 @@ export class RekapView {
     }
   }
 
+  generateStraplessReportTable(data) {
+    try {
+      const tableHtml = `
+        <div class="table-responsive">
+          <table class="table table-bordered table-striped table-hover" style="width: 100%; max-width: 100%; border-collapse: collapse; table-layout: auto; font-size: 14px;">
+            <thead class="table-dark">
+            <tr>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 60px;">No.</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 100px;">Tanggal</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 120px;">Operator</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 150px;">Jenis Pekerjaan</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 100px;">Time Start</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 100px;">Time Finish</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 80px;">QTY OK</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 80px;">QTY NG</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 80px;">Total QTY</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 80px;">Satuan</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 120px;">Proses Selanjutnya</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 150px;">Keterangan</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 120px;">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data
+              .map(
+                (item) => `
+              <tr data-id="${
+                item.id
+              }" data-type="strapless-report" class="table-row">
+                <td class="editable" data-field="nomor" data-type="number" data-value="${
+                  item.nomor || 0
+                }" style="padding: 6px 4px; font-size: 12px; text-align: center;">${
+                  item.nomor || "-"
+                }</td>
+                <td class="editable" data-field="tanggal" data-type="date" data-value="${this.formatDateForInput(
+                  item.tanggal
+                )}" style="padding: 6px 4px; font-size: 12px; text-align: left;">${new Date(
+                  item.tanggal
+                ).toLocaleDateString("id-ID")}</td>
+                <td class="editable" data-field="operator" data-type="text" data-value="${
+                  item.operator || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: left;">${
+                  item.operator || "-"
+                }</td>
+                <td class="editable" data-field="jenisPekerjaan" data-type="text" data-value="${
+                  item.jenisPekerjaan || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: left;">${
+                  item.jenisPekerjaan || "-"
+                }</td>
+                <td class="editable" data-field="timeStart" data-type="time" data-value="${
+                  item.timeStart || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: left;">${
+                  item.timeStart || "-"
+                }</td>
+                <td class="editable" data-field="timeFinish" data-type="time" data-value="${
+                  item.timeFinish || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: left;">${
+                  item.timeFinish || "-"
+                }</td>
+                <td class="editable" data-field="qtyOk" data-type="number" data-value="${
+                  item.qtyOk || 0
+                }" style="padding: 6px 4px; font-size: 12px; text-align: right;">${this.formatNumber(
+                  item.qtyOk || 0
+                )}</td>
+                <td class="editable" data-field="qtyNg" data-type="number" data-value="${
+                  item.qtyNg || 0
+                }" style="padding: 6px 4px; font-size: 12px; text-align: right;">${this.formatNumber(
+                  item.qtyNg || 0
+                )}</td>
+                <td class="non-editable" style="padding: 6px 4px; font-size: 12px; text-align: right;"><strong>${this.formatNumber(
+                  item.totalQty || 0
+                )}</strong></td>
+                <td class="editable" data-field="satuan" data-type="select" data-value="${
+                  item.satuan || "PCS"
+                }" data-options="PCS,LEMBAR,METER,ROLL,SET" style="padding: 6px 4px; font-size: 12px; text-align: left;">${
+                  item.satuan || "PCS"
+                }</td>
+                <td class="editable" data-field="prosesSelanjutnya" data-type="text" data-value="${
+                  item.prosesSelanjutnya || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: left;">${
+                  item.prosesSelanjutnya || "-"
+                }</td>
+                <td class="editable" data-field="keterangan" data-type="text" data-value="${
+                  item.keterangan || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: left;">${
+                  item.keterangan || "-"
+                }</td>
+                <td style="padding: 6px 4px; font-size: 12px; text-align: center;">
+                  <button class="btn btn-sm btn-primary edit-btn" data-id="${
+                    item.id
+                  }" data-type="strapless-report">Edit</button>
+                  <button class="btn btn-sm btn-success save-btn d-none" data-id="${
+                    item.id
+                  }" data-type="strapless-report" style="display: none;">Simpan</button>
+                  <button class="btn btn-sm btn-secondary cancel-btn d-none" data-id="${
+                    item.id
+                  }" data-type="strapless-report" style="display: none;">Batal</button>
+                  <button class="btn btn-sm btn-danger delete-btn" data-id="${
+                    item.id
+                  }" data-type="strapless-report">Hapus</button>
+                </td>
+              </tr>
+            `
+              )
+              .join("")}
+            
+            <!-- Baris Total Akumulasi -->
+            <tr class="table-warning" style="background-color: #fff3cd; font-weight: bold; border: 2px solid #ffc107;">
+              <td colspan="6" style="padding: 10px 6px; font-size: 13px; text-align: right; font-weight: bold; background-color: #fff3cd;">
+                <strong>TOTAL AKUMULASI:</strong>
+              </td>
+              <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #fff3cd; color: #28a745;">
+                <strong>${this.formatNumber(
+                  data.reduce(
+                    (total, item) => total + (Number(item.qtyOk) || 0),
+                    0
+                  )
+                )}</strong>
+              </td>
+              <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #fff3cd; color: #dc3545;">
+                <strong>${this.formatNumber(
+                  data.reduce(
+                    (total, item) => total + (Number(item.qtyNg) || 0),
+                    0
+                  )
+                )}</strong>
+              </td>
+              <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #fff3cd; color: #007bff;">
+                <strong>${this.formatNumber(
+                  data.reduce(
+                    (total, item) => total + (Number(item.totalQty) || 0),
+                    0
+                  )
+                )}</strong>
+              </td>
+              <td colspan="4" style="padding: 10px 6px; font-size: 13px; text-align: center; background-color: #fff3cd;">
+                -
+              </td>
+            </tr>
+            
+            <!-- Baris Rata-rata -->
+            <tr class="table-info" style="background-color: #d1ecf1; font-weight: bold; border: 2px solid #17a2b8;">
+              <td colspan="6" style="padding: 10px 6px; font-size: 13px; text-align: right; font-weight: bold; background-color: #d1ecf1;">
+                <strong>RATA-RATA:</strong>
+              </td>
+              <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #d1ecf1; color: #28a745;">
+                <strong>${this.formatNumber(
+                  Math.round(
+                    data.length > 0
+                      ? data.reduce(
+                          (total, item) => total + (Number(item.qtyOk) || 0),
+                          0
+                        ) / data.length
+                      : 0
+                  )
+                )}</strong>
+              </td>
+              <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #d1ecf1; color: #dc3545;">
+                <strong>${this.formatNumber(
+                  Math.round(
+                    data.length > 0
+                      ? data.reduce(
+                          (total, item) => total + (Number(item.qtyNg) || 0),
+                          0
+                        ) / data.length
+                      : 0
+                  )
+                )}</strong>
+              </td>
+              <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #d1ecf1; color: #007bff;">
+                <strong>${this.formatNumber(
+                  Math.round(
+                    data.length > 0
+                      ? data.reduce(
+                          (total, item) => total + (Number(item.totalQty) || 0),
+                          0
+                        ) / data.length
+                      : 0
+                  )
+                )}</strong>
+              </td>
+              <td colspan="4" style="padding: 10px 6px; font-size: 13px; text-align: center; background-color: #d1ecf1;">
+                -
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      return tableHtml;
+    } catch (error) {
+      console.error("❌ Error generating strapless report table:", error);
+      return "<p>Error generating table</p>";
+    }
+  }
+
+  generateLipatReportTable(data) {
+    try {
+      const tableHtml = `
+        <div class="table-responsive">
+          <table class="table table-bordered table-striped table-hover" style="width: 100%; max-width: 100%; border-collapse: collapse; table-layout: auto; font-size: 14px;">
+            <thead class="table-dark">
+            <tr>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 60px;">No.</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 100px;">Tanggal</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 120px;">Operator</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 150px;">Jenis Pekerjaan</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 120px;">Produk</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 120px;">Terima Dari</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 100px;">Time Start</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 100px;">Time Finish</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 80px;">QTY OK</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 80px;">QTY NG</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 80px;">Total QTY</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 80px;">Satuan</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 120px;">Proses Selanjutnya</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 150px;">Keterangan</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 120px;">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data
+              .map(
+                (item) => `
+              <tr data-id="${
+                item.id
+              }" data-type="lipat-report" class="table-row">
+                <td class="editable" data-field="nomor" data-type="number" data-value="${
+                  item.nomor || 0
+                }" style="padding: 6px 4px; font-size: 12px; text-align: center;">${
+                  item.nomor || "-"
+                }</td>
+                <td class="editable" data-field="tanggal" data-type="date" data-value="${this.formatDateForInput(
+                  item.tanggal
+                )}" style="padding: 6px 4px; font-size: 12px; text-align: left;">${new Date(
+                  item.tanggal
+                ).toLocaleDateString("id-ID")}</td>
+                <td class="editable" data-field="operator" data-type="text" data-value="${
+                  item.operator || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: left;">${
+                  item.operator || "-"
+                }</td>
+                <td class="editable" data-field="jenisPekerjaan" data-type="text" data-value="${
+                  item.jenisPekerjaan || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: left;">${
+                  item.jenisPekerjaan || "-"
+                }</td>
+                <td class="editable" data-field="produk" data-type="text" data-value="${
+                  item.produk || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: left;">${
+                  item.produk || "-"
+                }</td>
+                <td class="editable" data-field="terimaDari" data-type="text" data-value="${
+                  item.terimaDari || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: left;">${
+                  item.terimaDari || "-"
+                }</td>
+                <td class="editable" data-field="timeStart" data-type="time" data-value="${
+                  item.timeStart || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: center;">${
+                  item.timeStart || "-"
+                }</td>
+                <td class="editable" data-field="timeFinish" data-type="time" data-value="${
+                  item.timeFinish || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: center;">${
+                  item.timeFinish || "-"
+                }</td>
+                <td class="editable" data-field="qtyOk" data-type="number" data-value="${
+                  item.qtyOk || 0
+                }" style="padding: 6px 4px; font-size: 12px; text-align: right; color: #28a745; font-weight: 600;">${this.formatNumber(
+                  item.qtyOk || 0
+                )}</td>
+                <td class="editable" data-field="qtyNg" data-type="number" data-value="${
+                  item.qtyNg || 0
+                }" style="padding: 6px 4px; font-size: 12px; text-align: right; color: #dc3545; font-weight: 600;">${this.formatNumber(
+                  item.qtyNg || 0
+                )}</td>
+                <td style="padding: 6px 4px; font-size: 12px; text-align: right; color: #007bff; font-weight: 700;">${this.formatNumber(
+                  (item.qtyOk || 0) + (item.qtyNg || 0)
+                )}</td>
+                <td class="editable" data-field="satuan" data-type="select" data-options="PCS,LEMBAR,METER,ROLL,SET" data-value="${
+                  item.satuan || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: center;">${
+                  item.satuan || "-"
+                }</td>
+                <td class="editable" data-field="prosesSelanjutnya" data-type="text" data-value="${
+                  item.prosesSelanjutnya || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: left;">${
+                  item.prosesSelanjutnya || "-"
+                }</td>
+                <td class="editable" data-field="keterangan" data-type="textarea" data-value="${
+                  item.keterangan || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: left; max-width: 200px; word-wrap: break-word;">${
+                  item.keterangan || "-"
+                }</td>
+                <td style="padding: 6px 4px; font-size: 12px; text-align: center;">
+                  <button class="btn btn-sm btn-warning edit-btn" data-id="${
+                    item.id
+                  }" data-type="lipat-report">Edit</button>
+                  <button class="btn btn-sm btn-danger delete-btn" data-id="${
+                    item.id
+                  }" data-type="lipat-report">Hapus</button>
+                </td>
+              </tr>
+            `
+              )
+              .join("")}
+            
+            <!-- Baris Total Akumulasi -->
+            <tr class="table-warning" style="background-color: #fff3cd; font-weight: bold; border: 2px solid #ffc107;">
+              <td colspan="8" style="padding: 10px 6px; font-size: 13px; text-align: right; font-weight: bold; background-color: #fff3cd;">
+                <strong>TOTAL AKUMULASI:</strong>
+              </td>
+              <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #fff3cd; color: #28a745;">
+                <strong>${this.formatNumber(
+                  data.reduce(
+                    (total, item) => total + (Number(item.qtyOk) || 0),
+                    0
+                  )
+                )}</strong>
+              </td>
+              <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #fff3cd; color: #dc3545;">
+                <strong>${this.formatNumber(
+                  data.reduce(
+                    (total, item) => total + (Number(item.qtyNg) || 0),
+                    0
+                  )
+                )}</strong>
+              </td>
+              <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #fff3cd; color: #007bff;">
+                <strong>${this.formatNumber(
+                  data.reduce(
+                    (total, item) => total + (Number(item.totalQty) || 0),
+                    0
+                  )
+                )}</strong>
+              </td>
+              <td colspan="4" style="padding: 10px 6px; font-size: 13px; text-align: center; background-color: #fff3cd;">
+                -
+              </td>
+            </tr>
+            
+            <!-- Baris Rata-rata -->
+            <tr class="table-info" style="background-color: #d1ecf1; font-weight: bold; border: 2px solid #17a2b8;">
+              <td colspan="8" style="padding: 10px 6px; font-size: 13px; text-align: right; font-weight: bold; background-color: #d1ecf1;">
+                <strong>RATA-RATA:</strong>
+              </td>
+              <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #d1ecf1; color: #28a745;">
+                <strong>${this.formatNumber(
+                  Math.round(
+                    data.length > 0
+                      ? data.reduce(
+                          (total, item) => total + (Number(item.qtyOk) || 0),
+                          0
+                        ) / data.length
+                      : 0
+                  )
+                )}</strong>
+              </td>
+              <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #d1ecf1; color: #dc3545;">
+                <strong>${this.formatNumber(
+                  Math.round(
+                    data.length > 0
+                      ? data.reduce(
+                          (total, item) => total + (Number(item.qtyNg) || 0),
+                          0
+                        ) / data.length
+                      : 0
+                  )
+                )}</strong>
+              </td>
+              <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #d1ecf1; color: #007bff;">
+                <strong>${this.formatNumber(
+                  Math.round(
+                    data.length > 0
+                      ? data.reduce(
+                          (total, item) => total + (Number(item.totalQty) || 0),
+                          0
+                        ) / data.length
+                      : 0
+                  )
+                )}</strong>
+              </td>
+              <td colspan="4" style="padding: 10px 6px; font-size: 13px; text-align: center; background-color: #d1ecf1;">
+                -
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      return tableHtml;
+    } catch (error) {
+      console.error("❌ Error generating lipat report table:", error);
+      return "<p>Error generating table</p>";
+    }
+  }
+
+  generateLemPackingReportTable(data) {
+    try {
+      const tableHtml = `
+        <div class="table-responsive">
+          <table class="table table-bordered table-striped table-hover" style="width: 100%; max-width: 100%; border-collapse: collapse; table-layout: auto; font-size: 14px;">
+            <thead class="table-dark">
+            <tr>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 60px;">No.</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 100px;">Tanggal</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 120px;">Operator</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 150px;">Jenis Pekerjaan</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 100px;">Time Start</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 100px;">Time Finish</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 80px;">QTY OK</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 80px;">QTY NG</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 80px;">Total QTY</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 120px;">No. SPK</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 150px;">Keterangan</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 120px;">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data
+              .map(
+                (item) => `
+              <tr data-id="${
+                item.id
+              }" data-type="lem-packing-report" class="table-row">
+                <td class="editable" data-field="nomor" data-type="number" data-value="${
+                  item.nomor || 0
+                }" style="padding: 6px 4px; font-size: 12px; text-align: center;">${
+                  item.nomor || "-"
+                }</td>
+                <td class="editable" data-field="tanggal" data-type="date" data-value="${this.formatDateForInput(
+                  item.tanggal
+                )}" style="padding: 6px 4px; font-size: 12px; text-align: left;">${new Date(
+                  item.tanggal
+                ).toLocaleDateString("id-ID")}</td>
+                <td class="editable" data-field="operator" data-type="text" data-value="${
+                  item.operator || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: left;">${
+                  item.operator || "-"
+                }</td>
+                <td class="editable" data-field="jenisPekerjaan" data-type="text" data-value="${
+                  item.jenisPekerjaan || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: left;">${
+                  item.jenisPekerjaan || "-"
+                }</td>
+                <td class="editable" data-field="timeStart" data-type="time" data-value="${
+                  item.timeStart || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: center;">${
+                  item.timeStart || "-"
+                }</td>
+                <td class="editable" data-field="timeFinish" data-type="time" data-value="${
+                  item.timeFinish || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: center;">${
+                  item.timeFinish || "-"
+                }</td>
+                <td class="editable" data-field="qtyOk" data-type="number" data-value="${
+                  item.qtyOk || 0
+                }" style="padding: 6px 4px; font-size: 12px; text-align: right; color: #28a745; font-weight: 600;">${this.formatNumber(
+                  item.qtyOk || 0
+                )}</td>
+                <td class="editable" data-field="qtyNg" data-type="number" data-value="${
+                  item.qtyNg || 0
+                }" style="padding: 6px 4px; font-size: 12px; text-align: right; color: #dc3545; font-weight: 600;">${this.formatNumber(
+                  item.qtyNg || 0
+                )}</td>
+                <td style="padding: 6px 4px; font-size: 12px; text-align: right; color: #007bff; font-weight: 700;">${this.formatNumber(
+                  (item.qtyOk || 0) + (item.qtyNg || 0)
+                )}</td>
+                <td class="editable" data-field="noSpk" data-type="text" data-value="${
+                  item.noSpk || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: left;">${
+                  item.noSpk || "-"
+                }</td>
+                <td class="editable" data-field="keterangan" data-type="textarea" data-value="${
+                  item.keterangan || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: left; max-width: 200px; word-wrap: break-word;">${
+                  item.keterangan || "-"
+                }</td>
+                <td style="padding: 6px 4px; font-size: 12px; text-align: center;">
+                  <button class="btn btn-sm btn-warning edit-btn" data-id="${
+                    item.id
+                  }" data-type="lem-packing-report">Edit</button>
+                  <button class="btn btn-sm btn-danger delete-btn" data-id="${
+                    item.id
+                  }" data-type="lem-packing-report">Hapus</button>
+                </td>
+              </tr>
+            `
+              )
+              .join("")}
+            
+            <!-- Baris Total Akumulasi -->
+            <tr class="table-warning" style="background-color: #fff3cd; font-weight: bold; border: 2px solid #ffc107;">
+              <td colspan="6" style="padding: 10px 6px; font-size: 13px; text-align: right; font-weight: bold; background-color: #fff3cd;">
+                <strong>TOTAL AKUMULASI:</strong>
+              </td>
+              <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #fff3cd; color: #28a745;">
+                <strong>${this.formatNumber(
+                  data.reduce(
+                    (total, item) => total + (Number(item.qtyOk) || 0),
+                    0
+                  )
+                )}</strong>
+              </td>
+              <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #fff3cd; color: #dc3545;">
+                <strong>${this.formatNumber(
+                  data.reduce(
+                    (total, item) => total + (Number(item.qtyNg) || 0),
+                    0
+                  )
+                )}</strong>
+              </td>
+              <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #fff3cd; color: #007bff;">
+                <strong>${this.formatNumber(
+                  data.reduce(
+                    (total, item) => total + (Number(item.totalQty) || 0),
+                    0
+                  )
+                )}</strong>
+              </td>
+              <td colspan="3" style="padding: 10px 6px; font-size: 13px; text-align: center; background-color: #fff3cd;">
+                -
+              </td>
+            </tr>
+            
+            <!-- Baris Rata-rata -->
+            <tr class="table-info" style="background-color: #d1ecf1; font-weight: bold; border: 2px solid #17a2b8;">
+              <td colspan="6" style="padding: 10px 6px; font-size: 13px; text-align: right; font-weight: bold; background-color: #d1ecf1;">
+                <strong>RATA-RATA:</strong>
+              </td>
+              <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #d1ecf1; color: #28a745;">
+                <strong>${this.formatNumber(
+                  Math.round(
+                    data.length > 0
+                      ? data.reduce(
+                          (total, item) => total + (Number(item.qtyOk) || 0),
+                          0
+                        ) / data.length
+                      : 0
+                  )
+                )}</strong>
+              </td>
+              <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #d1ecf1; color: #dc3545;">
+                <strong>${this.formatNumber(
+                  Math.round(
+                    data.length > 0
+                      ? data.reduce(
+                          (total, item) => total + (Number(item.qtyNg) || 0),
+                          0
+                        ) / data.length
+                      : 0
+                  )
+                )}</strong>
+              </td>
+              <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #d1ecf1; color: #007bff;">
+                <strong>${this.formatNumber(
+                  Math.round(
+                    data.length > 0
+                      ? data.reduce(
+                          (total, item) => total + (Number(item.totalQty) || 0),
+                          0
+                        ) / data.length
+                      : 0
+                  )
+                )}</strong>
+              </td>
+              <td colspan="3" style="padding: 10px 6px; font-size: 13px; text-align: center; background-color: #d1ecf1;">
+                -
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      return tableHtml;
+    } catch (error) {
+      console.error("❌ Error generating lem packing report table:", error);
+      return "<p>Error generating table</p>";
+    }
+  }
+
   generateIridesseReportTable(data) {
     return `
             <div class="table-responsive">
@@ -716,6 +1301,12 @@ export class RekapView {
       html = this.generateBahanBakuTable(data);
     } else if (tipe === "iridesse-report") {
       html = this.generateIridesseReportTable(data);
+    } else if (tipe === "strapless-report") {
+      html = this.generateStraplessReportTable(data);
+    } else if (tipe === "lipat-report") {
+      html = this.generateLipatReportTable(data);
+    } else if (tipe === "lem-packing-report") {
+      html = this.generateLemPackingReportTable(data);
     } else {
       html = this.generateDailyReportTable(data);
     }
@@ -744,8 +1335,13 @@ export class RekapView {
   }
 
   createDownloadButton(tipe) {
-    const typeLabel =
-      tipe === "iridesse-report" ? "Iridesse" : "Daily Report Mesin Offset";
+    let typeLabel = "Daily Report Mesin Offset";
+    if (tipe === "iridesse-report") {
+      typeLabel = "Iridesse";
+    } else if (tipe === "strapless-report") {
+      typeLabel = "Daily Report Mesin Strapless";
+    }
+
     return `
       <div style="margin-bottom: 15px;">
         <button id="download-pdf-btn" class="btn btn-success" style="margin-right: 10px;">
@@ -865,7 +1461,11 @@ export class RekapView {
       }
 
       // Make editable cells into input fields
-      if (type === "iridesse-report" || type === "daily-report") {
+      if (
+        type === "iridesse-report" ||
+        type === "daily-report" ||
+        type === "strapless-report"
+      ) {
         const editableCells = row.querySelectorAll(".editable");
         console.log("Found editable cells:", editableCells.length);
         editableCells.forEach((cell, index) => {
@@ -937,7 +1537,11 @@ export class RekapView {
   saveEdit(id, type) {
     console.log(`Saving edit for ${type} with id: ${id}`);
 
-    if (type === "iridesse-report" || type === "daily-report") {
+    if (
+      type === "iridesse-report" ||
+      type === "daily-report" ||
+      type === "strapless-report"
+    ) {
       const row = this.tableContainer.querySelector(
         `tr[data-id="${id}"][data-type="${type}"]`
       );
@@ -992,7 +1596,11 @@ export class RekapView {
     }
 
     // Restore original cell content
-    if (type === "iridesse-report" || type === "daily-report") {
+    if (
+      type === "iridesse-report" ||
+      type === "daily-report" ||
+      type === "strapless-report"
+    ) {
       const editableCells = row.querySelectorAll(".editable");
       editableCells.forEach((cell) => {
         const input = cell.querySelector("input, select");
@@ -1021,6 +1629,8 @@ export class RekapView {
             field === "qtyPo" ||
             field === "qtyCetakOk" ||
             field === "qtyCetakNg" ||
+            field === "qtyOk" ||
+            field === "qtyNg" ||
             field === "nomor"
           ) {
             const numValue = Number(originalValue) || 0;
@@ -1052,10 +1662,14 @@ export class RekapView {
       doc.text("PT. GCI (Garasi Creasindo Indonesia)", 20, 20);
 
       // Add report title
-      const title =
-        this.currentType === "iridesse-report"
-          ? "Laporan Iridesse Report"
-          : "Laporan Daily Report Mesin Offset";
+      let title = "Laporan Daily Report Mesin Offset";
+      if (this.currentType === "iridesse-report") {
+        title = "Laporan Iridesse Report";
+      } else if (this.currentType === "strapless-report") {
+        title = "Laporan Daily Report Mesin Strapless";
+      } else if (this.currentType === "lipat-report") {
+        title = "Laporan Daily Report Mesin Lipat";
+      }
       doc.setFontSize(14);
       doc.setFont(undefined, "normal");
       doc.text(title, 20, 32);
@@ -1103,6 +1717,12 @@ export class RekapView {
       // Generate table based on type
       if (this.currentType === "iridesse-report") {
         this.generateIridessePDF(doc, dataForPDF);
+      } else if (this.currentType === "strapless-report") {
+        this.generateStraplessReportPDF(doc, dataForPDF);
+      } else if (this.currentType === "lipat-report") {
+        this.generateLipatReportPDF(doc, dataForPDF);
+      } else if (this.currentType === "lem-packing-report") {
+        this.generateLemPackingReportPDF(doc, dataForPDF);
       } else {
         this.generateDailyReportPDF(doc, dataForPDF);
       }
@@ -1388,6 +2008,542 @@ export class RekapView {
     }.pdf`;
     doc.save(filename);
     alert(`PDF berhasil dibuat: ${filename}`);
+  }
+
+  generateStraplessReportPDF(doc, data = null) {
+    const pdfData = data || this.currentData;
+    const headers = [
+      "No",
+      "Tanggal",
+      "Operator",
+      "Jenis Pekerjaan",
+      "Time Start",
+      "Time Finish",
+      "QTY OK",
+      "QTY NG",
+      "Total QTY",
+      "Satuan",
+      "Proses Selanjutnya",
+      "Keterangan",
+    ];
+
+    const tableData = pdfData.map((item) => [
+      item.nomor || "",
+      new Date(item.tanggal).toLocaleDateString("id-ID"),
+      item.operator || "-",
+      item.jenisPekerjaan || "-",
+      item.timeStart || "-",
+      item.timeFinish || "-",
+      this.formatNumber(item.qtyOk || 0),
+      this.formatNumber(item.qtyNg || 0),
+      this.formatNumber(item.totalQty || 0),
+      item.satuan || "PCS",
+      item.prosesSelanjutnya || "-",
+      item.keterangan || "-",
+    ]);
+
+    // Calculate totals for summary row
+    const totalQtyOk = pdfData.reduce(
+      (total, item) => total + (Number(item.qtyOk) || 0),
+      0
+    );
+    const totalQtyNg = pdfData.reduce(
+      (total, item) => total + (Number(item.qtyNg) || 0),
+      0
+    );
+    const totalQtyAll = pdfData.reduce(
+      (total, item) => total + (Number(item.totalQty) || 0),
+      0
+    );
+
+    // Add total summary row
+    tableData.push([
+      "",
+      "",
+      "",
+      "",
+      "",
+      "TOTAL AKUMULASI:",
+      this.formatNumber(totalQtyOk),
+      this.formatNumber(totalQtyNg),
+      this.formatNumber(totalQtyAll),
+      "",
+      "",
+      "",
+    ]);
+
+    // Calculate and add average row
+    const avgQtyOk = pdfData.length > 0 ? totalQtyOk / pdfData.length : 0;
+    const avgQtyNg = pdfData.length > 0 ? totalQtyNg / pdfData.length : 0;
+    const avgQtyAll = pdfData.length > 0 ? totalQtyAll / pdfData.length : 0;
+
+    tableData.push([
+      "",
+      "",
+      "",
+      "",
+      "",
+      "RATA-RATA:",
+      this.formatNumber(Math.round(avgQtyOk)),
+      this.formatNumber(Math.round(avgQtyNg)),
+      this.formatNumber(Math.round(avgQtyAll)),
+      "",
+      "",
+      "",
+    ]);
+
+    // Add total records info
+    doc.text(`Total Record: ${pdfData.length} item`, 20, 64);
+
+    // Generate table in PDF
+    doc.autoTable({
+      head: [headers],
+      body: tableData,
+      startY: 66,
+      styles: {
+        fontSize: 7,
+        cellPadding: 2,
+      },
+      headStyles: {
+        fillColor: [52, 152, 219],
+        textColor: 255,
+        fontStyle: "bold",
+        fontSize: 7,
+      },
+      alternateRowStyles: {
+        fillColor: [248, 249, 250],
+      },
+      // Special styling for total row and average row (last two rows)
+      didParseCell: function (data) {
+        // Check if this is the total row (second to last row)
+        if (data.row.index === tableData.length - 2) {
+          data.cell.styles.fillColor = [255, 243, 205]; // Light yellow background
+          data.cell.styles.fontStyle = "bold";
+          data.cell.styles.fontSize = 8;
+          data.cell.styles.textColor = [0, 0, 0];
+
+          // Special colors for total columns
+          if (data.column.index === 6) {
+            // QTY OK column
+            data.cell.styles.textColor = [40, 167, 69]; // Green
+          } else if (data.column.index === 7) {
+            // QTY NG column
+            data.cell.styles.textColor = [220, 53, 69]; // Red
+          } else if (data.column.index === 8) {
+            // Total QTY column
+            data.cell.styles.textColor = [0, 123, 255]; // Blue
+          }
+        }
+
+        // Check if this is the average row (last row)
+        if (data.row.index === tableData.length - 1) {
+          data.cell.styles.fillColor = [209, 236, 241]; // Light blue background
+          data.cell.styles.fontStyle = "bold";
+          data.cell.styles.fontSize = 8;
+          data.cell.styles.textColor = [0, 0, 0];
+
+          // Special colors for average columns
+          if (data.column.index === 6) {
+            // QTY OK column
+            data.cell.styles.textColor = [40, 167, 69]; // Green
+          } else if (data.column.index === 7) {
+            // QTY NG column
+            data.cell.styles.textColor = [220, 53, 69]; // Red
+          } else if (data.column.index === 8) {
+            // Total QTY column
+            data.cell.styles.textColor = [0, 123, 255]; // Blue
+          }
+        }
+      },
+      margin: { top: 66, left: 10, right: 10 },
+      didDrawPage: function (data) {
+        const pageCount = doc.internal.getNumberOfPages();
+        const pageSize = doc.internal.pageSize;
+        doc.setFontSize(8);
+        doc.text(
+          `Halaman ${data.pageNumber} dari ${pageCount}`,
+          pageSize.width - 40,
+          pageSize.height - 10
+        );
+      },
+    });
+
+    // Save PDF
+    const filename = `Laporan_Daily_Report_Strapless_${
+      new Date().toISOString().split("T")[0]
+    }.pdf`;
+    doc.save(filename);
+    alert(`PDF berhasil dibuat: ${filename}`);
+  }
+
+  generateLipatReportPDF(doc, data = null) {
+    const pdfData = data || this.currentData;
+    const headers = [
+      "No",
+      "Tanggal",
+      "Operator",
+      "Jenis Pekerjaan",
+      "Produk",
+      "Terima Dari",
+      "Time Start",
+      "Time Finish",
+      "QTY OK",
+      "QTY NG",
+      "Total QTY",
+      "Satuan",
+      "Proses Selanjutnya",
+      "Keterangan",
+    ];
+
+    const tableData = pdfData.map((item) => [
+      item.nomor || "",
+      new Date(item.tanggal).toLocaleDateString("id-ID"),
+      item.operator || "-",
+      item.jenisPekerjaan || "-",
+      item.produk || "-",
+      item.terimaDari || "-",
+      item.timeStart || "-",
+      item.timeFinish || "-",
+      this.formatNumber(item.qtyOk || 0),
+      this.formatNumber(item.qtyNg || 0),
+      this.formatNumber(item.totalQty || 0),
+      item.satuan || "-",
+      item.prosesSelanjutnya || "-",
+      item.keterangan || "-",
+    ]);
+
+    // Calculate totals
+    const totalQtyOk = pdfData.reduce(
+      (sum, item) => sum + (Number(item.qtyOk) || 0),
+      0
+    );
+    const totalQtyNg = pdfData.reduce(
+      (sum, item) => sum + (Number(item.qtyNg) || 0),
+      0
+    );
+    const totalQtyAll = totalQtyOk + totalQtyNg;
+
+    // Add total summary row
+    tableData.push([
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "TOTAL AKUMULASI:",
+      this.formatNumber(totalQtyOk),
+      this.formatNumber(totalQtyNg),
+      this.formatNumber(totalQtyAll),
+      "",
+      "",
+      "",
+    ]);
+
+    // Calculate and add average row
+    const avgQtyOk = pdfData.length > 0 ? totalQtyOk / pdfData.length : 0;
+    const avgQtyNg = pdfData.length > 0 ? totalQtyNg / pdfData.length : 0;
+    const avgQtyAll = pdfData.length > 0 ? totalQtyAll / pdfData.length : 0;
+
+    tableData.push([
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "RATA-RATA:",
+      this.formatNumber(Math.round(avgQtyOk)),
+      this.formatNumber(Math.round(avgQtyNg)),
+      this.formatNumber(Math.round(avgQtyAll)),
+      "",
+      "",
+      "",
+    ]);
+
+    // Add total records info
+    doc.text(`Total Record: ${pdfData.length} item`, 20, 64);
+
+    // Generate table in PDF
+    doc.autoTable({
+      head: [headers],
+      body: tableData,
+      startY: 66,
+      styles: {
+        fontSize: 6,
+        cellPadding: 1.5,
+      },
+      headStyles: {
+        fillColor: [52, 152, 219],
+        textColor: 255,
+        fontStyle: "bold",
+        fontSize: 6,
+      },
+      alternateRowStyles: {
+        fillColor: [248, 249, 250],
+      },
+      // Special styling for total row and average row (last two rows)
+      didParseCell: function (data) {
+        // Check if this is the total row (second to last row)
+        if (data.row.index === tableData.length - 2) {
+          data.cell.styles.fillColor = [255, 243, 205]; // Light yellow background
+          data.cell.styles.fontStyle = "bold";
+          data.cell.styles.fontSize = 7;
+          data.cell.styles.textColor = [0, 0, 0];
+
+          // Special colors for total columns
+          if (data.column.index === 8) {
+            // QTY OK column
+            data.cell.styles.textColor = [40, 167, 69]; // Green
+          } else if (data.column.index === 9) {
+            // QTY NG column
+            data.cell.styles.textColor = [220, 53, 69]; // Red
+          } else if (data.column.index === 10) {
+            // Total QTY column
+            data.cell.styles.textColor = [0, 123, 255]; // Blue
+          }
+        }
+
+        // Check if this is the average row (last row)
+        if (data.row.index === tableData.length - 1) {
+          data.cell.styles.fillColor = [209, 236, 241]; // Light blue background
+          data.cell.styles.fontStyle = "bold";
+          data.cell.styles.fontSize = 7;
+          data.cell.styles.textColor = [0, 0, 0];
+
+          // Special colors for average columns
+          if (data.column.index === 8) {
+            // QTY OK column
+            data.cell.styles.textColor = [40, 167, 69]; // Green
+          } else if (data.column.index === 9) {
+            // QTY NG column
+            data.cell.styles.textColor = [220, 53, 69]; // Red
+          } else if (data.column.index === 10) {
+            // Total QTY column
+            data.cell.styles.textColor = [0, 123, 255]; // Blue
+          }
+        }
+      },
+      margin: { top: 66, left: 10, right: 10 },
+      didDrawPage: function (data) {
+        const pageCount = doc.internal.getNumberOfPages();
+        const pageSize = doc.internal.pageSize;
+        doc.setFontSize(8);
+        doc.text(
+          `Halaman ${data.pageNumber} dari ${pageCount}`,
+          pageSize.width - 40,
+          pageSize.height - 10
+        );
+      },
+    });
+
+    // Save PDF
+    const filename = `Laporan_Daily_Report_Lipat_${
+      new Date().toISOString().split("T")[0]
+    }.pdf`;
+    doc.save(filename);
+    alert(`PDF berhasil dibuat: ${filename}`);
+  }
+
+  generateLemPackingReportPDF(doc, data = null) {
+    try {
+      if (!data || data.length === 0) {
+        console.warn("No data for Lem Packing Report PDF generation");
+        return;
+      }
+
+      // Header setup
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("LAPORAN DAILY REPORT MESIN LEM PACKING CASE", 105, 20, {
+        align: "center",
+      });
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Tanggal: ${new Date().toLocaleDateString("id-ID")}`, 14, 35);
+      doc.text(`Total Data: ${data.length} records`, 14, 42);
+
+      // Prepare table data
+      let tableData = [];
+
+      // Data rows
+      data.forEach((item) => {
+        const qtyOk = Number(item.qtyOk) || 0;
+        const qtyNg = Number(item.qtyNg) || 0;
+        const totalQty = qtyOk + qtyNg;
+
+        tableData.push([
+          item.nomor || "-",
+          new Date(item.tanggal).toLocaleDateString("id-ID"),
+          item.operator || "-",
+          item.jenisPekerjaan || "-",
+          item.timeStart || "-",
+          item.timeFinish || "-",
+          this.formatNumber(qtyOk),
+          this.formatNumber(qtyNg),
+          this.formatNumber(totalQty),
+          item.noSpk || "-",
+          item.keterangan || "-",
+        ]);
+      });
+
+      // Calculate totals
+      const totalOk = data.reduce((sum, item) => sum + (Number(item.qtyOk) || 0), 0);
+      const totalNg = data.reduce((sum, item) => sum + (Number(item.qtyNg) || 0), 0);
+      const grandTotal = totalOk + totalNg;
+
+      // Calculate averages
+      const avgOk = data.length > 0 ? Math.round(totalOk / data.length) : 0;
+      const avgNg = data.length > 0 ? Math.round(totalNg / data.length) : 0;
+      const avgTotal = data.length > 0 ? Math.round(grandTotal / data.length) : 0;
+
+      // Add total row
+      tableData.push([
+        "TOTAL:",
+        "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        this.formatNumber(totalOk),
+        this.formatNumber(totalNg),
+        this.formatNumber(grandTotal),
+        "-",
+        "-",
+      ]);
+
+      // Add average row
+      tableData.push([
+        "RATA-RATA:",
+        "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        this.formatNumber(avgOk),
+        this.formatNumber(avgNg),
+        this.formatNumber(avgTotal),
+        "-",
+        "-",
+      ]);
+
+      // AutoTable configuration
+      doc.autoTable({
+        head: [
+          [
+            "No.",
+            "Tanggal",
+            "Operator",
+            "Jenis Pekerjaan",
+            "Start",
+            "Finish",
+            "QTY OK",
+            "QTY NG",
+            "Total",
+            "No. SPK",
+            "Keterangan"
+          ]
+        ],
+        body: tableData,
+        startY: 50,
+        styles: {
+          fontSize: 6,
+          cellPadding: 2,
+          halign: "center",
+          valign: "middle",
+          lineColor: [0, 0, 0],
+          lineWidth: 0.1,
+        },
+        headStyles: {
+          fillColor: [52, 58, 64],
+          textColor: [255, 255, 255],
+          fontStyle: "bold",
+          fontSize: 6,
+          halign: "center",
+        },
+        columnStyles: {
+          0: { halign: "center", cellWidth: 15 }, // No.
+          1: { halign: "center", cellWidth: 20 }, // Tanggal
+          2: { halign: "left", cellWidth: 25 }, // Operator
+          3: { halign: "left", cellWidth: 30 }, // Jenis Pekerjaan
+          4: { halign: "center", cellWidth: 18 }, // Time Start
+          5: { halign: "center", cellWidth: 18 }, // Time Finish
+          6: { halign: "right", cellWidth: 20 }, // QTY OK
+          7: { halign: "right", cellWidth: 20 }, // QTY NG
+          8: { halign: "right", cellWidth: 20 }, // Total QTY
+          9: { halign: "left", cellWidth: 25 }, // No. SPK
+          10: { halign: "left", cellWidth: 30 }, // Keterangan
+        },
+        alternateRowStyles: {
+          fillColor: [248, 249, 250],
+        },
+        didParseCell: function (data) {
+          // Check if this is the total row (second to last row)
+          if (data.row.index === tableData.length - 2) {
+            data.cell.styles.fillColor = [255, 243, 205]; // Yellow background
+            data.cell.styles.fontStyle = "bold";
+            data.cell.styles.fontSize = 7;
+            data.cell.styles.textColor = [0, 0, 0];
+
+            // Special colors for total columns
+            if (data.column.index === 6) {
+              // QTY OK column
+              data.cell.styles.textColor = [40, 167, 69]; // Green
+            } else if (data.column.index === 7) {
+              // QTY NG column
+              data.cell.styles.textColor = [220, 53, 69]; // Red
+            } else if (data.column.index === 8) {
+              // Total QTY column
+              data.cell.styles.textColor = [0, 123, 255]; // Blue
+            }
+          }
+
+          // Check if this is the average row (last row)
+          if (data.row.index === tableData.length - 1) {
+            data.cell.styles.fillColor = [209, 236, 241]; // Light blue background
+            data.cell.styles.fontStyle = "bold";
+            data.cell.styles.fontSize = 7;
+            data.cell.styles.textColor = [0, 0, 0];
+
+            // Special colors for average columns
+            if (data.column.index === 6) {
+              // QTY OK column
+              data.cell.styles.textColor = [40, 167, 69]; // Green
+            } else if (data.column.index === 7) {
+              // QTY NG column
+              data.cell.styles.textColor = [220, 53, 69]; // Red
+            } else if (data.column.index === 8) {
+              // Total QTY column
+              data.cell.styles.textColor = [0, 123, 255]; // Blue
+            }
+          }
+        },
+        margin: { top: 66, left: 10, right: 10 },
+        didDrawPage: function (data) {
+          const pageCount = doc.internal.getNumberOfPages();
+          const pageSize = doc.internal.pageSize;
+          doc.setFontSize(8);
+          doc.text(
+            `Halaman ${data.pageNumber} dari ${pageCount}`,
+            pageSize.width - 40,
+            pageSize.height - 10
+          );
+        },
+      });
+
+      // Save PDF
+      const filename = `Laporan_Daily_Report_Lem_Packing_${
+        new Date().toISOString().split("T")[0]
+      }.pdf`;
+      doc.save(filename);
+      alert(`PDF berhasil dibuat: ${filename}`);
+    } catch (error) {
+      console.error("❌ Error generating Lem Packing Report PDF:", error);
+      alert("Terjadi kesalahan saat membuat PDF: " + error.message);
+    }
   }
 
   showSuccess(message) {

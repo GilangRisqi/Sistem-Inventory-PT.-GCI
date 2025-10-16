@@ -19,6 +19,9 @@ export class NavigationView {
       "in-produksi": document.getElementById("in-produksi-section"),
       "out-produksi": document.getElementById("out-produksi-section"),
       "daily-report": document.getElementById("daily-report-section"),
+      "strapless-report": document.getElementById("strapless-report-section"),
+      "lipat-report": document.getElementById("lipat-report-section"),
+      "lem-packing-report": document.getElementById("lem-packing-report-section"),
       "iridesse-report": document.getElementById("iridesse-report-section"),
       rekap: document.getElementById("rekap-section"),
     };

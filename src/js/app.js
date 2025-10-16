@@ -8,6 +8,9 @@ import "../css/style.css";
 import { BahanBakuModel } from "./models/BahanBakuModel.js";
 import { DailyReportModel } from "./models/DailyReportModel.js";
 import { IridesseReportModel } from "./models/IridesseReportModel.js";
+import { StraplessReportModel } from "./models/StraplessReportModel.js";
+import { LipatReportModel } from "./models/LipatReportModel.js";
+import { LemPackingReportModel } from "./models/LemPackingReportModel.js";
 
 // Import Views
 import { LoginView } from "./views/LoginView.js";
@@ -16,6 +19,9 @@ import { HeaderView } from "./views/HeaderView.js";
 import { BahanBakuView } from "./views/BahanBakuView.js";
 import { DailyReportView } from "./views/DailyReportView.js";
 import { IridesseReportView } from "./views/IridesseReportView.js";
+import { StraplessReportView } from "./views/StraplessReportView.js";
+import { LipatReportView } from "./views/LipatReportView.js";
+import { LemPackingReportView } from "./views/LemPackingReportView.js";
 import { RekapView } from "./views/RekapView.js";
 
 // Import Presenters
@@ -25,6 +31,9 @@ import { HeaderPresenter } from "./presenters/HeaderPresenter.js";
 import { BahanBakuPresenter } from "./presenters/BahanBakuPresenter.js";
 import { DailyReportPresenter } from "./presenters/DailyReportPresenter.js";
 import { IridesseReportPresenter } from "./presenters/IridesseReportPresenter.js";
+import { StraplessReportPresenter } from "./presenters/StraplessReportPresenter.js";
+import { LipatReportPresenter } from "./presenters/LipatReportPresenter.js";
+import { LemPackingReportPresenter } from "./presenters/LemPackingReportPresenter.js";
 import { RekapPresenter } from "./presenters/RekapPresenter.js";
 
 // Import Database
@@ -82,6 +91,9 @@ class App {
       }
       this.dailyReportModel = new DailyReportModel();
       this.iridesseReportModel = new IridesseReportModel();
+      this.straplessReportModel = new StraplessReportModel();
+      this.lipatReportModel = new LipatReportModel();
+      this.lemPackingReportModel = new LemPackingReportModel();
 
       // Initialize Views
       this.loginView = new LoginView();
@@ -95,6 +107,9 @@ class App {
       }
       this.dailyReportView = new DailyReportView();
       this.iridesseReportView = new IridesseReportView();
+      this.straplessReportView = new StraplessReportView();
+      this.lipatReportView = new LipatReportView();
+      this.lemPackingReportView = new LemPackingReportView();
       this.rekapView = new RekapView();
 
       // Initialize Presenters
@@ -137,10 +152,27 @@ class App {
         this.iridesseReportView
       );
 
+      this.straplessReportPresenter = new StraplessReportPresenter(
+        this.straplessReportView
+      );
+
+      this.lipatReportPresenter = new LipatReportPresenter(
+        this.lipatReportModel,
+        this.lipatReportView
+      );
+
+      this.lemPackingReportPresenter = new LemPackingReportPresenter(
+        this.lemPackingReportModel,
+        this.lemPackingReportView
+      );
+
       this.rekapPresenter = new RekapPresenter(
         this.bahanBakuModel,
         this.dailyReportModel,
         this.iridesseReportModel,
+        this.straplessReportModel,
+        this.lipatReportModel,
+        this.lemPackingReportModel,
         this.rekapView
       );
 
