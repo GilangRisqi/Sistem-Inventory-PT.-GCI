@@ -21,12 +21,202 @@ export class RekapView {
 
     this.currentData = []; // Store current table data for PDF generation
     this.currentType = ""; // Store current table type
+    this.filteredData = null; // Store filtered data for PDF generation
   }
 
   // Helper function untuk format angka yang konsisten dengan format Indonesia (titik sebagai pemisah ribuan)
   formatNumber(number) {
     const num = Number(number) || 0;
     return num.toLocaleString("id-ID"); // Menggunakan format Indonesia yang konsisten
+  }
+
+  // Filter data berdasarkan client
+  filterByClient(selectedClient) {
+    if (!this.currentData || this.currentType !== "daily-report") {
+      return;
+    }
+
+    const table = this.tableContainer.querySelector("table tbody");
+    if (!table) return;
+
+    const rows = table.querySelectorAll("tr");
+    let visibleRowCount = 0;
+    let filteredData = [];
+
+    // Initialize totals
+    let totalQtyCetakOk = 0;
+    let totalQtyCetakNg = 0;
+    let totalQtyCetakAll = 0;
+
+    // Show/hide rows and calculate totals based on filter
+    rows.forEach((row, index) => {
+      // Skip the total row and average row
+      if (
+        row.classList.contains("table-warning") ||
+        row.classList.contains("table-info")
+      )
+        return;
+
+      const clientCell = row.querySelector('td[data-field="client"]');
+      if (!clientCell) return;
+
+      const clientValue =
+        clientCell.dataset.value || clientCell.textContent.trim();
+
+      if (!selectedClient || clientValue === selectedClient) {
+        row.style.display = "";
+        visibleRowCount++;
+
+        // Get the row ID to find the correct item in currentData
+        const rowId = row.dataset.id;
+        const originalItem = this.currentData.find((item) => item.id == rowId);
+        if (originalItem) {
+          filteredData.push(originalItem);
+          totalQtyCetakOk += Number(originalItem.qtyCetakOk) || 0;
+          totalQtyCetakNg += Number(originalItem.qtyCetakNg) || 0;
+          totalQtyCetakAll += Number(originalItem.totalQtyCetakAll) || 0;
+        }
+      } else {
+        row.style.display = "none";
+      }
+    });
+
+    // Calculate averages
+    const avgQtyCetakOk =
+      visibleRowCount > 0 ? totalQtyCetakOk / visibleRowCount : 0;
+    const avgQtyCetakNg =
+      visibleRowCount > 0 ? totalQtyCetakNg / visibleRowCount : 0;
+    const avgQtyCetakAll =
+      visibleRowCount > 0 ? totalQtyCetakAll / visibleRowCount : 0;
+
+    // Update total row with calculated totals using more robust selector
+    const totalRow = table.querySelector("tr.table-warning");
+    if (totalRow) {
+      // Try different approaches to find the strong elements
+      const strongElements = totalRow.querySelectorAll("strong");
+      console.log(
+        `Found total row with ${strongElements.length} strong elements`
+      );
+
+      if (strongElements.length >= 3) {
+        // Approach 1: Use the strong elements directly (assuming they're in order)
+        const qtyCetakOkStrong = strongElements[0];
+        const qtyCetakNgStrong = strongElements[1];
+        const totalQtyStrong = strongElements[2];
+
+        if (qtyCetakOkStrong) {
+          const formattedOk = this.formatNumber(totalQtyCetakOk);
+          qtyCetakOkStrong.textContent = formattedOk;
+          console.log(`Updated OK strong to: ${formattedOk}`);
+        }
+        if (qtyCetakNgStrong) {
+          const formattedNg = this.formatNumber(totalQtyCetakNg);
+          qtyCetakNgStrong.textContent = formattedNg;
+          console.log(`Updated NG strong to: ${formattedNg}`);
+        }
+        if (totalQtyStrong) {
+          const formattedAll = this.formatNumber(totalQtyCetakAll);
+          totalQtyStrong.textContent = formattedAll;
+          console.log(`Updated Total strong to: ${formattedAll}`);
+        }
+      } else {
+        console.log(
+          `Not enough strong elements found: ${strongElements.length}`
+        );
+        // Fallback to original approach
+        const allTdElements = totalRow.querySelectorAll("td");
+        if (allTdElements.length >= 10) {
+          const qtyCetakOkCell = allTdElements[7].querySelector("strong");
+          const qtyCetakNgCell = allTdElements[8].querySelector("strong");
+          const totalQtyCell = allTdElements[9].querySelector("strong");
+
+          if (qtyCetakOkCell)
+            qtyCetakOkCell.textContent = this.formatNumber(totalQtyCetakOk);
+          if (qtyCetakNgCell)
+            qtyCetakNgCell.textContent = this.formatNumber(totalQtyCetakNg);
+          if (totalQtyCell)
+            totalQtyCell.textContent = this.formatNumber(totalQtyCetakAll);
+        }
+      }
+    } else {
+      console.log("Total row not found");
+    }
+
+    // Update average row with calculated averages
+    const averageRow = table.querySelector("tr.table-info");
+    if (averageRow) {
+      const avgStrongElements = averageRow.querySelectorAll("strong");
+      console.log(
+        `Found average row with ${avgStrongElements.length} strong elements`
+      );
+
+      if (avgStrongElements.length >= 3) {
+        const avgQtyCetakOkStrong = avgStrongElements[0];
+        const avgQtyCetakNgStrong = avgStrongElements[1];
+        const avgTotalQtyStrong = avgStrongElements[2];
+
+        if (avgQtyCetakOkStrong) {
+          const formattedAvgOk = this.formatNumber(Math.round(avgQtyCetakOk));
+          avgQtyCetakOkStrong.textContent = formattedAvgOk;
+          console.log(`Updated Average OK strong to: ${formattedAvgOk}`);
+        }
+        if (avgQtyCetakNgStrong) {
+          const formattedAvgNg = this.formatNumber(Math.round(avgQtyCetakNg));
+          avgQtyCetakNgStrong.textContent = formattedAvgNg;
+          console.log(`Updated Average NG strong to: ${formattedAvgNg}`);
+        }
+        if (avgTotalQtyStrong) {
+          const formattedAvgAll = this.formatNumber(Math.round(avgQtyCetakAll));
+          avgTotalQtyStrong.textContent = formattedAvgAll;
+          console.log(`Updated Average Total strong to: ${formattedAvgAll}`);
+        }
+      } else {
+        console.log(
+          `Not enough strong elements found in average row: ${avgStrongElements.length}`
+        );
+        // Fallback to td-based approach
+        const avgTdElements = averageRow.querySelectorAll("td");
+        if (avgTdElements.length >= 10) {
+          const avgQtyCetakOkCell = avgTdElements[7].querySelector("strong");
+          const avgQtyCetakNgCell = avgTdElements[8].querySelector("strong");
+          const avgTotalQtyCell = avgTdElements[9].querySelector("strong");
+
+          if (avgQtyCetakOkCell)
+            avgQtyCetakOkCell.textContent = this.formatNumber(
+              Math.round(avgQtyCetakOk)
+            );
+          if (avgQtyCetakNgCell)
+            avgQtyCetakNgCell.textContent = this.formatNumber(
+              Math.round(avgQtyCetakNg)
+            );
+          if (avgTotalQtyCell)
+            avgTotalQtyCell.textContent = this.formatNumber(
+              Math.round(avgQtyCetakAll)
+            );
+        }
+      }
+    } else {
+      console.log("Average row not found");
+    }
+
+    // Update filtered data for PDF generation
+    this.filteredData = selectedClient ? filteredData : this.currentData;
+
+    console.log(
+      `Filter applied: ${
+        selectedClient || "Semua Client"
+      }, Showing ${visibleRowCount} rows, Total OK: ${this.formatNumber(
+        totalQtyCetakOk
+      )}, Total NG: ${this.formatNumber(
+        totalQtyCetakNg
+      )}, Total All: ${this.formatNumber(
+        totalQtyCetakAll
+      )}, Average OK: ${this.formatNumber(
+        Math.round(avgQtyCetakOk)
+      )}, Average NG: ${this.formatNumber(
+        Math.round(avgQtyCetakNg)
+      )}, Average All: ${this.formatNumber(Math.round(avgQtyCetakAll))}`
+    );
   }
 
   formatDateForInput(dateValue) {
@@ -104,7 +294,36 @@ export class RekapView {
 
   generateDailyReportTable(data) {
     try {
+      // Get unique clients from data
+      const uniqueClients = [
+        ...new Set(
+          data
+            .map((item) => item.client)
+            .filter((client) => client && client.trim() !== "")
+        ),
+      ];
+
+      // Create filter dropdown
+      const filterHtml = `
+        <div class="mb-3">
+          <div class="row">
+            <div class="col-md-4">
+              <label for="client-filter" class="form-label"><strong>Filter berdasarkan Client:</strong></label>
+              <select id="client-filter" class="form-select">
+                <option value="">Semua Client</option>
+                ${uniqueClients
+                  .map(
+                    (client) => `<option value="${client}">${client}</option>`
+                  )
+                  .join("")}
+              </select>
+            </div>
+          </div>
+        </div>
+      `;
+
       const tableHtml = `
+        ${filterHtml}
         <div class="table-responsive">
           <table class="table table-bordered table-striped table-hover" style="width: 100%; max-width: 100%; border-collapse: collapse; table-layout: auto; font-size: 14px;">
             <thead class="table-dark">
@@ -257,6 +476,55 @@ export class RekapView {
                 )}</strong>
               </td>
               <td colspan="6" style="padding: 10px 6px; font-size: 13px; text-align: center; background-color: #fff3cd;">
+                -
+              </td>
+            </tr>
+            
+            <!-- Baris Rata-rata -->
+            <tr class="table-info" style="background-color: #d1ecf1; font-weight: bold; border: 2px solid #17a2b8;">
+              <td colspan="7" style="padding: 10px 6px; font-size: 13px; text-align: right; font-weight: bold; background-color: #d1ecf1;">
+                <strong>RATA-RATA:</strong>
+              </td>
+              <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #d1ecf1; color: #28a745;">
+                <strong>${this.formatNumber(
+                  Math.round(
+                    data.length > 0
+                      ? data.reduce(
+                          (total, item) =>
+                            total + (Number(item.qtyCetakOk) || 0),
+                          0
+                        ) / data.length
+                      : 0
+                  )
+                )}</strong>
+              </td>
+              <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #d1ecf1; color: #dc3545;">
+                <strong>${this.formatNumber(
+                  Math.round(
+                    data.length > 0
+                      ? data.reduce(
+                          (total, item) =>
+                            total + (Number(item.qtyCetakNg) || 0),
+                          0
+                        ) / data.length
+                      : 0
+                  )
+                )}</strong>
+              </td>
+              <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #d1ecf1; color: #007bff;">
+                <strong>${this.formatNumber(
+                  Math.round(
+                    data.length > 0
+                      ? data.reduce(
+                          (total, item) =>
+                            total + (Number(item.totalQtyCetakAll) || 0),
+                          0
+                        ) / data.length
+                      : 0
+                  )
+                )}</strong>
+              </td>
+              <td colspan="6" style="padding: 10px 6px; font-size: 13px; text-align: center; background-color: #d1ecf1;">
                 -
               </td>
             </tr>
@@ -495,6 +763,14 @@ export class RekapView {
     const downloadBtn = this.tableContainer.querySelector("#download-pdf-btn");
     if (downloadBtn) {
       downloadBtn.addEventListener("click", () => this.downloadPDF());
+    }
+
+    // Add client filter listener
+    const clientFilter = this.tableContainer.querySelector("#client-filter");
+    if (clientFilter) {
+      clientFilter.addEventListener("change", (e) =>
+        this.filterByClient(e.target.value)
+      );
     }
 
     // Add event listener for edit, save, cancel and delete buttons
@@ -759,7 +1035,10 @@ export class RekapView {
 
   downloadPDF() {
     try {
-      if (!this.currentData || this.currentData.length === 0) {
+      // Use filtered data if available, otherwise use current data
+      const dataForPDF = this.filteredData || this.currentData;
+
+      if (!dataForPDF || dataForPDF.length === 0) {
         alert("Tidak ada data untuk dicetak");
         return;
       }
@@ -802,6 +1081,14 @@ export class RekapView {
         doc.text(`Periode: ${monthNames[parseInt(month) - 1]} ${year}`, 20, 44);
       }
 
+      // Add filter info if applied
+      let yPos = 48;
+      const clientFilter = this.tableContainer.querySelector("#client-filter");
+      if (clientFilter && clientFilter.value) {
+        doc.text(`Filter Client: ${clientFilter.value}`, 20, yPos);
+        yPos += 6;
+      }
+
       // Add date and time
       const currentDate = new Date().toLocaleDateString("id-ID", {
         day: "2-digit",
@@ -810,14 +1097,14 @@ export class RekapView {
       });
       const currentTime = new Date().toLocaleTimeString("id-ID");
       doc.setFontSize(10);
-      doc.text(`Tanggal: ${currentDate}`, 20, 52);
-      doc.text(`Waktu: ${currentTime}`, 20, 58);
+      doc.text(`Tanggal: ${currentDate}`, 20, yPos + 4);
+      doc.text(`Waktu: ${currentTime}`, 20, yPos + 10);
 
       // Generate table based on type
       if (this.currentType === "iridesse-report") {
-        this.generateIridessePDF(doc);
+        this.generateIridessePDF(doc, dataForPDF);
       } else {
-        this.generateDailyReportPDF(doc);
+        this.generateDailyReportPDF(doc, dataForPDF);
       }
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -825,7 +1112,8 @@ export class RekapView {
     }
   }
 
-  generateIridessePDF(doc) {
+  generateIridessePDF(doc, data = null) {
+    const pdfData = data || this.currentData;
     const headers = [
       "Tanggal",
       "No SPK",
@@ -847,7 +1135,7 @@ export class RekapView {
       "Status",
     ];
 
-    const tableData = this.currentData.map((item) => {
+    const tableData = pdfData.map((item) => {
       const totalCetak =
         (Number(item.jumlahCetak) || 0) - (Number(item.ng) || 0);
       const billing =
@@ -918,7 +1206,8 @@ export class RekapView {
     alert(`PDF berhasil dibuat: ${filename}`);
   }
 
-  generateDailyReportPDF(doc) {
+  generateDailyReportPDF(doc, data = null) {
+    const pdfData = data || this.currentData;
     const headers = [
       "No",
       "Tanggal",
@@ -937,7 +1226,7 @@ export class RekapView {
       "Keterangan",
     ];
 
-    const tableData = this.currentData.map((item) => [
+    const tableData = pdfData.map((item) => [
       item.nomor || "",
       new Date(item.tanggal).toLocaleDateString("id-ID"),
       this.formatNumber(item.qtyPo || 0),
@@ -956,15 +1245,15 @@ export class RekapView {
     ]);
 
     // Calculate totals for summary row
-    const totalQtyCetakOk = this.currentData.reduce(
+    const totalQtyCetakOk = pdfData.reduce(
       (total, item) => total + (Number(item.qtyCetakOk) || 0),
       0
     );
-    const totalQtyCetakNg = this.currentData.reduce(
+    const totalQtyCetakNg = pdfData.reduce(
       (total, item) => total + (Number(item.qtyCetakNg) || 0),
       0
     );
-    const totalQtyCetakAll = this.currentData.reduce(
+    const totalQtyCetakAll = pdfData.reduce(
       (total, item) => total + (Number(item.totalQtyCetakAll) || 0),
       0
     );
@@ -988,14 +1277,43 @@ export class RekapView {
       "",
     ]);
 
+    // Calculate and add average row
+    const avgQtyCetakOk =
+      pdfData.length > 0 ? totalQtyCetakOk / pdfData.length : 0;
+    const avgQtyCetakNg =
+      pdfData.length > 0 ? totalQtyCetakNg / pdfData.length : 0;
+    const avgQtyCetakAll =
+      pdfData.length > 0 ? totalQtyCetakAll / pdfData.length : 0;
+
+    tableData.push([
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "RATA-RATA:",
+      this.formatNumber(Math.round(avgQtyCetakOk)),
+      this.formatNumber(Math.round(avgQtyCetakNg)),
+      this.formatNumber(Math.round(avgQtyCetakAll)),
+      "",
+      "",
+      "",
+      "",
+      "",
+    ]);
+
     // Add total records info
-    doc.text(`Total Record: ${this.currentData.length} item`, 20, 64);
+    const clientFilter = this.tableContainer.querySelector("#client-filter");
+    const recordYPos = clientFilter && clientFilter.value ? 70 : 64;
+    doc.text(`Total Record: ${pdfData.length} item`, 20, recordYPos);
 
     // Generate table in PDF
+    const tableStartY = clientFilter && clientFilter.value ? 72 : 66;
     doc.autoTable({
       head: [headers],
       body: tableData,
-      startY: 66,
+      startY: tableStartY,
       styles: {
         fontSize: 7,
         cellPadding: 2,
@@ -1009,16 +1327,36 @@ export class RekapView {
       alternateRowStyles: {
         fillColor: [248, 249, 250],
       },
-      // Special styling for total row (last row)
+      // Special styling for total row and average row (last two rows)
       didParseCell: function (data) {
-        // Check if this is the last row (total row)
-        if (data.row.index === tableData.length - 1) {
+        // Check if this is the total row (second to last row)
+        if (data.row.index === tableData.length - 2) {
           data.cell.styles.fillColor = [255, 243, 205]; // Light yellow background
           data.cell.styles.fontStyle = "bold";
           data.cell.styles.fontSize = 8;
           data.cell.styles.textColor = [0, 0, 0];
 
           // Special colors for total columns
+          if (data.column.index === 7) {
+            // Qty Cetak OK column
+            data.cell.styles.textColor = [40, 167, 69]; // Green
+          } else if (data.column.index === 8) {
+            // Qty Cetak NG column
+            data.cell.styles.textColor = [220, 53, 69]; // Red
+          } else if (data.column.index === 9) {
+            // Total Qty column
+            data.cell.styles.textColor = [0, 123, 255]; // Blue
+          }
+        }
+
+        // Check if this is the average row (last row)
+        if (data.row.index === tableData.length - 1) {
+          data.cell.styles.fillColor = [209, 236, 241]; // Light blue background
+          data.cell.styles.fontStyle = "bold";
+          data.cell.styles.fontSize = 8;
+          data.cell.styles.textColor = [0, 0, 0];
+
+          // Special colors for average columns
           if (data.column.index === 7) {
             // Qty Cetak OK column
             data.cell.styles.textColor = [40, 167, 69]; // Green
