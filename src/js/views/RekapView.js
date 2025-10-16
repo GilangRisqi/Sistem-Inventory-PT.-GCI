@@ -23,6 +23,12 @@ export class RekapView {
     this.currentType = ""; // Store current table type
   }
 
+  // Helper function untuk format angka yang konsisten dengan format Indonesia (titik sebagai pemisah ribuan)
+  formatNumber(number) {
+    const num = Number(number) || 0;
+    return num.toLocaleString("id-ID"); // Menggunakan format Indonesia yang konsisten
+  }
+
   formatDateForInput(dateValue) {
     if (!dateValue) return "";
 
@@ -140,9 +146,9 @@ export class RekapView {
                 ).toLocaleDateString("id-ID")}</td>
                 <td class="editable" data-field="qtyPo" data-type="number" data-value="${
                   item.qtyPo || 0
-                }" style="padding: 6px 4px; font-size: 12px; text-align: right; max-width: 100px;">${(
+                }" style="padding: 6px 4px; font-size: 12px; text-align: right; max-width: 100px;">${this.formatNumber(
                   item.qtyPo || 0
-                ).toLocaleString()}</td>
+                )}</td>
                 <td class="editable" data-field="jenisBahan" data-type="text" data-value="${
                   item.jenisBahan || ""
                 }" style="padding: 6px 4px; font-size: 12px; text-align: left; max-width: 150px;">${
@@ -165,17 +171,17 @@ export class RekapView {
                 }</td>
                 <td class="editable" data-field="qtyCetakOk" data-type="number" data-value="${
                   item.qtyCetakOk || 0
-                }" style="padding: 6px 4px; font-size: 12px; text-align: right; max-width: 100px;">${(
+                }" style="padding: 6px 4px; font-size: 12px; text-align: right; max-width: 100px;">${this.formatNumber(
                   item.qtyCetakOk || 0
-                ).toLocaleString()}</td>
+                )}</td>
                 <td class="editable" data-field="qtyCetakNg" data-type="number" data-value="${
                   item.qtyCetakNg || 0
-                }" style="padding: 6px 4px; font-size: 12px; text-align: right; max-width: 100px;">${(
+                }" style="padding: 6px 4px; font-size: 12px; text-align: right; max-width: 100px;">${this.formatNumber(
                   item.qtyCetakNg || 0
-                ).toLocaleString()}</td>
-                <td class="non-editable" style="padding: 6px 4px; font-size: 12px; text-align: right; max-width: 100px;"><strong>${(
+                )}</td>
+                <td class="non-editable" style="padding: 6px 4px; font-size: 12px; text-align: right; max-width: 100px;"><strong>${this.formatNumber(
                   item.totalQtyCetakAll || 0
-                ).toLocaleString()}</strong></td>
+                )}</strong></td>
                 <td class="editable" data-field="satuanCetak" data-type="select" data-value="${
                   item.satuanCetak || "LEMBAR PLANO"
                 }" data-options="LEMBAR PLANO,METER,ROLL,PCS,SET" style="padding: 6px 4px; font-size: 12px; text-align: left; max-width: 150px;">${
@@ -219,6 +225,41 @@ export class RekapView {
             `
               )
               .join("")}
+            
+            <!-- Baris Total Akumulasi -->
+            <tr class="table-warning" style="background-color: #fff3cd; font-weight: bold; border: 2px solid #ffc107;">
+              <td colspan="7" style="padding: 10px 6px; font-size: 13px; text-align: right; font-weight: bold; background-color: #fff3cd;">
+                <strong>TOTAL AKUMULASI:</strong>
+              </td>
+              <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #fff3cd; color: #28a745;">
+                <strong>${this.formatNumber(
+                  data.reduce(
+                    (total, item) => total + (Number(item.qtyCetakOk) || 0),
+                    0
+                  )
+                )}</strong>
+              </td>
+              <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #fff3cd; color: #dc3545;">
+                <strong>${this.formatNumber(
+                  data.reduce(
+                    (total, item) => total + (Number(item.qtyCetakNg) || 0),
+                    0
+                  )
+                )}</strong>
+              </td>
+              <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #fff3cd; color: #007bff;">
+                <strong>${this.formatNumber(
+                  data.reduce(
+                    (total, item) =>
+                      total + (Number(item.totalQtyCetakAll) || 0),
+                    0
+                  )
+                )}</strong>
+              </td>
+              <td colspan="6" style="padding: 10px 6px; font-size: 13px; text-align: center; background-color: #fff3cd;">
+                -
+              </td>
+            </tr>
             </tbody>
           </table>
         </div>
@@ -297,13 +338,15 @@ export class RekapView {
                               }">${item.jenisPrint || "-"}</td>
                               <td class="editable" data-field="jumlahCetak" data-type="number" data-value="${
                                 item.jumlahCetak || 0
-                              }">${(
+                              }">${this.formatNumber(
                           item.jumlahCetak || 0
-                        ).toLocaleString()}</td>
+                        )}</td>
                               <td class="editable" data-field="ng" data-type="number" data-value="${
                                 item.ng || 0
-                              }">${(item.ng || 0).toLocaleString()}</td>
-                              <td class="non-editable"><strong>${totalCetak.toLocaleString()}</strong></td>
+                              }">${this.formatNumber(item.ng || 0)}</td>
+                              <td class="non-editable"><strong>${this.formatNumber(
+                                totalCetak
+                              )}</strong></td>
                               <td class="editable" data-field="timeStart" data-type="time" data-value="${
                                 item.timeStart || ""
                               }">${item.timeStart || "-"}</td>
@@ -312,17 +355,17 @@ export class RekapView {
                               }">${item.timeFinish || "-"}</td>
                               <td class="editable" data-field="startBilling" data-type="number" data-value="${
                                 item.startBilling || 0
-                              }">${(
+                              }">${this.formatNumber(
                           item.startBilling || 0
-                        ).toLocaleString()}</td>
+                        )}</td>
                               <td class="editable" data-field="finishBilling" data-type="number" data-value="${
                                 item.finishBilling || 0
-                              }">${(
+                              }">${this.formatNumber(
                           item.finishBilling || 0
-                        ).toLocaleString()}</td>
+                        )}</td>
                               <td class="editable" data-field="billing" data-type="number" data-value="${
                                 item.billing || 0
-                              }">${(item.billing || 0).toLocaleString()}</td>
+                              }">${this.formatNumber(item.billing || 0)}</td>
                               <td class="editable ${
                                 gap < 0
                                   ? "text-danger"
@@ -331,7 +374,7 @@ export class RekapView {
                                   : ""
                               }" data-field="gap" data-type="number" data-value="${
                           item.gap || 0
-                        }">${(item.gap || 0).toLocaleString()}</td>
+                        }">${this.formatNumber(item.gap || 0)}</td>
                               <td class="editable" data-field="status" data-type="select" data-value="${
                                 item.status || ""
                               }" data-options="PENDING,PROGRESS,SELESAI"><span class="badge ${
@@ -705,7 +748,7 @@ export class RekapView {
             field === "nomor"
           ) {
             const numValue = Number(originalValue) || 0;
-            cell.textContent = numValue.toLocaleString();
+            cell.textContent = this.formatNumber(numValue);
           } else {
             cell.textContent = originalValue || "-";
           }
@@ -819,16 +862,16 @@ export class RekapView {
         item.jenisKertas || "-",
         item.ukuranKertas || "-",
         item.jenisPrint || "-",
-        (item.jumlahCetak || 0).toLocaleString(),
-        (item.jumlahOk || 0).toLocaleString(),
-        (item.ng || 0).toLocaleString(),
-        totalCetak.toLocaleString(),
+        this.formatNumber(item.jumlahCetak || 0),
+        this.formatNumber(item.jumlahOk || 0),
+        this.formatNumber(item.ng || 0),
+        this.formatNumber(totalCetak),
         item.timeStart || "-",
         item.timeFinish || "-",
-        (item.startBilling || 0).toLocaleString(),
-        (item.finishBilling || 0).toLocaleString(),
-        billing.toLocaleString(),
-        gap.toLocaleString(),
+        this.formatNumber(item.startBilling || 0),
+        this.formatNumber(item.finishBilling || 0),
+        this.formatNumber(billing),
+        this.formatNumber(gap),
         item.status || "-",
       ];
     });
@@ -897,14 +940,14 @@ export class RekapView {
     const tableData = this.currentData.map((item) => [
       item.nomor || "",
       new Date(item.tanggal).toLocaleDateString("id-ID"),
-      (item.qtyPo || 0).toLocaleString(),
+      this.formatNumber(item.qtyPo || 0),
       item.jenisBahan || "-",
       item.jenisPekerjaan || "-",
       item.client || "-",
       item.spesifikasi || "-",
-      (item.qtyCetakOk || 0).toLocaleString(),
-      (item.qtyCetakNg || 0).toLocaleString(),
-      (item.totalQtyCetakAll || 0).toLocaleString(),
+      this.formatNumber(item.qtyCetakOk || 0),
+      this.formatNumber(item.qtyCetakNg || 0),
+      this.formatNumber(item.totalQtyCetakAll || 0),
       item.satuanCetak || "LEMBAR PLANO",
       item.waktuStart || "-",
       item.waktuFinish || "-",
@@ -912,8 +955,41 @@ export class RekapView {
       item.keterangan || "-",
     ]);
 
+    // Calculate totals for summary row
+    const totalQtyCetakOk = this.currentData.reduce(
+      (total, item) => total + (Number(item.qtyCetakOk) || 0),
+      0
+    );
+    const totalQtyCetakNg = this.currentData.reduce(
+      (total, item) => total + (Number(item.qtyCetakNg) || 0),
+      0
+    );
+    const totalQtyCetakAll = this.currentData.reduce(
+      (total, item) => total + (Number(item.totalQtyCetakAll) || 0),
+      0
+    );
+
+    // Add total summary row
+    tableData.push([
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "TOTAL AKUMULASI:",
+      this.formatNumber(totalQtyCetakOk),
+      this.formatNumber(totalQtyCetakNg),
+      this.formatNumber(totalQtyCetakAll),
+      "",
+      "",
+      "",
+      "",
+      "",
+    ]);
+
     // Add total records info
-    doc.text(`Total Record: ${tableData.length} item`, 20, 64);
+    doc.text(`Total Record: ${this.currentData.length} item`, 20, 64);
 
     // Generate table in PDF
     doc.autoTable({
@@ -932,6 +1008,28 @@ export class RekapView {
       },
       alternateRowStyles: {
         fillColor: [248, 249, 250],
+      },
+      // Special styling for total row (last row)
+      didParseCell: function (data) {
+        // Check if this is the last row (total row)
+        if (data.row.index === tableData.length - 1) {
+          data.cell.styles.fillColor = [255, 243, 205]; // Light yellow background
+          data.cell.styles.fontStyle = "bold";
+          data.cell.styles.fontSize = 8;
+          data.cell.styles.textColor = [0, 0, 0];
+
+          // Special colors for total columns
+          if (data.column.index === 7) {
+            // Qty Cetak OK column
+            data.cell.styles.textColor = [40, 167, 69]; // Green
+          } else if (data.column.index === 8) {
+            // Qty Cetak NG column
+            data.cell.styles.textColor = [220, 53, 69]; // Red
+          } else if (data.column.index === 9) {
+            // Total Qty column
+            data.cell.styles.textColor = [0, 123, 255]; // Blue
+          }
+        }
       },
       margin: { top: 66, left: 10, right: 10 },
       didDrawPage: function (data) {

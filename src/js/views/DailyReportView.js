@@ -10,6 +10,20 @@ export class DailyReportView {
     }
   }
 
+  // Helper function untuk format angka yang konsisten dengan format Indonesia (titik sebagai pemisah ribuan)
+  formatNumber(number) {
+    const num = Number(number) || 0;
+    return num.toLocaleString('id-ID'); // Menggunakan format Indonesia yang konsisten
+  }
+
+  // Helper function untuk parse angka dari text yang sudah diformat
+  parseFormattedNumber(formattedText) {
+    if (!formattedText) return 0;
+    // Handle both comma and dot as thousand separator
+    const cleanText = String(formattedText).replace(/[.,]/g, '');
+    return Number(cleanText) || 0;
+  }
+
   bindSaveReport(handler) {
     this.saveHandler = handler;
   }
@@ -23,9 +37,14 @@ export class DailyReportView {
       const qtyNg = Number(qtyNgInput.value) || 0;
       const total = qtyOk + qtyNg;
 
-      this.totalQtyOk.textContent = qtyOk.toLocaleString();
-      this.totalQtyNg.textContent = qtyNg.toLocaleString();
-      this.totalQtyAll.textContent = total.toLocaleString();
+      this.totalQtyOk.textContent = this.formatNumber(qtyOk);
+      this.totalQtyNg.textContent = this.formatNumber(qtyNg);
+      this.totalQtyAll.textContent = this.formatNumber(total);
+      
+      // Store raw numbers in data attributes for easy access
+      this.totalQtyOk.setAttribute('data-value', qtyOk);
+      this.totalQtyNg.setAttribute('data-value', qtyNg);
+      this.totalQtyAll.setAttribute('data-value', total);
     };
 
     qtyOkInput.addEventListener("input", updateTotals);
@@ -51,11 +70,9 @@ export class DailyReportView {
         waktuFinish: formData.get("waktu-finish"),
         noSpk: formData.get("no-spk"),
         keterangan: formData.get("keterangan"),
-        totalQtyCetakOk: Number(this.totalQtyOk.textContent.replace(/,/g, "")),
-        totalQtyCetakNg: Number(this.totalQtyNg.textContent.replace(/,/g, "")),
-        totalQtyCetakAll: Number(
-          this.totalQtyAll.textContent.replace(/,/g, "")
-        ),
+        totalQtyCetakOk: Number(this.totalQtyOk.getAttribute('data-value')) || 0,
+        totalQtyCetakNg: Number(this.totalQtyNg.getAttribute('data-value')) || 0,
+        totalQtyCetakAll: Number(this.totalQtyAll.getAttribute('data-value')) || 0,
       };
 
       // Call the save handler if available
@@ -65,7 +82,7 @@ export class DailyReportView {
 
       // Reset form setelah submit
       this.form.reset();
-      updateTotals();
+      updateTotals(); // This will reset the totals and data-attributes
     });
   }
 
