@@ -2,7 +2,13 @@ class LipatReportView {
   constructor() {
     this.form = document.getElementById("lipat-report-form");
     this.section = document.getElementById("lipat-report-section");
-    this.initializeEventListeners();
+
+    if (this.form) {
+      this.initializeEventListeners();
+
+      // Auto-generate nomor when form loads (like banner forms)
+      this.initializeAutoNumber();
+    }
   }
 
   initializeEventListeners() {
@@ -21,12 +27,6 @@ class LipatReportView {
         qtyOkInput.addEventListener("input", () => this.updateTotals());
         qtyNgInput.addEventListener("input", () => this.updateTotals());
       }
-
-      // Auto-generate nomor based on date
-      const tanggalInput = document.getElementById("lipat-tanggal");
-      if (tanggalInput) {
-        tanggalInput.addEventListener("change", () => this.autoGenerateNomor());
-      }
     }
   }
 
@@ -35,11 +35,17 @@ class LipatReportView {
     const formData = this.getFormData();
 
     if (this.validateForm(formData)) {
-      // Dispatch custom event for presenter to handle
-      const event = new CustomEvent("lipatReportSubmit", {
-        detail: formData,
-      });
-      document.dispatchEvent(event);
+      // Call the save handler if available (like DailyReportView pattern)
+      if (this.saveHandler) {
+        this.saveHandler(formData);
+      }
+
+      // Reset form setelah submit
+      this.form.reset();
+      this.updateTotals(); // This will reset the totals
+
+      // Auto-generate nomor untuk entri berikutnya
+      this.initializeAutoNumber();
     }
   }
 
@@ -62,6 +68,7 @@ class LipatReportView {
       { key: "tanggal", label: "Hari/Tanggal" },
       { key: "operator", label: "Operator" },
       { key: "jenisPekerjaan", label: "Jenis Pekerjaan" },
+      { key: "client", label: "Client" },
       { key: "produk", label: "Produk" },
       { key: "terimaDari", label: "Terima Dari" },
       { key: "timeStart", label: "Time Start" },
@@ -116,23 +123,59 @@ class LipatReportView {
     document.getElementById("lipat-total-qty-all").textContent = total;
   }
 
-  // Auto-generate nomor based on selected date
-  autoGenerateNomor() {
-    const tanggal = document.getElementById("lipat-tanggal").value;
-    if (!tanggal) return;
+  // Initialize auto number on form load (like banner forms)
+  async initializeAutoNumber() {
+    console.log("🔢 Lipat: Initializing auto nomor...");
 
+    // Set current date as default
+    const tanggalInput = document.getElementById("lipat-tanggal");
+    if (tanggalInput && !tanggalInput.value) {
+      const today = new Date().toISOString().split("T")[0];
+      tanggalInput.value = today;
+      console.log("📅 Lipat: Set default date:", today);
+    }
+
+    // Generate auto number with a small delay to ensure database is ready
+    setTimeout(async () => {
+      await this.autoGenerateNomor();
+    }, 100);
+  }
+
+  // Auto-generate nomor based on current month (like banner logic)
+  async autoGenerateNomor() {
+    console.log("🔄 Lipat: Auto-generating nomor...");
+    try {
+      const nextNomor = await this.getNextNomor();
+      console.log("✅ Lipat: Got next nomor from database:", nextNomor);
+      this.setAutoNomor(nextNomor);
+    } catch (error) {
+      console.error("❌ Lipat: Error generating auto nomor:", error);
+      this.setAutoNomor(1);
+    }
+  }
+
+  // Get next nomor from model
+  async getNextNomor() {
     // Dispatch event to get next nomor from presenter
-    const event = new CustomEvent("lipatReportGetNextNomor", {
-      detail: { tanggal },
+    return new Promise((resolve) => {
+      const event = new CustomEvent("lipatReportGetNextNomor", {
+        detail: {
+          callback: resolve,
+        },
+      });
+      document.dispatchEvent(event);
     });
-    document.dispatchEvent(event);
   }
 
   // Set auto-generated nomor
   setAutoNomor(nomor) {
+    console.log("🎯 Lipat: Setting auto nomor to:", nomor);
     const nomorInput = document.getElementById("lipat-nomor");
-    if (nomorInput && !nomorInput.value) {
+    if (nomorInput) {
       nomorInput.value = nomor;
+      console.log("✅ Lipat: Nomor input updated to:", nomorInput.value);
+    } else {
+      console.error("❌ Lipat: Nomor input element not found!");
     }
   }
 
@@ -266,6 +309,21 @@ class LipatReportView {
   // Format time for display
   formatTime(timeString) {
     return timeString;
+  }
+
+  // Bind save report handler
+  bindSaveReport(handler) {
+    this.saveHandler = handler;
+  }
+
+  // Show success message
+  showSuccess(message) {
+    alert(message || "Data berhasil disimpan!");
+  }
+
+  // Show error message
+  showError(message) {
+    alert("Error: " + message);
   }
 }
 

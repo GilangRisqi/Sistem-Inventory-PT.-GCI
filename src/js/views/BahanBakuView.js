@@ -17,6 +17,18 @@ export class BahanBakuView {
     // Store data for PDF generation
     this.stockData[category] = stockData;
 
+    // Produksi sections have their own dedicated display methods
+    if (
+      category === "produksi" ||
+      category === "produksi-in" ||
+      category === "produksi-out"
+    ) {
+      console.log(
+        `Skipping updateStockDisplay for ${category} - has dedicated methods`
+      );
+      return;
+    }
+
     // Handle special case for banner-in and banner-out sections
     let sectionId;
     if (category === "banner-in") {
@@ -399,7 +411,7 @@ export class BahanBakuView {
     this.stockForms = {
       "banner-in": this._initializeStockForm("stock-banner-in"),
       "banner-out": this._initializeStockForm("stock-banner-out"),
-      produksi: this._initializeStockForm("stock-produksi"),
+      // produksi removed - uses its own specific display methods without stock-results
     };
 
     this.inOutForms = {

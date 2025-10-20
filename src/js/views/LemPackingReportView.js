@@ -1,31 +1,31 @@
 class LemPackingReportView {
   constructor() {
-    this.form = document.getElementById('lem-packing-report-form');
-    this.section = document.getElementById('lem-packing-report-section');
-    this.initializeEventListeners();
+    this.form = document.getElementById("lem-packing-report-form");
+    this.section = document.getElementById("lem-packing-report-section");
+
+    if (this.form) {
+      this.initializeEventListeners();
+
+      // Auto-generate nomor when form loads (like banner forms)
+      this.initializeAutoNumber();
+    }
   }
 
   initializeEventListeners() {
     if (this.form) {
       // Form submission
-      this.form.addEventListener('submit', (e) => {
+      this.form.addEventListener("submit", (e) => {
         e.preventDefault();
         this.handleFormSubmit();
       });
 
       // Real-time total calculation
-      const qtyOkInput = document.getElementById('lem-packing-qty-ok');
-      const qtyNgInput = document.getElementById('lem-packing-qty-ng');
-      
-      if (qtyOkInput && qtyNgInput) {
-        qtyOkInput.addEventListener('input', () => this.updateTotals());
-        qtyNgInput.addEventListener('input', () => this.updateTotals());
-      }
+      const qtyOkInput = document.getElementById("lem-packing-qty-ok");
+      const qtyNgInput = document.getElementById("lem-packing-qty-ng");
 
-      // Auto-generate nomor based on date
-      const tanggalInput = document.getElementById('lem-packing-tanggal');
-      if (tanggalInput) {
-        tanggalInput.addEventListener('change', () => this.autoGenerateNomor());
+      if (qtyOkInput && qtyNgInput) {
+        qtyOkInput.addEventListener("input", () => this.updateTotals());
+        qtyNgInput.addEventListener("input", () => this.updateTotals());
       }
     }
   }
@@ -33,13 +33,19 @@ class LemPackingReportView {
   // Handle form submission
   handleFormSubmit() {
     const formData = this.getFormData();
-    
+
     if (this.validateForm(formData)) {
-      // Dispatch custom event for presenter to handle
-      const event = new CustomEvent('lemPackingReportSubmit', {
-        detail: formData
-      });
-      document.dispatchEvent(event);
+      // Call the save handler if available (like DailyReportView pattern)
+      if (this.saveHandler) {
+        this.saveHandler(formData);
+      }
+
+      // Reset form setelah submit
+      this.form.reset();
+      this.updateTotals(); // This will reset the totals
+
+      // Auto-generate nomor untuk entri berikutnya
+      this.initializeAutoNumber();
     }
   }
 
@@ -47,31 +53,31 @@ class LemPackingReportView {
   getFormData() {
     const formData = new FormData(this.form);
     const data = {};
-    
+
     for (let [key, value] of formData.entries()) {
       data[key] = value;
     }
-    
+
     return data;
   }
 
   // Validate form data
   validateForm(data) {
     const requiredFields = [
-      { key: 'nomor', label: 'No.' },
-      { key: 'tanggal', label: 'Hari/Tanggal' },
-      { key: 'operator', label: 'Operator' },
-      { key: 'jenisPekerjaan', label: 'Jenis Pekerjaan' },
-      { key: 'timeStart', label: 'Time Start' },
-      { key: 'timeFinish', label: 'Time Finish' },
-      { key: 'qtyOk', label: 'QTY OK' },
-      { key: 'qtyNg', label: 'QTY NG' },
-      { key: 'noSpk', label: 'No. SPK' }
+      { key: "nomor", label: "No." },
+      { key: "tanggal", label: "Hari/Tanggal" },
+      { key: "operator", label: "Operator" },
+      { key: "jenisPekerjaan", label: "Jenis Pekerjaan" },
+      { key: "timeStart", label: "Time Start" },
+      { key: "timeFinish", label: "Time Finish" },
+      { key: "qtyOk", label: "QTY OK" },
+      { key: "qtyNg", label: "QTY NG" },
+      { key: "noSpk", label: "No. SPK" },
     ];
 
     for (let field of requiredFields) {
-      if (!data[field.key] && data[field.key] !== '0') {
-        this.showToast(`${field.label} harus diisi`, 'error');
+      if (!data[field.key] && data[field.key] !== "0") {
+        this.showToast(`${field.label} harus diisi`, "error");
         return false;
       }
     }
@@ -80,9 +86,12 @@ class LemPackingReportView {
     if (data.timeStart && data.timeFinish) {
       const startTime = new Date(`2000-01-01T${data.timeStart}`);
       const finishTime = new Date(`2000-01-01T${data.timeFinish}`);
-      
+
       if (finishTime <= startTime) {
-        this.showToast('Time Finish harus lebih besar dari Time Start', 'error');
+        this.showToast(
+          "Time Finish harus lebih besar dari Time Start",
+          "error"
+        );
         return false;
       }
     }
@@ -90,9 +99,9 @@ class LemPackingReportView {
     // Validate quantities
     const qtyOk = parseInt(data.qtyOk) || 0;
     const qtyNg = parseInt(data.qtyNg) || 0;
-    
+
     if (qtyOk < 0 || qtyNg < 0) {
-      this.showToast('QTY tidak boleh negatif', 'error');
+      this.showToast("QTY tidak boleh negatif", "error");
       return false;
     }
 
@@ -101,32 +110,70 @@ class LemPackingReportView {
 
   // Update real-time totals
   updateTotals() {
-    const qtyOk = parseInt(document.getElementById('lem-packing-qty-ok').value) || 0;
-    const qtyNg = parseInt(document.getElementById('lem-packing-qty-ng').value) || 0;
+    const qtyOk =
+      parseInt(document.getElementById("lem-packing-qty-ok").value) || 0;
+    const qtyNg =
+      parseInt(document.getElementById("lem-packing-qty-ng").value) || 0;
     const total = qtyOk + qtyNg;
 
-    document.getElementById('lem-packing-total-qty-ok').textContent = qtyOk;
-    document.getElementById('lem-packing-total-qty-ng').textContent = qtyNg;
-    document.getElementById('lem-packing-total-qty-all').textContent = total;
+    document.getElementById("lem-packing-total-qty-ok").textContent = qtyOk;
+    document.getElementById("lem-packing-total-qty-ng").textContent = qtyNg;
+    document.getElementById("lem-packing-total-qty-all").textContent = total;
   }
 
-  // Auto-generate nomor based on selected date
-  autoGenerateNomor() {
-    const tanggal = document.getElementById('lem-packing-tanggal').value;
-    if (!tanggal) return;
+  // Initialize auto number on form load (like banner forms)
+  async initializeAutoNumber() {
+    console.log("🔢 LemPacking: Initializing auto nomor...");
 
+    // Set current date as default
+    const tanggalInput = document.getElementById("lem-packing-tanggal");
+    if (tanggalInput && !tanggalInput.value) {
+      const today = new Date().toISOString().split("T")[0];
+      tanggalInput.value = today;
+      console.log("📅 LemPacking: Set default date:", today);
+    }
+
+    // Generate auto number with a small delay to ensure database is ready
+    setTimeout(async () => {
+      await this.autoGenerateNomor();
+    }, 100);
+  }
+
+  // Auto-generate nomor based on current month (like banner logic)
+  async autoGenerateNomor() {
+    console.log("🔄 LemPacking: Auto-generating nomor...");
+    try {
+      const nextNomor = await this.getNextNomor();
+      console.log("✅ LemPacking: Got next nomor from database:", nextNomor);
+      this.setAutoNomor(nextNomor);
+    } catch (error) {
+      console.error("❌ LemPacking: Error generating auto nomor:", error);
+      this.setAutoNomor(1);
+    }
+  }
+
+  // Get next nomor from model
+  async getNextNomor() {
     // Dispatch event to get next nomor from presenter
-    const event = new CustomEvent('lemPackingReportGetNextNomor', {
-      detail: { tanggal }
+    return new Promise((resolve) => {
+      const event = new CustomEvent("lemPackingReportGetNextNomor", {
+        detail: {
+          callback: resolve,
+        },
+      });
+      document.dispatchEvent(event);
     });
-    document.dispatchEvent(event);
   }
 
   // Set auto-generated nomor
   setAutoNomor(nomor) {
-    const nomorInput = document.getElementById('lem-packing-nomor');
-    if (nomorInput && !nomorInput.value) {
+    console.log("🎯 LemPacking: Setting auto nomor to:", nomor);
+    const nomorInput = document.getElementById("lem-packing-nomor");
+    if (nomorInput) {
       nomorInput.value = nomor;
+      console.log("✅ LemPacking: Nomor input updated to:", nomorInput.value);
+    } else {
+      console.error("❌ LemPacking: Nomor input element not found!");
     }
   }
 
@@ -138,37 +185,39 @@ class LemPackingReportView {
 
   // Populate form for editing
   populateForm(data) {
-    Object.keys(data).forEach(key => {
-      const input = document.getElementById(`lem-packing-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`);
+    Object.keys(data).forEach((key) => {
+      const input = document.getElementById(
+        `lem-packing-${key.replace(/([A-Z])/g, "-$1").toLowerCase()}`
+      );
       if (input) {
-        if (input.type === 'number') {
+        if (input.type === "number") {
           input.value = data[key] || 0;
         } else {
-          input.value = data[key] || '';
+          input.value = data[key] || "";
         }
       }
     });
-    
+
     // Update totals after populating
     this.updateTotals();
-    
+
     // Store edit ID for update
     this.editId = data.id;
   }
 
   // Show toast notification
-  showToast(message, type = 'info') {
+  showToast(message, type = "info") {
     // Remove existing toast if any
-    const existingToast = document.querySelector('.toast');
+    const existingToast = document.querySelector(".toast");
     if (existingToast) {
       existingToast.remove();
     }
 
     // Create new toast
-    const toast = document.createElement('div');
+    const toast = document.createElement("div");
     toast.className = `toast toast-${type}`;
     toast.textContent = message;
-    
+
     // Style the toast
     toast.style.cssText = `
       position: fixed;
@@ -182,27 +231,27 @@ class LemPackingReportView {
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       transition: opacity 0.3s ease;
     `;
-    
+
     // Set background color based on type
     switch (type) {
-      case 'success':
-        toast.style.backgroundColor = '#10b981';
+      case "success":
+        toast.style.backgroundColor = "#10b981";
         break;
-      case 'error':
-        toast.style.backgroundColor = '#ef4444';
+      case "error":
+        toast.style.backgroundColor = "#ef4444";
         break;
-      case 'warning':
-        toast.style.backgroundColor = '#f59e0b';
+      case "warning":
+        toast.style.backgroundColor = "#f59e0b";
         break;
       default:
-        toast.style.backgroundColor = '#3b82f6';
+        toast.style.backgroundColor = "#3b82f6";
     }
-    
+
     document.body.appendChild(toast);
-    
+
     // Auto remove after 3 seconds
     setTimeout(() => {
-      toast.style.opacity = '0';
+      toast.style.opacity = "0";
       setTimeout(() => {
         if (toast.parentNode) {
           toast.parentNode.removeChild(toast);
@@ -213,24 +262,24 @@ class LemPackingReportView {
 
   // Show success message
   showSuccess(message) {
-    this.showToast(message, 'success');
+    this.showToast(message, "success");
   }
 
   // Show error message
   showError(message) {
-    this.showToast(message, 'error');
+    this.showToast(message, "error");
   }
 
   // Show/hide section
   show() {
     if (this.section) {
-      this.section.style.display = 'block';
+      this.section.style.display = "block";
     }
   }
 
   hide() {
     if (this.section) {
-      this.section.style.display = 'none';
+      this.section.style.display = "none";
     }
   }
 
@@ -247,17 +296,32 @@ class LemPackingReportView {
   // Format date for display
   formatDate(dateString) {
     const date = new Date(dateString);
-    return date.toLocaleDateString('id-ID', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return date.toLocaleDateString("id-ID", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   }
 
   // Format time for display
   formatTime(timeString) {
     return timeString;
+  }
+
+  // Bind save report handler
+  bindSaveReport(handler) {
+    this.saveHandler = handler;
+  }
+
+  // Show success message
+  showSuccess(message) {
+    alert(message || "Data berhasil disimpan!");
+  }
+
+  // Show error message
+  showError(message) {
+    alert("Error: " + message);
   }
 }
 

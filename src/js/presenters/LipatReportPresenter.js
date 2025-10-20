@@ -2,6 +2,10 @@ class LipatReportPresenter {
   constructor(model, view) {
     this.model = model;
     this.view = view;
+
+    // Bind the save handler (like DailyReportPresenter pattern)
+    this.view.bindSaveReport(this.handleSaveReport.bind(this));
+
     this.initializeEventListeners();
   }
 
@@ -11,9 +15,9 @@ class LipatReportPresenter {
       this.handleReportSubmit(event.detail);
     });
 
-    // Listen for next nomor request
+    // Listen for next nomor request (updated for callback pattern)
     document.addEventListener("lipatReportGetNextNomor", (event) => {
-      this.handleGetNextNomor(event.detail.tanggal);
+      this.handleGetNextNomor(event.detail);
     });
 
     // Listen for edit requests from rekap
@@ -62,20 +66,37 @@ class LipatReportPresenter {
   }
 
   // Handle get next nomor request
-  handleGetNextNomor(tanggal) {
+  // Handle get next nomor request
+  async handleGetNextNomor(detail) {
     try {
-      const reports = this.model.getByDateRange(tanggal, tanggal);
-      let nextNomor = 1;
+      console.log("🔄 Lipat Presenter: Getting next nomor from model...");
+      const nextNomor = await this.model.getNextNomor();
+      console.log(
+        `📞 Lipat Presenter: Got nomor ${nextNomor}, detail has callback:`,
+        !!detail.callback
+      );
 
-      if (reports.length > 0) {
-        const maxNomor = Math.max(...reports.map((r) => r.nomor));
-        nextNomor = maxNomor + 1;
+      if (detail.callback) {
+        // New callback pattern (like banner)
+        console.log(
+          "📤 Lipat Presenter: Calling callback with nomor:",
+          nextNomor
+        );
+        detail.callback(nextNomor);
+      } else {
+        // Old pattern for backward compatibility
+        console.log("📤 Lipat Presenter: Setting auto nomor via view method");
+        this.view.setAutoNomor(nextNomor);
       }
-
-      this.view.setAutoNomor(nextNomor);
     } catch (error) {
-      console.error("Error getting next nomor:", error);
-      this.view.setAutoNomor(1);
+      console.error("❌ Lipat Presenter: Error getting next nomor:", error);
+      const defaultNomor = 1;
+
+      if (detail.callback) {
+        detail.callback(defaultNomor);
+      } else {
+        this.view.setAutoNomor(defaultNomor);
+      }
     }
   }
 
@@ -285,6 +306,24 @@ class LipatReportPresenter {
         uniqueProducts: 0,
         uniqueWorkTypes: 0,
       };
+    }
+  }
+
+  // Handle save report (like DailyReportPresenter pattern)
+  async handleSaveReport(data) {
+    try {
+      // Validate required fields
+      if (!data.tanggal || !data.operator || !data.jenisPekerjaan) {
+        this.view.showError("Harap lengkapi data yang wajib diisi!");
+        return;
+      }
+
+      // Save to database
+      await this.model.save(data);
+      this.view.showSuccess("Lipat Report berhasil disimpan!");
+    } catch (error) {
+      console.error("❌ Lipat: Error saving report:", error);
+      this.view.showError("Gagal menyimpan laporan: " + error.message);
     }
   }
 }

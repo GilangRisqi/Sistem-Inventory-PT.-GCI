@@ -32,7 +32,10 @@ export class RekapView {
 
   // Filter data berdasarkan client
   filterByClient(selectedClient) {
-    if (!this.currentData || this.currentType !== "daily-report") {
+    if (!this.currentData || 
+        (this.currentType !== "daily-report" && 
+         this.currentType !== "strapless-report" && 
+         this.currentType !== "lipat-report")) {
       return;
     }
 
@@ -72,9 +75,17 @@ export class RekapView {
         const originalItem = this.currentData.find((item) => item.id == rowId);
         if (originalItem) {
           filteredData.push(originalItem);
-          totalQtyCetakOk += Number(originalItem.qtyCetakOk) || 0;
-          totalQtyCetakNg += Number(originalItem.qtyCetakNg) || 0;
-          totalQtyCetakAll += Number(originalItem.totalQtyCetakAll) || 0;
+          
+          // Handle different report types for totals calculation
+          if (this.currentType === "daily-report") {
+            totalQtyCetakOk += Number(originalItem.qtyCetakOk) || 0;
+            totalQtyCetakNg += Number(originalItem.qtyCetakNg) || 0;
+            totalQtyCetakAll += Number(originalItem.totalQtyCetakAll) || 0;
+          } else if (this.currentType === "strapless-report" || this.currentType === "lipat-report") {
+            totalQtyCetakOk += Number(originalItem.qtyOk) || 0;
+            totalQtyCetakNg += Number(originalItem.qtyNg) || 0;
+            totalQtyCetakAll += Number(originalItem.totalQty) || 0;
+          }
         }
       } else {
         row.style.display = "none";
@@ -356,7 +367,11 @@ export class RekapView {
                 <td class="editable" data-field="nomor" data-type="number" data-value="${
                   item.nomor || 0
                 }" style="padding: 6px 4px; font-size: 12px; text-align: center; max-width: 50px;">${
-                  item.nomor || "-"
+                  item.nomor !== undefined &&
+                  item.nomor !== null &&
+                  item.nomor !== ""
+                    ? item.nomor
+                    : "-"
                 }</td>
                 <td class="editable" data-field="tanggal" data-type="date" data-value="${this.formatDateForInput(
                   item.tanggal
@@ -542,7 +557,36 @@ export class RekapView {
 
   generateStraplessReportTable(data) {
     try {
+      // Get unique clients from data
+      const uniqueClients = [
+        ...new Set(
+          data
+            .map((item) => item.client)
+            .filter((client) => client && client.trim() !== "")
+        ),
+      ];
+
+      // Create filter dropdown
+      const filterHtml = `
+        <div class="mb-3">
+          <div class="row">
+            <div class="col-md-4">
+              <label for="client-filter" class="form-label"><strong>Filter berdasarkan Client:</strong></label>
+              <select id="client-filter" class="form-select">
+                <option value="">Semua Client</option>
+                ${uniqueClients
+                  .map(
+                    (client) => `<option value="${client}">${client}</option>`
+                  )
+                  .join("")}
+              </select>
+            </div>
+          </div>
+        </div>
+      `;
+
       const tableHtml = `
+        ${filterHtml}
         <div class="table-responsive">
           <table class="table table-bordered table-striped table-hover" style="width: 100%; max-width: 100%; border-collapse: collapse; table-layout: auto; font-size: 14px;">
             <thead class="table-dark">
@@ -551,6 +595,7 @@ export class RekapView {
               <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 100px;">Tanggal</th>
               <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 120px;">Operator</th>
               <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 150px;">Jenis Pekerjaan</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 120px;">Client</th>
               <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 100px;">Time Start</th>
               <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 100px;">Time Finish</th>
               <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 80px;">QTY OK</th>
@@ -588,6 +633,11 @@ export class RekapView {
                   item.jenisPekerjaan || ""
                 }" style="padding: 6px 4px; font-size: 12px; text-align: left;">${
                   item.jenisPekerjaan || "-"
+                }</td>
+                <td class="editable" data-field="client" data-type="text" data-value="${
+                  item.client || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: left;">${
+                  item.client || "-"
                 }</td>
                 <td class="editable" data-field="timeStart" data-type="time" data-value="${
                   item.timeStart || ""
@@ -739,7 +789,36 @@ export class RekapView {
 
   generateLipatReportTable(data) {
     try {
+      // Get unique clients from data
+      const uniqueClients = [
+        ...new Set(
+          data
+            .map((item) => item.client)
+            .filter((client) => client && client.trim() !== "")
+        ),
+      ];
+
+      // Create filter dropdown
+      const filterHtml = `
+        <div class="mb-3">
+          <div class="row">
+            <div class="col-md-4">
+              <label for="client-filter" class="form-label"><strong>Filter berdasarkan Client:</strong></label>
+              <select id="client-filter" class="form-select">
+                <option value="">Semua Client</option>
+                ${uniqueClients
+                  .map(
+                    (client) => `<option value="${client}">${client}</option>`
+                  )
+                  .join("")}
+              </select>
+            </div>
+          </div>
+        </div>
+      `;
+
       const tableHtml = `
+        ${filterHtml}
         <div class="table-responsive">
           <table class="table table-bordered table-striped table-hover" style="width: 100%; max-width: 100%; border-collapse: collapse; table-layout: auto; font-size: 14px;">
             <thead class="table-dark">
@@ -748,6 +827,7 @@ export class RekapView {
               <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 100px;">Tanggal</th>
               <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 120px;">Operator</th>
               <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 150px;">Jenis Pekerjaan</th>
+              <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 120px;">Client</th>
               <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 120px;">Produk</th>
               <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 120px;">Terima Dari</th>
               <th style="padding: 8px 6px; font-size: 12px; text-align: center; white-space: nowrap; min-width: 100px;">Time Start</th>
@@ -787,6 +867,11 @@ export class RekapView {
                   item.jenisPekerjaan || ""
                 }" style="padding: 6px 4px; font-size: 12px; text-align: left;">${
                   item.jenisPekerjaan || "-"
+                }</td>
+                <td class="editable" data-field="client" data-type="text" data-value="${
+                  item.client || ""
+                }" style="padding: 6px 4px; font-size: 12px; text-align: left;">${
+                  item.client || "-"
                 }</td>
                 <td class="editable" data-field="produk" data-type="text" data-value="${
                   item.produk || ""
@@ -1336,10 +1421,16 @@ export class RekapView {
 
   createDownloadButton(tipe) {
     let typeLabel = "Daily Report Mesin Offset";
-    if (tipe === "iridesse-report") {
+    if (tipe === "bahan-baku") {
+      typeLabel = "Bahan Baku";
+    } else if (tipe === "iridesse-report") {
       typeLabel = "Iridesse";
     } else if (tipe === "strapless-report") {
       typeLabel = "Daily Report Mesin Strapless";
+    } else if (tipe === "lipat-report") {
+      typeLabel = "Daily Report Mesin Lipat";
+    } else if (tipe === "lem-packing-report") {
+      typeLabel = "Daily Report Mesin Lem Packing Case";
     }
 
     return `
@@ -2391,14 +2482,21 @@ export class RekapView {
       });
 
       // Calculate totals
-      const totalOk = data.reduce((sum, item) => sum + (Number(item.qtyOk) || 0), 0);
-      const totalNg = data.reduce((sum, item) => sum + (Number(item.qtyNg) || 0), 0);
+      const totalOk = data.reduce(
+        (sum, item) => sum + (Number(item.qtyOk) || 0),
+        0
+      );
+      const totalNg = data.reduce(
+        (sum, item) => sum + (Number(item.qtyNg) || 0),
+        0
+      );
       const grandTotal = totalOk + totalNg;
 
       // Calculate averages
       const avgOk = data.length > 0 ? Math.round(totalOk / data.length) : 0;
       const avgNg = data.length > 0 ? Math.round(totalNg / data.length) : 0;
-      const avgTotal = data.length > 0 ? Math.round(grandTotal / data.length) : 0;
+      const avgTotal =
+        data.length > 0 ? Math.round(grandTotal / data.length) : 0;
 
       // Add total row
       tableData.push([
@@ -2444,8 +2542,8 @@ export class RekapView {
             "QTY NG",
             "Total",
             "No. SPK",
-            "Keterangan"
-          ]
+            "Keterangan",
+          ],
         ],
         body: tableData,
         startY: 50,

@@ -22,6 +22,7 @@ export class StraplessReportModel {
       tanggal: reportData.tanggal,
       operator: reportData.operator,
       jenisPekerjaan: reportData.jenisPekerjaan,
+      client: reportData.client || "",
       timeStart: reportData.timeStart,
       timeFinish: reportData.timeFinish,
       qtyOk: Number(reportData.qtyOk) || 0,
@@ -180,6 +181,71 @@ export class StraplessReportModel {
       this.data = [];
       this.nextId = 1;
     }
+  }
+
+  // Get next available nomor for current month (like banner pattern)
+  async getNextNomor() {
+    try {
+      console.log("🔍 Strapless: Getting next nomor from database...");
+      const allReports = this.getAll();
+      console.log(
+        "📊 Strapless: Total reports in database:",
+        allReports.length
+      );
+
+      // Get current month and year
+      const currentDate = new Date();
+      const currentYear = currentDate.getFullYear();
+      const currentMonth = currentDate.getMonth(); // 0-based month
+      console.log(
+        `📅 Strapless: Current month/year: ${currentMonth + 1}/${currentYear}`
+      );
+
+      // Filter reports for the current month and year
+      const reportsForMonth = allReports.filter((report) => {
+        const reportDate = new Date(report.tanggal);
+        const reportYear = reportDate.getFullYear();
+        const reportMonth = reportDate.getMonth();
+        return reportYear === currentYear && reportMonth === currentMonth;
+      });
+
+      console.log(
+        "📈 Strapless: Reports for current month:",
+        reportsForMonth.length
+      );
+
+      if (reportsForMonth.length === 0) {
+        console.log("✨ Strapless: First report for this month, returning 1");
+        return 1; // First report for this month
+      }
+
+      // Find the maximum nomor for this month and increment by 1
+      const nomors = reportsForMonth.map((report) => Number(report.nomor) || 0);
+      console.log("🔢 Strapless: Existing nomors:", nomors);
+
+      const maxNomor = Math.max(...nomors);
+      const nextNomor = maxNomor + 1;
+
+      console.log(
+        `🎯 Strapless: Max nomor: ${maxNomor}, Next nomor: ${nextNomor}`
+      );
+      return nextNomor;
+    } catch (error) {
+      console.error("❌ Strapless: Error getting next nomor:", error);
+      return 1; // Default to 1 if error occurs
+    }
+  }
+
+  // Save data with promise pattern (like DailyReportModel)
+  async save(data) {
+    return new Promise((resolve, reject) => {
+      try {
+        const result = this.add(data);
+        resolve(result);
+      } catch (error) {
+        reject(error);
+      }
+    });
   }
 
   // Clear all data

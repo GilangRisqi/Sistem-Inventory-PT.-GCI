@@ -7,6 +7,9 @@ export class DailyReportView {
 
     if (this.form) {
       this.initializeEventListeners();
+
+      // Auto-generate nomor when form loads (like banner forms)
+      this.initializeAutoNumber();
     }
   }
 
@@ -50,7 +53,7 @@ export class DailyReportView {
     qtyOkInput.addEventListener("input", updateTotals);
     qtyNgInput.addEventListener("input", updateTotals);
 
-    this.form.addEventListener("submit", (e) => {
+    this.form.addEventListener("submit", async (e) => {
       e.preventDefault();
 
       const formData = new FormData(this.form);
@@ -86,7 +89,66 @@ export class DailyReportView {
       // Reset form setelah submit
       this.form.reset();
       updateTotals(); // This will reset the totals and data-attributes
+
+      // Auto-generate nomor untuk entri berikutnya
+      await this.initializeAutoNumber();
     });
+  }
+
+  // Initialize auto number on form load (like banner forms)
+  async initializeAutoNumber() {
+    console.log("🔢 Initializing auto number...");
+
+    // Set current date as default
+    const tanggalInput = document.getElementById("tanggal");
+    if (tanggalInput && !tanggalInput.value) {
+      const today = new Date().toISOString().split("T")[0];
+      tanggalInput.value = today;
+      console.log("📅 Set default date:", today);
+    }
+
+    // Generate auto number with a small delay to ensure database is ready
+    setTimeout(async () => {
+      await this.autoGenerateNomor();
+    }, 100);
+  }
+
+  // Auto-generate nomor based on current month (like banner logic)
+  async autoGenerateNomor() {
+    console.log("🔄 Auto-generating nomor...");
+    try {
+      const nextNomor = await this.getNextNomor();
+      console.log("✅ Got next nomor from database:", nextNomor);
+      this.setAutoNomor(nextNomor);
+    } catch (error) {
+      console.error("❌ Error generating auto nomor:", error);
+      this.setAutoNomor(1);
+    }
+  }
+
+  // Get next nomor from model
+  async getNextNomor() {
+    // Dispatch event to get next nomor from presenter
+    return new Promise((resolve) => {
+      const event = new CustomEvent("dailyReportGetNextNomor", {
+        detail: {
+          callback: resolve,
+        },
+      });
+      document.dispatchEvent(event);
+    });
+  }
+
+  // Set auto-generated nomor
+  setAutoNomor(nomor) {
+    console.log("🎯 Setting auto nomor to:", nomor);
+    const nomorInput = document.getElementById("nomor");
+    if (nomorInput) {
+      nomorInput.value = nomor;
+      console.log("✅ Nomor input updated to:", nomorInput.value);
+    } else {
+      console.error("❌ Nomor input element not found!");
+    }
   }
 
   showSuccess(message) {

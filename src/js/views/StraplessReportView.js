@@ -10,6 +10,7 @@ export class StraplessReportView {
     this.jenisPekerjaanInput = document.getElementById(
       "strapless-jenis-pekerjaan"
     );
+    this.clientInput = document.getElementById("strapless-client");
     this.timeStartInput = document.getElementById("strapless-time-start");
     this.timeFinishInput = document.getElementById("strapless-time-finish");
     this.qtyOkInput = document.getElementById("strapless-qty-ok");
@@ -45,6 +46,9 @@ export class StraplessReportView {
     this.attachEventListeners();
     this.updateTotals();
 
+    // Auto-generate nomor when form loads (like banner forms)
+    this.initializeAutoNumber();
+
     console.log("✅ StraplessReportView initialized");
   }
 
@@ -64,22 +68,25 @@ export class StraplessReportView {
     if (this.qtyNgInput) {
       this.qtyNgInput.addEventListener("input", () => this.updateTotals());
     }
-
-    // Auto-increment nomor when date changes
-    if (this.tanggalInput) {
-      this.tanggalInput.addEventListener("change", () => this.generateNomor());
-    }
   }
 
   handleFormSubmit() {
     try {
       const formData = this.getFormData();
 
-      if (this.addStraplessReportHandler) {
-        this.addStraplessReportHandler(formData);
+      // Call the save handler if available (like DailyReportView pattern)
+      if (this.saveHandler) {
+        this.saveHandler(formData);
       }
+
+      // Reset form setelah submit
+      this.form.reset();
+      this.updateTotals(); // This will reset the totals
+
+      // Auto-generate nomor untuk entri berikutnya
+      this.initializeAutoNumber();
     } catch (error) {
-      console.error("❌ Error handling form submit:", error);
+      console.error("❌ Strapless: Error handling form submit:", error);
       this.showError("Terjadi kesalahan saat menyimpan data");
     }
   }
@@ -90,6 +97,7 @@ export class StraplessReportView {
       tanggal: this.tanggalInput?.value,
       operator: this.operatorInput?.value?.trim(),
       jenisPekerjaan: this.jenisPekerjaanInput?.value?.trim(),
+      client: this.clientInput?.value?.trim(),
       timeStart: this.timeStartInput?.value,
       timeFinish: this.timeFinishInput?.value,
       qtyOk: parseInt(this.qtyOkInput?.value) || 0,
@@ -116,18 +124,6 @@ export class StraplessReportView {
     }
   }
 
-  generateNomor() {
-    // Simple auto-increment based on current date
-    const today = new Date().toISOString().split("T")[0];
-    const selectedDate = this.tanggalInput?.value;
-
-    if (selectedDate === today && this.nomorInput) {
-      // You could implement more sophisticated numbering here
-      const randomNomor = Math.floor(Math.random() * 1000) + 1;
-      this.nomorInput.value = randomNomor;
-    }
-  }
-
   // Format number with Indonesian locale
   formatNumber(number) {
     const num = Number(number) || 0;
@@ -151,8 +147,8 @@ export class StraplessReportView {
     // Update totals
     this.updateTotals();
 
-    // Generate new nomor
-    this.generateNomor();
+    // Generate new nomor (using new auto-nomor system)
+    this.initializeAutoNumber();
 
     console.log("✅ Strapless report form cleared");
   }
@@ -345,5 +341,77 @@ export class StraplessReportView {
     if (this.section) {
       this.section.style.display = "none";
     }
+  }
+
+  // Initialize auto number on form load (like banner forms)
+  async initializeAutoNumber() {
+    console.log("🔢 Strapless: Initializing auto nomor...");
+
+    // Set current date as default
+    if (this.tanggalInput && !this.tanggalInput.value) {
+      const today = new Date().toISOString().split("T")[0];
+      this.tanggalInput.value = today;
+      console.log("📅 Strapless: Set default date:", today);
+    }
+
+    // Generate auto number with a small delay to ensure database is ready
+    setTimeout(async () => {
+      await this.autoGenerateNomor();
+    }, 100);
+  }
+
+  // Auto-generate nomor based on current month (like banner logic)
+  async autoGenerateNomor() {
+    console.log("🔄 Strapless: Auto-generating nomor...");
+    try {
+      const nextNomor = await this.getNextNomor();
+      console.log("✅ Strapless: Got next nomor from database:", nextNomor);
+      this.setAutoNomor(nextNomor);
+    } catch (error) {
+      console.error("❌ Strapless: Error generating auto nomor:", error);
+      this.setAutoNomor(1);
+    }
+  }
+
+  // Get next nomor from model
+  async getNextNomor() {
+    // Dispatch event to get next nomor from presenter
+    return new Promise((resolve) => {
+      const event = new CustomEvent("straplessReportGetNextNomor", {
+        detail: {
+          callback: resolve,
+        },
+      });
+      document.dispatchEvent(event);
+    });
+  }
+
+  // Set auto-generated nomor
+  setAutoNomor(nomor) {
+    console.log("🎯 Strapless: Setting auto nomor to:", nomor);
+    if (this.nomorInput) {
+      this.nomorInput.value = nomor;
+      console.log(
+        "✅ Strapless: Nomor input updated to:",
+        this.nomorInput.value
+      );
+    } else {
+      console.error("❌ Strapless: Nomor input element not found!");
+    }
+  }
+
+  // Bind save report handler
+  bindSaveReport(handler) {
+    this.saveHandler = handler;
+  }
+
+  // Show success message
+  showSuccess(message) {
+    alert(message || "Data berhasil disimpan!");
+  }
+
+  // Show error message
+  showError(message) {
+    alert("Error: " + message);
   }
 }
