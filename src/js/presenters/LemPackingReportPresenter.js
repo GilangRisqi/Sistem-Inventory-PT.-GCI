@@ -3,8 +3,12 @@ class LemPackingReportPresenter {
     this.model = model;
     this.view = view;
 
+    // Note: Inline editing for RekapView is handled by RekapPresenter, not individual presenters
+
     // Bind the save handler (like DailyReportPresenter pattern)
-    this.view.bindSaveReport(this.handleSaveReport.bind(this));
+    if (this.view.bindSaveReport) {
+      this.view.bindSaveReport(this.handleSaveReport.bind(this));
+    }
 
     this.initializeEventListeners();
   }
@@ -331,6 +335,8 @@ class LemPackingReportPresenter {
       this.view.showError("Gagal menyimpan laporan: " + error.message);
     }
   }
+
+  // Note: Inline editing methods removed - all handled by RekapPresenter
 }
 
 export { LemPackingReportPresenter };

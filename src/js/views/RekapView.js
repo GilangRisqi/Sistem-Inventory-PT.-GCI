@@ -32,10 +32,12 @@ export class RekapView {
 
   // Filter data berdasarkan client
   filterByClient(selectedClient) {
-    if (!this.currentData || 
-        (this.currentType !== "daily-report" && 
-         this.currentType !== "strapless-report" && 
-         this.currentType !== "lipat-report")) {
+    if (
+      !this.currentData ||
+      (this.currentType !== "daily-report" &&
+        this.currentType !== "strapless-report" &&
+        this.currentType !== "lipat-report")
+    ) {
       return;
     }
 
@@ -75,13 +77,16 @@ export class RekapView {
         const originalItem = this.currentData.find((item) => item.id == rowId);
         if (originalItem) {
           filteredData.push(originalItem);
-          
+
           // Handle different report types for totals calculation
           if (this.currentType === "daily-report") {
             totalQtyCetakOk += Number(originalItem.qtyCetakOk) || 0;
             totalQtyCetakNg += Number(originalItem.qtyCetakNg) || 0;
             totalQtyCetakAll += Number(originalItem.totalQtyCetakAll) || 0;
-          } else if (this.currentType === "strapless-report" || this.currentType === "lipat-report") {
+          } else if (
+            this.currentType === "strapless-report" ||
+            this.currentType === "lipat-report"
+          ) {
             totalQtyCetakOk += Number(originalItem.qtyOk) || 0;
             totalQtyCetakNg += Number(originalItem.qtyNg) || 0;
             totalQtyCetakAll += Number(originalItem.totalQty) || 0;
@@ -925,6 +930,12 @@ export class RekapView {
                   <button class="btn btn-sm btn-warning edit-btn" data-id="${
                     item.id
                   }" data-type="lipat-report">Edit</button>
+                  <button class="btn btn-sm btn-success save-btn d-none" data-id="${
+                    item.id
+                  }" data-type="lipat-report" style="display: none;">Simpan</button>
+                  <button class="btn btn-sm btn-secondary cancel-btn d-none" data-id="${
+                    item.id
+                  }" data-type="lipat-report" style="display: none;">Batal</button>
                   <button class="btn btn-sm btn-danger delete-btn" data-id="${
                     item.id
                   }" data-type="lipat-report">Hapus</button>
@@ -1110,6 +1121,12 @@ export class RekapView {
                   <button class="btn btn-sm btn-warning edit-btn" data-id="${
                     item.id
                   }" data-type="lem-packing-report">Edit</button>
+                  <button class="btn btn-sm btn-success save-btn d-none" data-id="${
+                    item.id
+                  }" data-type="lem-packing-report" style="display: none;">Simpan</button>
+                  <button class="btn btn-sm btn-secondary cancel-btn d-none" data-id="${
+                    item.id
+                  }" data-type="lem-packing-report" style="display: none;">Batal</button>
                   <button class="btn btn-sm btn-danger delete-btn" data-id="${
                     item.id
                   }" data-type="lem-packing-report">Hapus</button>
@@ -1555,7 +1572,9 @@ export class RekapView {
       if (
         type === "iridesse-report" ||
         type === "daily-report" ||
-        type === "strapless-report"
+        type === "strapless-report" ||
+        type === "lipat-report" ||
+        type === "lem-packing-report"
       ) {
         const editableCells = row.querySelectorAll(".editable");
         console.log("Found editable cells:", editableCells.length);
@@ -1631,7 +1650,9 @@ export class RekapView {
     if (
       type === "iridesse-report" ||
       type === "daily-report" ||
-      type === "strapless-report"
+      type === "strapless-report" ||
+      type === "lipat-report" ||
+      type === "lem-packing-report"
     ) {
       const row = this.tableContainer.querySelector(
         `tr[data-id="${id}"][data-type="${type}"]`
@@ -1690,7 +1711,9 @@ export class RekapView {
     if (
       type === "iridesse-report" ||
       type === "daily-report" ||
-      type === "strapless-report"
+      type === "strapless-report" ||
+      type === "lipat-report" ||
+      type === "lem-packing-report"
     ) {
       const editableCells = row.querySelectorAll(".editable");
       editableCells.forEach((cell) => {
@@ -1760,6 +1783,8 @@ export class RekapView {
         title = "Laporan Daily Report Mesin Strapless";
       } else if (this.currentType === "lipat-report") {
         title = "Laporan Daily Report Mesin Lipat";
+      } else if (this.currentType === "lem-packing-report") {
+        title = "Laporan Daily Report Mesin Lem Packing Case";
       }
       doc.setFontSize(14);
       doc.setFont(undefined, "normal");
@@ -2445,17 +2470,8 @@ export class RekapView {
         return;
       }
 
-      // Header setup
-      doc.setFontSize(14);
-      doc.setFont("helvetica", "bold");
-      doc.text("LAPORAN DAILY REPORT MESIN LEM PACKING CASE", 105, 20, {
-        align: "center",
-      });
-
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.text(`Tanggal: ${new Date().toLocaleDateString("id-ID")}`, 14, 35);
-      doc.text(`Total Data: ${data.length} records`, 14, 42);
+      // Note: Header is already added in main exportToPDF method
+      // No need to duplicate header here
 
       // Prepare table data
       let tableData = [];
@@ -2546,7 +2562,7 @@ export class RekapView {
           ],
         ],
         body: tableData,
-        startY: 50,
+        startY: 66,
         styles: {
           fontSize: 6,
           cellPadding: 2,
@@ -2563,17 +2579,17 @@ export class RekapView {
           halign: "center",
         },
         columnStyles: {
-          0: { halign: "center", cellWidth: 15 }, // No.
-          1: { halign: "center", cellWidth: 20 }, // Tanggal
-          2: { halign: "left", cellWidth: 25 }, // Operator
-          3: { halign: "left", cellWidth: 30 }, // Jenis Pekerjaan
-          4: { halign: "center", cellWidth: 18 }, // Time Start
-          5: { halign: "center", cellWidth: 18 }, // Time Finish
-          6: { halign: "right", cellWidth: 20 }, // QTY OK
-          7: { halign: "right", cellWidth: 20 }, // QTY NG
-          8: { halign: "right", cellWidth: 20 }, // Total QTY
-          9: { halign: "left", cellWidth: 25 }, // No. SPK
-          10: { halign: "left", cellWidth: 30 }, // Keterangan
+          0: { halign: "center", cellWidth: 12 }, // No.
+          1: { halign: "center", cellWidth: 18 }, // Tanggal
+          2: { halign: "left", cellWidth: 22 }, // Operator
+          3: { halign: "left", cellWidth: 28 }, // Jenis Pekerjaan
+          4: { halign: "center", cellWidth: 16 }, // Time Start
+          5: { halign: "center", cellWidth: 16 }, // Time Finish
+          6: { halign: "right", cellWidth: 18 }, // QTY OK
+          7: { halign: "right", cellWidth: 18 }, // QTY NG
+          8: { halign: "right", cellWidth: 18 }, // Total QTY
+          9: { halign: "left", cellWidth: 22 }, // No. SPK
+          10: { halign: "left", cellWidth: 25 }, // Keterangan
         },
         alternateRowStyles: {
           fillColor: [248, 249, 250],
