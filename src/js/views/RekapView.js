@@ -1,6 +1,7 @@
 // Import jsPDF for PDF generation
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import { AccessControl } from "../utils/AccessControl.js";
 
 export class RekapView {
   constructor() {
@@ -1434,6 +1435,11 @@ export class RekapView {
 
     // Attach event listeners after table is rendered
     this.attachEventListeners();
+
+    // Apply access control to hide edit/delete buttons for operators
+    setTimeout(() => {
+      AccessControl.applyTableAccessControl(this.tableContainer);
+    }, 100);
   }
 
   createDownloadButton(tipe) {
@@ -1479,6 +1485,11 @@ export class RekapView {
 
     // Add event listener for edit, save, cancel and delete buttons
     this.handleTableClick = (e) => {
+      // Check access control first
+      if (!AccessControl.preventOperatorActions(e)) {
+        return;
+      }
+
       if (e.target.closest(".edit-btn")) {
         const btn = e.target.closest(".edit-btn");
         const id = btn.dataset.id;

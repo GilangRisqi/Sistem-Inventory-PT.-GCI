@@ -39,6 +39,9 @@ import { RekapPresenter } from "./presenters/RekapPresenter.js";
 // Import Database
 import * as db from "./db.js";
 
+// Import Utils
+import { AccessControl } from "./utils/AccessControl.js";
+
 class App {
   constructor() {
     // App initialization
@@ -54,10 +57,18 @@ class App {
   }
 
   bindEvents() {
-    document.addEventListener("loginSuccess", () => {
+    document.addEventListener("loginSuccess", (event) => {
       try {
+        const userRole = event.detail?.role;
+        console.log(`App: Login success for role: ${userRole}`);
+
         this.navigationPresenter.showPage("dashboard");
         this.navigationPresenter.showDefaultSection();
+
+        // Initialize access control after login
+        setTimeout(() => {
+          AccessControl.init();
+        }, 500);
       } catch (error) {
         console.error("App: Error during dashboard redirect:", error);
       }
