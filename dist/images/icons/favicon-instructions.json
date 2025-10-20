@@ -1,0 +1,10 @@
+{
+  "message": "Create favicon.ico for browser tab icon",
+  "steps": [
+    "1. Go to https://favicon.io/favicon-converter/",
+    "2. Upload the icon.svg file",
+    "3. Download the favicon.ico",
+    "4. Place it in src/images/icons/ folder",
+    "5. Add to HTML: <link rel='icon' href='images/icons/favicon.ico'>"
+  ]
+}

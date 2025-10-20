@@ -135,7 +135,28 @@ export class BahanBakuPresenter {
       const { sectionId, category, type, date } = event.detail;
       console.log(`Handling get-next-number request for ${sectionId}`);
       try {
-        const nextNumber = await this.model.getNextNumber(category, type, date);
+        let nextNumber = 1; // Default
+
+        // Use the new specific methods instead of the old getNextNumber
+        if (category === "banner" && type === "in") {
+          nextNumber = await this.model.getNextBannerInNumber(date);
+        } else if (category === "banner" && type === "out") {
+          nextNumber = await this.model.getNextBannerOutNumber(date);
+        } else if (category === "digital" && type === "in") {
+          nextNumber = await this.model.getNextDigitalInNumber(date);
+        } else if (category === "digital" && type === "out") {
+          nextNumber = await this.model.getNextDigitalOutNumber(date);
+        } else if (category === "produksi" && type === "in") {
+          nextNumber = await this.model.getNextProduksiInNumber(date);
+        } else if (category === "produksi" && type === "out") {
+          nextNumber = await this.model.getNextProduksiOutNumber(date);
+        } else {
+          console.warn(
+            `Unknown category/type combination: ${category}/${type}`
+          );
+          nextNumber = 1;
+        }
+
         console.log(`Next number for ${sectionId}: ${nextNumber}`);
         await this.view.updateAutoNumber(sectionId, nextNumber);
       } catch (error) {
@@ -154,12 +175,27 @@ export class BahanBakuPresenter {
         const [type, category] = sectionId.split("-");
         const currentDate = new Date().toISOString().split("T")[0];
 
-        // Get and update auto number
-        const nextNumber = await this.model.getNextNumber(
-          category,
-          type,
-          currentDate
-        );
+        let nextNumber = 1; // Default
+
+        // Use the new specific methods instead of the old getNextNumber
+        if (category === "banner" && type === "in") {
+          nextNumber = await this.model.getNextBannerInNumber(currentDate);
+        } else if (category === "banner" && type === "out") {
+          nextNumber = await this.model.getNextBannerOutNumber(currentDate);
+        } else if (category === "digital" && type === "in") {
+          nextNumber = await this.model.getNextDigitalInNumber(currentDate);
+        } else if (category === "digital" && type === "out") {
+          nextNumber = await this.model.getNextDigitalOutNumber(currentDate);
+        } else if (category === "produksi" && type === "in") {
+          nextNumber = await this.model.getNextProduksiInNumber(currentDate);
+        } else if (category === "produksi" && type === "out") {
+          nextNumber = await this.model.getNextProduksiOutNumber(currentDate);
+        } else {
+          console.warn(
+            `Unknown category/type combination: ${category}/${type}`
+          );
+        }
+
         await this.view.updateAutoNumber(sectionId, nextNumber);
 
         console.log(`✅ Auto number updated for ${sectionId}: ${nextNumber}`);
@@ -407,44 +443,92 @@ Check console for detailed information.`);
         throw new Error("Data tidak valid");
       }
 
-      // Get next auto number before saving
-      const nextNumber = await this.model.getNextNumber(
-        category,
-        "in",
-        formData.data.tanggal
-      );
+      // Special handling untuk semua kategori - save ke Supabase
+      if (category === "banner") {
+        console.log("💾 Saving Banner In to Supabase...");
 
-      // Override nomor with auto-generated number
-      formData.data.nomor = nextNumber;
+        // Get next number khusus untuk Banner In dari Supabase (sama seperti DailyReport)
+        const bannerInNumber = await this.model.getNextBannerInNumber(
+          formData.data.tanggal
+        );
+        formData.data.nomor = bannerInNumber;
 
-      // Tambahkan timestamp
-      formData.data.timestamp = new Date().toISOString();
+        // Save to Supabase banner_in_stock table
+        const result = await this.model.saveBannerInStockToSupabase(
+          formData.data
+        );
+        console.log("✅ Banner In saved to Supabase:", result);
 
-      // Simpan data
-      const savedId = await this.model.addStock(category, formData);
+        // Refresh display langsung dari Supabase
+        await this.loadBannerInStockData();
 
-      // Berikan delay untuk memastikan data tersimpan di IndexedDB
-      await new Promise((resolve) => setTimeout(resolve, 100));
+        // Reset form dan tampilkan pesan sukses
+        this.view.resetForm(category, "in");
+        await this.view.initializeAutoNumbers();
 
-      // Refresh stock display terlebih dahulu
-      await this._refreshStockDisplay(category);
+        this.view.showSuccess(
+          `Banner In berhasil disimpan dengan nomor ${bannerInNumber}!`
+        );
 
-      // Reset form dan tampilkan pesan sukses setelah refresh selesai
-      this.view.resetForm(category, "in");
+        return true;
+      } else if (category === "digital") {
+        console.log("💾 Saving Digital In to Supabase...");
 
-      // Re-initialize auto numbers after reset
-      await this.view.initializeAutoNumbers();
+        // Get next number khusus untuk Digital In dari Supabase (sama seperti DailyReport)
+        const digitalInNumber = await this.model.getNextDigitalInNumber(
+          formData.data.tanggal
+        );
+        formData.data.nomor = digitalInNumber;
 
-      this.view.showSuccess(
-        `Input ${category} berhasil disimpan dengan nomor ${nextNumber}!`
-      );
+        // Save to Supabase digital_in_stock table
+        const result = await this.model.saveDigitalInStockToSupabase(
+          formData.data
+        );
+        console.log("✅ Digital In saved to Supabase:", result);
 
-      // Schedule additional refresh untuk memastikan data ter-update
-      setTimeout(async () => {
-        await this._refreshStockDisplay(category);
-      }, 1000);
+        // Refresh display langsung dari Supabase
+        await this.loadDigitalInStockData();
 
-      return true; // Menandakan bahwa penyimpanan berhasil
+        // Reset form dan tampilkan pesan sukses
+        this.view.resetForm(category, "in");
+        await this.view.initializeAutoNumbers();
+
+        this.view.showSuccess(
+          `Digital In berhasil disimpan dengan nomor ${digitalInNumber}!`
+        );
+
+        return true;
+      } else if (category === "produksi") {
+        console.log("💾 Saving Produksi In to Supabase...");
+
+        // Get next number khusus untuk Produksi In dari Supabase (sama seperti DailyReport)
+        const produksiInNumber = await this.model.getNextProduksiInNumber(
+          formData.data.tanggal
+        );
+        formData.data.nomor = produksiInNumber;
+
+        // Save to Supabase produksi_in_stock table
+        const result = await this.model.saveProduksiInStockToSupabase(
+          formData.data
+        );
+        console.log("✅ Produksi In saved to Supabase:", result);
+
+        // Refresh display langsung dari Supabase
+        await this.loadProduksiInStockData();
+
+        // Reset form dan tampilkan pesan sukses
+        this.view.resetForm(category, "in");
+        await this.view.initializeAutoNumbers();
+
+        this.view.showSuccess(
+          `Produksi In berhasil disimpan dengan nomor ${produksiInNumber}!`
+        );
+
+        return true;
+      }
+
+      // Fallback untuk kategori lain (tidak seharusnya tercapai)
+      throw new Error(`Kategori ${category} tidak didukung untuk In Submit`);
     } catch (error) {
       console.error("Error in handleInSubmit:", error);
       this.view.showError(`Gagal menyimpan data: ${error.message}`);
@@ -472,48 +556,92 @@ Check console for detailed information.`);
 
   async handleOutSubmit(category, formData) {
     try {
-      // Get next auto number before saving
-      const nextNumber = await this.model.getNextNumber(
-        category,
-        "out",
-        formData.data.tanggal
-      );
+      // Special handling untuk semua kategori Out - save ke Supabase
+      if (category === "banner") {
+        console.log("💾 Saving Banner Out to Supabase...");
 
-      // Override nomor with auto-generated number
-      formData.data.nomor = nextNumber;
+        // Get next number khusus untuk Banner Out dari Supabase (sama seperti DailyReport)
+        const bannerOutNumber = await this.model.getNextBannerOutNumber(
+          formData.data.tanggal
+        );
+        formData.data.nomor = bannerOutNumber;
 
-      // Simpan data
-      await this.model.reduceStock(category, formData.data);
+        // Save to Supabase banner_out_stock table
+        const result = await this.model.saveBannerOutStockToSupabase(
+          formData.data
+        );
+        console.log("✅ Banner Out saved to Supabase:", result);
 
-      // Reset form dan tampilkan pesan sukses
-      this.view.resetForm(category, "out");
+        // Refresh display langsung dari Supabase
+        await this.loadBannerOutStockData();
 
-      // Re-initialize auto numbers after reset
-      await this.view.initializeAutoNumbers();
+        // Reset form dan tampilkan pesan sukses
+        this.view.resetForm(category, "out");
+        await this.view.initializeAutoNumbers();
 
-      this.view.showSuccess(
-        `Output ${category} berhasil disimpan dengan nomor ${nextNumber}!`
-      );
+        this.view.showSuccess(
+          `Banner Out berhasil disimpan dengan nomor ${bannerOutNumber}!`
+        );
 
-      // Refresh stock display dengan delay kecil
-      setTimeout(async () => {
-        try {
-          if (category === "banner") {
-            await this.loadBannerInStockData();
-            await this.loadBannerOutStockData();
-          } else if (category === "digital") {
-            await this.loadDigitalInStockData();
-            await this.loadDigitalOutStockData();
-          } else if (category === "produksi") {
-            await this.loadProduksiInStockData();
-            await this.loadProduksiOutStockData();
-          }
-        } catch (error) {
-          console.error(`Error refreshing ${category} display:`, error);
-        }
-      }, 500); // Increased delay to ensure data is stored
+        return true;
+      } else if (category === "digital") {
+        console.log("💾 Saving Digital Out to Supabase...");
 
-      return true; // Menandakan bahwa penyimpanan berhasil
+        // Get next number khusus untuk Digital Out dari Supabase (sama seperti DailyReport)
+        const digitalOutNumber = await this.model.getNextDigitalOutNumber(
+          formData.data.tanggal
+        );
+        formData.data.nomor = digitalOutNumber;
+
+        // Save to Supabase digital_out_stock table
+        const result = await this.model.saveDigitalOutStockToSupabase(
+          formData.data
+        );
+        console.log("✅ Digital Out saved to Supabase:", result);
+
+        // Refresh display langsung dari Supabase
+        await this.loadDigitalOutStockData();
+
+        // Reset form dan tampilkan pesan sukses
+        this.view.resetForm(category, "out");
+        await this.view.initializeAutoNumbers();
+
+        this.view.showSuccess(
+          `Digital Out berhasil disimpan dengan nomor ${digitalOutNumber}!`
+        );
+
+        return true;
+      } else if (category === "produksi") {
+        console.log("💾 Saving Produksi Out to Supabase...");
+
+        // Get next number khusus untuk Produksi Out dari Supabase (sama seperti DailyReport)
+        const produksiOutNumber = await this.model.getNextProduksiOutNumber(
+          formData.data.tanggal
+        );
+        formData.data.nomor = produksiOutNumber;
+
+        // Save to Supabase produksi_out_stock table
+        const result = await this.model.saveProduksiOutStockToSupabase(
+          formData.data
+        );
+        console.log("✅ Produksi Out saved to Supabase:", result);
+
+        // Refresh display langsung dari Supabase
+        await this.loadProduksiOutStockData();
+
+        // Reset form dan tampilkan pesan sukses
+        this.view.resetForm(category, "out");
+        await this.view.initializeAutoNumbers();
+
+        this.view.showSuccess(
+          `Produksi Out berhasil disimpan dengan nomor ${produksiOutNumber}!`
+        );
+
+        return true;
+      }
+
+      // Fallback untuk kategori lain (tidak seharusnya tercapai)
+      throw new Error(`Kategori ${category} tidak didukung untuk Out Submit`);
     } catch (error) {
       console.error("Error in handleOutSubmit:", error);
       this.view.showError(error.message);
@@ -640,11 +768,32 @@ Check console for detailed information.`);
       });
 
       // Update data in appropriate store based on type
-      if (type === "banner-in" || type === "digital-in") {
-        // Banner In and Digital In use stock store
-        await this.model.updateStockRecord(id, data);
+      if (type === "banner-in") {
+        // Banner In - update di Supabase
+        await this.model.updateBannerInStockInSupabase(id, data);
+        console.log("✅ Banner In updated in Supabase");
+      } else if (type === "banner-out") {
+        // Banner Out - update di Supabase
+        await this.model.updateBannerOutStockInSupabase(id, data);
+        console.log("✅ Banner Out updated in Supabase");
+      } else if (type === "digital-in") {
+        // Digital In - update di Supabase
+        await this.model.updateDigitalInStockInSupabase(id, data);
+        console.log("✅ Digital In updated in Supabase");
+      } else if (type === "digital-out") {
+        // Digital Out - update di Supabase
+        await this.model.updateDigitalOutStockInSupabase(id, data);
+        console.log("✅ Digital Out updated in Supabase");
+      } else if (type === "produksi-in") {
+        // Produksi In - update di Supabase
+        await this.model.updateProduksiInStockInSupabase(id, data);
+        console.log("✅ Produksi In updated in Supabase");
+      } else if (type === "produksi-out") {
+        // Produksi Out - update di Supabase
+        await this.model.updateProduksiOutStockInSupabase(id, data);
+        console.log("✅ Produksi Out updated in Supabase");
       } else if (
-        type === "banner-out" ||
+        false || // Disable old logic
         type === "digital-out" ||
         type === "produksi-in" ||
         type === "produksi-out"
@@ -692,27 +841,27 @@ Check console for detailed information.`);
     try {
       console.log("🗑️ Deleting Banner In:", id);
 
-      // Delete from stock store (Banner In uses stock data)
-      await this.model.deleteStockRecord(id);
+      // Delete from Supabase banner_in_stock table
+      await this.model.deleteBannerInStockFromSupabase(id);
       this.view.showSuccess("Data Banner In berhasil dihapus!");
       await this.loadBannerInStockData();
-      console.log("✅ Banner In deleted and display refreshed");
+      console.log("✅ Banner In deleted from Supabase and display refreshed");
     } catch (error) {
       console.error("❌ Error deleting Banner In:", error);
       this.view.showError("Gagal menghapus data Banner In");
     }
   }
 
-  // Handler untuk delete Banner Out - simplified like RekapPresenter
+  // Handler untuk delete Banner Out - updated untuk Supabase
   async handleBannerOutDelete(id) {
     try {
       console.log("🗑️ Deleting Banner Out:", id);
 
-      // Simple delete like in rekap laporan
-      await this.model.deleteTransactionRecord(id);
+      // Delete from Supabase banner_out_stock table
+      await this.model.deleteBannerOutStockFromSupabase(id);
       this.view.showSuccess("Data Banner Out berhasil dihapus!");
       await this.loadBannerOutStockData();
-      console.log("✅ Banner Out deleted and display refreshed");
+      console.log("✅ Banner Out deleted from Supabase and display refreshed");
     } catch (error) {
       console.error("❌ Error deleting Banner Out:", error);
       this.view.showError("Gagal menghapus data Banner Out");
@@ -747,35 +896,69 @@ Check console for detailed information.`);
     }
   }
 
-  // Handler untuk delete Digital In
+  // Handler untuk delete Digital In - updated untuk Supabase
   async handleDigitalInDelete(id) {
     try {
       console.log("🗑️ Deleting Digital In:", id);
 
-      // Digital In uses stock store like Banner In
-      await this.model.deleteStockRecord(id);
+      // Delete from Supabase digital_in_stock table
+      await this.model.deleteDigitalInStockFromSupabase(id);
       this.view.showSuccess("Data Digital In berhasil dihapus!");
       await this.loadDigitalInStockData();
-      console.log("✅ Digital In deleted and display refreshed");
+      console.log("✅ Digital In deleted from Supabase and display refreshed");
     } catch (error) {
       console.error("❌ Error deleting Digital In:", error);
       this.view.showError("Gagal menghapus data Digital In");
     }
   }
 
-  // Handler untuk delete Digital Out
+  // Handler untuk delete Digital Out - updated untuk Supabase
   async handleDigitalOutDelete(id) {
     try {
       console.log("🗑️ Deleting Digital Out:", id);
 
-      // Digital Out uses transactions store like Banner Out
-      await this.model.deleteTransactionRecord(id);
+      // Delete from Supabase digital_out_stock table
+      await this.model.deleteDigitalOutStockFromSupabase(id);
       this.view.showSuccess("Data Digital Out berhasil dihapus!");
       await this.loadDigitalOutStockData();
-      console.log("✅ Digital Out deleted and display refreshed");
+      console.log("✅ Digital Out deleted from Supabase and display refreshed");
     } catch (error) {
       console.error("❌ Error deleting Digital Out:", error);
       this.view.showError("Gagal menghapus data Digital Out");
+    }
+  }
+
+  // Handler untuk delete Produksi In - tambahan baru
+  async handleProduksiInDelete(id) {
+    try {
+      console.log("🗑️ Deleting Produksi In:", id);
+
+      // Delete from Supabase produksi_in_stock table
+      await this.model.deleteProduksiInStockFromSupabase(id);
+      this.view.showSuccess("Data Produksi In berhasil dihapus!");
+      await this.loadProduksiInStockData();
+      console.log("✅ Produksi In deleted from Supabase and display refreshed");
+    } catch (error) {
+      console.error("❌ Error deleting Produksi In:", error);
+      this.view.showError("Gagal menghapus data Produksi In");
+    }
+  }
+
+  // Handler untuk delete Produksi Out - tambahan baru
+  async handleProduksiOutDelete(id) {
+    try {
+      console.log("🗑️ Deleting Produksi Out:", id);
+
+      // Delete from Supabase produksi_out_stock table
+      await this.model.deleteProduksiOutStockFromSupabase(id);
+      this.view.showSuccess("Data Produksi Out berhasil dihapus!");
+      await this.loadProduksiOutStockData();
+      console.log(
+        "✅ Produksi Out deleted from Supabase and display refreshed"
+      );
+    } catch (error) {
+      console.error("❌ Error deleting Produksi Out:", error);
+      this.view.showError("Gagal menghapus data Produksi Out");
     }
   }
 

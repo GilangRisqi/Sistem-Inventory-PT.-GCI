@@ -3,12 +3,28 @@ class LipatReportView {
     this.form = document.getElementById("lipat-report-form");
     this.section = document.getElementById("lipat-report-section");
 
+    console.log("🚀 LipatReportView constructor - form found:", !!this.form);
+
     if (this.form) {
       this.initializeEventListeners();
 
       // Auto-generate nomor when form loads (like banner forms)
       this.initializeAutoNumber();
+    } else {
+      console.warn("⚠️ LipatReportView: Form not found during construction");
     }
+
+    // Listen for section activation to refresh auto numbering
+    document.addEventListener("section-activated", (event) => {
+      if (event.detail.sectionId === "lipat-report") {
+        console.log(
+          "🎯 LipatReportView: Section activated, refreshing auto number"
+        );
+        setTimeout(() => {
+          this.initializeAutoNumber();
+        }, 100);
+      }
+    });
   }
 
   initializeEventListeners() {
@@ -52,11 +68,22 @@ class LipatReportView {
   // Get form data
   getFormData() {
     const formData = new FormData(this.form);
-    const data = {};
-
-    for (let [key, value] of formData.entries()) {
-      data[key] = value;
-    }
+    const data = {
+      nomor: Number(formData.get("nomor")),
+      tanggal: formData.get("tanggal"),
+      operator: formData.get("operator"),
+      jenisPekerjaan: formData.get("jenisPekerjaan"),
+      client: formData.get("client"),
+      produk: formData.get("produk"),
+      terimaDari: formData.get("terimaDari"),
+      timeStart: formData.get("timeStart"),
+      timeFinish: formData.get("timeFinish"),
+      qtyOk: Number(formData.get("qtyOk")),
+      qtyNg: Number(formData.get("qtyNg")),
+      satuan: formData.get("satuan"),
+      prosesSelanjutnya: formData.get("prosesSelanjutnya"),
+      keterangan: formData.get("keterangan"),
+    };
 
     return data;
   }
@@ -324,6 +351,12 @@ class LipatReportView {
   // Show error message
   showError(message) {
     alert("Error: " + message);
+  }
+
+  // Public method to trigger auto numbering from outside
+  refreshAutoNumber() {
+    console.log("🔄 LipatReportView: Manual refresh auto number triggered");
+    this.initializeAutoNumber();
   }
 }
 

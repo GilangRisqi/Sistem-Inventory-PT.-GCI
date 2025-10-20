@@ -1,19 +1,32 @@
 {
-  "name": "projectkp",
-  "version": "1.0.0",
-  "description": "Sistem Manajemen Percetakan PWA",
+  "name": "sistem-inventory-gci",
+  "version": "2.0.0",
+  "description": "Progressive Web App - Sistem Inventory dan Daily Report PT. Grand Central Indonesia",
   "main": "src/js/app.js",
+  "homepage": "https://yourdomain.com",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack --mode production",
     "build:dev": "webpack --mode development",
-    "start": "webpack serve --open",
-    "watch": "webpack --watch",
-    "dev": "webpack serve --mode development --open"
+    "start": "cross-env NODE_ENV=development webpack serve --open --https",
+    "start:clean": "node webpack.dev-helper.js && cross-env NODE_ENV=development webpack serve --open --https",
+    "serve": "webpack serve --mode production --https",
+    "watch": "cross-env WEBPACK_WATCH=true webpack --watch",
+    "dev": "cross-env NODE_ENV=development webpack serve --mode development --open --https",
+    "analyze": "webpack-bundle-analyzer dist/static/js/*.js",
+    "lighthouse": "lighthouse http://localhost:8080 --output html --output-path ./lighthouse-report.html"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "pwa",
+    "progressive-web-app",
+    "inventory-system",
+    "daily-report",
+    "offline-first",
+    "service-worker",
+    "workbox"
+  ],
+  "author": "PT. Grand Central Indonesia",
+  "license": "MIT",
   "devDependencies": {
     "@babel/core": "^7.28.4",
     "@babel/plugin-proposal-class-properties": "^7.18.6",
@@ -26,20 +39,35 @@
     "babel-loader": "^10.0.0",
     "copy-webpack-plugin": "^11.0.0",
     "core-js": "^3.45.1",
+    "cross-env": "^10.1.0",
     "css-loader": "^6.8.1",
     "html-webpack-plugin": "^5.5.3",
     "idb": "^8.0.3",
+    "lighthouse": "^11.7.1",
     "style-loader": "^3.3.3",
     "webpack": "^5.89.0",
+    "webpack-bundle-analyzer": "^4.10.2",
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^4.15.1",
+    "webpack-pwa-manifest": "^4.3.0",
     "workbox-webpack-plugin": "^7.3.0",
     "workbox-window": "^7.3.0"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.75.1",
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
     "jspdf": "^3.0.3",
     "jspdf-autotable": "^5.0.2"
-  }
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead",
+    "not ie 11"
+  ]
 }

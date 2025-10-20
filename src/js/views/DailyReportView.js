@@ -63,6 +63,7 @@ export class DailyReportView {
         qtyPo: Number(formData.get("qty-po")),
         satuan: formData.get("satuan"),
         jenisBahan: formData.get("jenis-bahan"),
+        jenisPrint: formData.get("jenis-print"),
         jenisPekerjaan: formData.get("jenis-pekerjaan"),
         client: formData.get("client"),
         spesifikasi: formData.get("spesifikasi"),

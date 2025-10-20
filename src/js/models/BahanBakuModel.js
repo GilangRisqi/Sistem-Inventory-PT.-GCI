@@ -1,4 +1,6 @@
-import * as db from "../db.js";
+import { dbService } from "../services/SupabaseService.js";
+import { TABLES } from "../config/supabase.js";
+import * as db from "../db.js"; // Keep for backward compatibility
 
 export class BahanBakuModel {
   constructor() {
@@ -6,15 +8,75 @@ export class BahanBakuModel {
       stock: db.DB_STORES.bahanBakuStock,
       transactions: db.DB_STORES.bahanBakuTransactions,
     };
+    this.useSupabase = true; // Toggle to enable/disable Supabase
   }
 
   async getCurrentBannerStock() {
-    const data = await this.getCurrentStock("banner");
-    return data;
+    try {
+      if (this.useSupabase) {
+        console.log("🔄 Loading Banner In from Supabase...");
+        const supabaseData = await this.getBannerInStockFromSupabase();
+
+        if (supabaseData.length > 0) {
+          // Transform dari snake_case ke camelCase untuk UI
+          const transformedData = supabaseData.map((item) => ({
+            id: item.id,
+            nomor: item.nomor,
+            jenisKertas: item.jenis_kertas,
+            ukuran: item.ukuran,
+            qtyLastMonth: item.qty_last_month,
+            jumlahMasuk: item.jumlah_kertas_masuk, // Sesuai field di database
+            total: item.total, // calculated field dari database
+            tanggal: item.tanggal,
+            timestamp: item.created_at, // for compatibility
+            createdAt: item.created_at,
+            updatedAt: item.updated_at,
+          }));
+          console.log("✅ Transformed Banner In data:", transformedData);
+          return transformedData;
+        }
+      }
+
+      // Fallback ke IndexedDB jika Supabase kosong atau error
+      console.log("📦 Fallback to IndexedDB for Banner In...");
+      const data = await this.getCurrentStock("banner");
+      return data;
+    } catch (error) {
+      console.error("Error in getCurrentBannerStock:", error);
+      // Fallback ke IndexedDB jika ada error
+      return await this.getCurrentStock("banner");
+    }
   }
 
   async getCurrentBannerOutStock() {
     try {
+      if (this.useSupabase) {
+        console.log("🔄 Loading Banner Out from Supabase...");
+        const supabaseData = await this.getBannerOutStockFromSupabase();
+
+        if (supabaseData.length > 0) {
+          const transformedData = supabaseData.map((item) => ({
+            id: item.id,
+            nomor: item.nomor,
+            jenisKertas: item.jenis_kertas,
+            ukuran: item.ukuran,
+            totalMasuk: item.total_kertas_masuk,
+            totalKeluarOk: item.total_keluar_ok,
+            totalKeluarNg: item.total_keluar_ng,
+            totalKeluar: item.total_keluar, // calculated field
+            sisaStock: item.sisa_stock, // calculated field
+            tanggal: item.tanggal,
+            timestamp: item.created_at,
+            createdAt: item.created_at,
+            updatedAt: item.updated_at,
+          }));
+          console.log("✅ Transformed Banner Out data:", transformedData);
+          return transformedData;
+        }
+      }
+
+      // Fallback ke IndexedDB
+      console.log("📦 Fallback to IndexedDB for Banner Out...");
       console.log("=== getCurrentBannerOutStock called ===");
 
       // Force refresh DB connection to ensure fresh data after delete
@@ -130,27 +192,84 @@ export class BahanBakuModel {
   }
 
   async getCurrentDigitalStock() {
-    console.log("=== getCurrentDigitalStock called ===");
+    try {
+      if (this.useSupabase) {
+        console.log("🔄 Loading Digital In from Supabase...");
+        const supabaseData = await this.getDigitalInStockFromSupabase();
 
-    // Debug: Check all records in stock store
-    const allStockRecords = await db.getRecords(this.storeNames.stock);
-    console.log("🗃️ All stock records in database:", allStockRecords.length);
-    console.log("📋 All stock records:", allStockRecords);
+        if (supabaseData.length > 0) {
+          const transformedData = supabaseData.map((item) => ({
+            id: item.id,
+            nomor: item.nomor,
+            jenisKertas: item.jenis_kertas,
+            ukuran: item.ukuran,
+            qtyLastMonth: item.qty_last_month,
+            jumlahMasuk: item.jumlah_kertas_masuk,
+            total: item.total, // calculated field
+            tanggal: item.tanggal,
+            timestamp: item.created_at,
+            createdAt: item.created_at,
+            updatedAt: item.updated_at,
+          }));
+          console.log("✅ Transformed Digital In data:", transformedData);
+          return transformedData;
+        }
+      }
 
-    // Check specifically for digital records
-    const digitalRecords = allStockRecords.filter(
-      (record) => record.category === "digital"
-    );
-    console.log("📊 Digital records found:", digitalRecords.length);
-    console.log("🔍 Digital records details:", digitalRecords);
+      // Fallback ke IndexedDB
+      console.log("📦 Fallback to IndexedDB for Digital In...");
+      console.log("=== getCurrentDigitalStock called ===");
 
-    const data = await this.getCurrentStock("digital");
-    console.log("✅ getCurrentStock result:", data);
-    return data;
+      // Debug: Check all records in stock store
+      const allStockRecords = await db.getRecords(this.storeNames.stock);
+      console.log("🗃️ All stock records in database:", allStockRecords.length);
+      console.log("📋 All stock records:", allStockRecords);
+
+      // Check specifically for digital records
+      const digitalRecords = allStockRecords.filter(
+        (record) => record.category === "digital"
+      );
+      console.log("📊 Digital records found:", digitalRecords.length);
+      console.log("🔍 Digital records details:", digitalRecords);
+
+      const data = await this.getCurrentStock("digital");
+      console.log("✅ getCurrentStock result:", data);
+      return data;
+    } catch (error) {
+      console.error("Error in getCurrentDigitalStock:", error);
+      return await this.getCurrentStock("digital");
+    }
   }
 
   async getCurrentDigitalOutStock() {
     try {
+      if (this.useSupabase) {
+        console.log("🔄 Loading Digital Out from Supabase...");
+        const supabaseData = await this.getDigitalOutStockFromSupabase();
+
+        if (supabaseData.length > 0) {
+          const transformedData = supabaseData.map((item) => ({
+            id: item.id,
+            nomor: item.nomor,
+            jenisKertas: item.jenis_kertas,
+            ukuran: item.ukuran,
+            totalMasuk: item.total_kertas_masuk,
+            totalKeluarOk: item.total_keluar_ok,
+            totalKeluarNg: item.total_keluar_ng,
+            totalKeluar: item.total_keluar, // calculated field
+            sisaStock: item.sisa_stock, // calculated field
+            tanggal: item.tanggal,
+            timestamp: item.created_at,
+            createdAt: item.created_at,
+            updatedAt: item.updated_at,
+          }));
+          console.log("✅ Transformed Digital Out data:", transformedData);
+          return transformedData;
+        }
+      }
+
+      // Fallback ke IndexedDB
+      console.log("📦 Fallback to IndexedDB for Digital Out...");
       console.log("=== getCurrentDigitalOutStock called ===");
 
       // Force refresh DB connection to ensure fresh data after delete
@@ -210,6 +329,32 @@ export class BahanBakuModel {
 
   async getCurrentProduksiStock() {
     try {
+      if (this.useSupabase) {
+        console.log("🔄 Loading Produksi In from Supabase...");
+        const supabaseData = await this.getProduksiInStockFromSupabase();
+
+        if (supabaseData.length > 0) {
+          const transformedData = supabaseData.map((item) => ({
+            id: item.id,
+            nomor: item.nomor,
+            jenisKertas: item.jenis_kertas,
+            ukuran: item.ukuran,
+            qtyLastMonth: item.qty_last_month,
+            jumlahMasuk: item.jumlah_kertas_masuk,
+            total: item.total, // calculated field
+            tanggal: item.tanggal,
+            remark: item.remark, // Produksi In punya field remark
+            timestamp: item.created_at,
+            createdAt: item.created_at,
+            updatedAt: item.updated_at,
+          }));
+          console.log("✅ Transformed Produksi In data:", transformedData);
+          return transformedData;
+        }
+      }
+
+      // Fallback ke IndexedDB
+      console.log("📦 Fallback to IndexedDB for Produksi In...");
       await db.openDB();
       const records = await db.getRecords(this.storeNames.transactions);
       console.log("🔍 All transaction records for Produksi In:", records);
@@ -248,11 +393,38 @@ export class BahanBakuModel {
 
   async getCurrentProduksiOutStock() {
     try {
+      if (this.useSupabase) {
+        console.log("🔄 Loading Produksi Out from Supabase...");
+        const supabaseData = await this.getProduksiOutStockFromSupabase();
+
+        if (supabaseData.length > 0) {
+          const transformedData = supabaseData.map((item) => ({
+            id: item.id,
+            nomor: item.nomor,
+            jenisKertas: item.jenis_kertas,
+            ukuran: item.ukuran,
+            totalMasuk: item.total_kertas_masuk,
+            totalKeluarOk: item.total_keluar_ok,
+            totalKeluarNg: item.total_keluar_ng,
+            totalKeluar: item.total_keluar, // calculated field
+            sisaStock: item.sisa_stock, // calculated field
+            tanggal: item.tanggal,
+            timestamp: item.created_at,
+            createdAt: item.created_at,
+            updatedAt: item.updated_at,
+          }));
+          console.log("✅ Transformed Produksi Out data:", transformedData);
+          return transformedData;
+        }
+      }
+
+      // Fallback ke IndexedDB
+      console.log("📦 Fallback to IndexedDB for Produksi Out...");
       await db.openDB();
       const records = await db.getRecords(this.storeNames.transactions);
       console.log("🔍 All transaction records:", records);
 
-      // Filter untuk kategori produksi dan type out (handle both old and new format)
+      // Filter untuk kategori produksi dan type out (handle both old dan new format)
       const produksiOutRecords = records.filter(
         (record) =>
           record &&
@@ -1207,6 +1379,889 @@ export class BahanBakuModel {
     } catch (error) {
       console.error("Error testing gap filling:", error);
       return null;
+    }
+  }
+
+  // ===== SUPABASE METHODS =====
+
+  // Methods untuk Banner In Stock (Supabase)
+  async getBannerInStockFromSupabase() {
+    try {
+      const data = await dbService.read(TABLES.BANNER_IN_STOCK);
+      console.log("📊 Banner In data from Supabase:", data);
+      return data || [];
+    } catch (error) {
+      console.error("Error getting banner in stock from Supabase:", error);
+      return [];
+    }
+  }
+
+  async saveBannerInStockToSupabase(data) {
+    try {
+      // Transform data ke format Supabase sesuai struktur tabel yang ada
+      const supabaseData = {
+        nomor: data.nomor,
+        jenis_kertas: data.jenisKertas,
+        ukuran: data.ukuran,
+        qty_last_month: data.qtyLastMonth || 0,
+        jumlah_kertas_masuk: data.jumlahMasuk || 0, // Sesuai field di database
+        tanggal: data.tanggal,
+      };
+
+      console.log("💾 Saving to Supabase banner_in_stock:", supabaseData);
+      return await dbService.create(TABLES.BANNER_IN_STOCK, supabaseData);
+    } catch (error) {
+      console.error("Error saving banner in stock to Supabase:", error);
+      throw error;
+    }
+  }
+
+  async updateBannerInStockInSupabase(id, data) {
+    try {
+      const supabaseData = {
+        jenis_kertas: data.jenisKertas,
+        ukuran: data.ukuran,
+        qty_last_month: parseInt(data.qtyLastMonth) || 0,
+        jumlah_kertas_masuk: parseInt(data.jumlahMasuk) || 0, // Sesuai field di database
+        tanggal: data.tanggal,
+      };
+
+      console.log("🔄 Updating Supabase banner_in_stock:", {
+        id,
+        supabaseData,
+      });
+      return await dbService.update(TABLES.BANNER_IN_STOCK, id, supabaseData);
+    } catch (error) {
+      console.error("Error updating banner in stock in Supabase:", error);
+      throw error;
+    }
+  }
+
+  async deleteBannerInStockFromSupabase(id) {
+    try {
+      console.log("🗑️ Deleting from Supabase banner_in_stock:", id);
+      return await dbService.delete(TABLES.BANNER_IN_STOCK, id);
+    } catch (error) {
+      console.error("Error deleting banner in stock from Supabase:", error);
+      throw error;
+    }
+  }
+
+  // ===== BANNER OUT STOCK METHODS =====
+  async getBannerOutStockFromSupabase() {
+    try {
+      const data = await dbService.read(TABLES.BANNER_OUT_STOCK);
+      console.log("📊 Banner Out data from Supabase:", data);
+      return data || [];
+    } catch (error) {
+      console.error("Error getting banner out stock from Supabase:", error);
+      return [];
+    }
+  }
+
+  async saveBannerOutStockToSupabase(data) {
+    try {
+      const supabaseData = {
+        nomor: data.nomor,
+        jenis_kertas: data.jenisKertas,
+        ukuran: data.ukuran,
+        total_kertas_masuk: data.totalMasuk || 0,
+        total_keluar_ok: data.totalKeluarOk || 0,
+        total_keluar_ng: data.totalKeluarNg || 0,
+        tanggal: data.tanggal,
+      };
+
+      console.log("💾 Saving to Supabase banner_out_stock:", supabaseData);
+      return await dbService.create(TABLES.BANNER_OUT_STOCK, supabaseData);
+    } catch (error) {
+      console.error("Error saving banner out stock to Supabase:", error);
+      throw error;
+    }
+  }
+
+  async updateBannerOutStockInSupabase(id, data) {
+    try {
+      const supabaseData = {
+        jenis_kertas: data.jenisKertas,
+        ukuran: data.ukuran,
+        total_kertas_masuk: parseInt(data.totalMasuk) || 0,
+        total_keluar_ok: parseInt(data.totalKeluarOk) || 0,
+        total_keluar_ng: parseInt(data.totalKeluarNg) || 0,
+        tanggal: data.tanggal,
+      };
+
+      console.log("🔄 Updating Supabase banner_out_stock:", {
+        id,
+        supabaseData,
+      });
+      return await dbService.update(TABLES.BANNER_OUT_STOCK, id, supabaseData);
+    } catch (error) {
+      console.error("Error updating banner out stock in Supabase:", error);
+      throw error;
+    }
+  }
+
+  async deleteBannerOutStockFromSupabase(id) {
+    try {
+      console.log("🗑️ Deleting from Supabase banner_out_stock:", id);
+      return await dbService.delete(TABLES.BANNER_OUT_STOCK, id);
+    } catch (error) {
+      console.error("Error deleting banner out stock from Supabase:", error);
+      throw error;
+    }
+  }
+
+  // ===== DIGITAL IN STOCK METHODS =====
+  async getDigitalInStockFromSupabase() {
+    try {
+      const data = await dbService.read(TABLES.DIGITAL_IN_STOCK);
+      console.log("📊 Digital In data from Supabase:", data);
+      return data || [];
+    } catch (error) {
+      console.error("Error getting digital in stock from Supabase:", error);
+      return [];
+    }
+  }
+
+  async saveDigitalInStockToSupabase(data) {
+    try {
+      const supabaseData = {
+        nomor: data.nomor,
+        jenis_kertas: data.jenisKertas,
+        ukuran: data.ukuran,
+        qty_last_month: data.qtyLastMonth || 0,
+        jumlah_kertas_masuk: data.jumlahMasuk || 0,
+        tanggal: data.tanggal,
+      };
+
+      console.log("💾 Saving to Supabase digital_in_stock:", supabaseData);
+      return await dbService.create(TABLES.DIGITAL_IN_STOCK, supabaseData);
+    } catch (error) {
+      console.error("Error saving digital in stock to Supabase:", error);
+      throw error;
+    }
+  }
+
+  async updateDigitalInStockInSupabase(id, data) {
+    try {
+      const supabaseData = {
+        jenis_kertas: data.jenisKertas,
+        ukuran: data.ukuran,
+        qty_last_month: parseInt(data.qtyLastMonth) || 0,
+        jumlah_kertas_masuk: parseInt(data.jumlahMasuk) || 0,
+        tanggal: data.tanggal,
+      };
+
+      console.log("🔄 Updating Supabase digital_in_stock:", {
+        id,
+        supabaseData,
+      });
+      return await dbService.update(TABLES.DIGITAL_IN_STOCK, id, supabaseData);
+    } catch (error) {
+      console.error("Error updating digital in stock in Supabase:", error);
+      throw error;
+    }
+  }
+
+  async deleteDigitalInStockFromSupabase(id) {
+    try {
+      console.log("🗑️ Deleting from Supabase digital_in_stock:", id);
+      return await dbService.delete(TABLES.DIGITAL_IN_STOCK, id);
+    } catch (error) {
+      console.error("Error deleting digital in stock from Supabase:", error);
+      throw error;
+    }
+  }
+
+  // ===== DIGITAL OUT STOCK METHODS =====
+  async getDigitalOutStockFromSupabase() {
+    try {
+      const data = await dbService.read(TABLES.DIGITAL_OUT_STOCK);
+      console.log("📊 Digital Out data from Supabase:", data);
+      return data || [];
+    } catch (error) {
+      console.error("Error getting digital out stock from Supabase:", error);
+      return [];
+    }
+  }
+
+  async saveDigitalOutStockToSupabase(data) {
+    try {
+      const supabaseData = {
+        nomor: data.nomor,
+        jenis_kertas: data.jenisKertas,
+        ukuran: data.ukuran,
+        total_kertas_masuk: data.totalMasuk || 0,
+        total_keluar_ok: data.totalKeluarOk || 0,
+        total_keluar_ng: data.totalKeluarNg || 0,
+        tanggal: data.tanggal,
+      };
+
+      console.log("💾 Saving to Supabase digital_out_stock:", supabaseData);
+      return await dbService.create(TABLES.DIGITAL_OUT_STOCK, supabaseData);
+    } catch (error) {
+      console.error("Error saving digital out stock to Supabase:", error);
+      throw error;
+    }
+  }
+
+  async updateDigitalOutStockInSupabase(id, data) {
+    try {
+      const supabaseData = {
+        jenis_kertas: data.jenisKertas,
+        ukuran: data.ukuran,
+        total_kertas_masuk: parseInt(data.totalMasuk) || 0,
+        total_keluar_ok: parseInt(data.totalKeluarOk) || 0,
+        total_keluar_ng: parseInt(data.totalKeluarNg) || 0,
+        tanggal: data.tanggal,
+      };
+
+      console.log("🔄 Updating Supabase digital_out_stock:", {
+        id,
+        supabaseData,
+      });
+      return await dbService.update(TABLES.DIGITAL_OUT_STOCK, id, supabaseData);
+    } catch (error) {
+      console.error("Error updating digital out stock in Supabase:", error);
+      throw error;
+    }
+  }
+
+  async deleteDigitalOutStockFromSupabase(id) {
+    try {
+      console.log("🗑️ Deleting from Supabase digital_out_stock:", id);
+      return await dbService.delete(TABLES.DIGITAL_OUT_STOCK, id);
+    } catch (error) {
+      console.error("Error deleting digital out stock from Supabase:", error);
+      throw error;
+    }
+  }
+
+  // ===== PRODUKSI IN STOCK METHODS =====
+  async getProduksiInStockFromSupabase() {
+    try {
+      const data = await dbService.read(TABLES.PRODUKSI_IN_STOCK);
+      console.log("📊 Produksi In data from Supabase:", data);
+      return data || [];
+    } catch (error) {
+      console.error("Error getting produksi in stock from Supabase:", error);
+      return [];
+    }
+  }
+
+  async saveProduksiInStockToSupabase(data) {
+    try {
+      const supabaseData = {
+        nomor: data.nomor,
+        jenis_kertas: data.jenisKertas,
+        ukuran: data.ukuran,
+        qty_last_month: data.qtyLastMonth || 0,
+        jumlah_kertas_masuk: data.jumlahMasuk || 0,
+        tanggal: data.tanggal,
+        remark: data.remark || null, // Produksi In punya field remark
+      };
+
+      console.log("💾 Saving to Supabase produksi_in_stock:", supabaseData);
+      return await dbService.create(TABLES.PRODUKSI_IN_STOCK, supabaseData);
+    } catch (error) {
+      console.error("Error saving produksi in stock to Supabase:", error);
+      throw error;
+    }
+  }
+
+  async updateProduksiInStockInSupabase(id, data) {
+    try {
+      const supabaseData = {
+        jenis_kertas: data.jenisKertas,
+        ukuran: data.ukuran,
+        qty_last_month: parseInt(data.qtyLastMonth) || 0,
+        jumlah_kertas_masuk: parseInt(data.jumlahMasuk) || 0,
+        tanggal: data.tanggal,
+        remark: data.remark || null,
+      };
+
+      console.log("🔄 Updating Supabase produksi_in_stock:", {
+        id,
+        supabaseData,
+      });
+      return await dbService.update(TABLES.PRODUKSI_IN_STOCK, id, supabaseData);
+    } catch (error) {
+      console.error("Error updating produksi in stock in Supabase:", error);
+      throw error;
+    }
+  }
+
+  async deleteProduksiInStockFromSupabase(id) {
+    try {
+      console.log("🗑️ Deleting from Supabase produksi_in_stock:", id);
+      return await dbService.delete(TABLES.PRODUKSI_IN_STOCK, id);
+    } catch (error) {
+      console.error("Error deleting produksi in stock from Supabase:", error);
+      throw error;
+    }
+  }
+
+  // ===== PRODUKSI OUT STOCK METHODS =====
+  async getProduksiOutStockFromSupabase() {
+    try {
+      const data = await dbService.read(TABLES.PRODUKSI_OUT_STOCK);
+      console.log("📊 Produksi Out data from Supabase:", data);
+      return data || [];
+    } catch (error) {
+      console.error("Error getting produksi out stock from Supabase:", error);
+      return [];
+    }
+  }
+
+  async saveProduksiOutStockToSupabase(data) {
+    try {
+      const supabaseData = {
+        nomor: data.nomor,
+        jenis_kertas: data.jenisKertas,
+        ukuran: data.ukuran,
+        total_kertas_masuk: data.totalMasuk || 0,
+        total_keluar_ok: data.totalKeluarOk || 0,
+        total_keluar_ng: data.totalKeluarNg || 0,
+        tanggal: data.tanggal,
+      };
+
+      console.log("💾 Saving to Supabase produksi_out_stock:", supabaseData);
+      return await dbService.create(TABLES.PRODUKSI_OUT_STOCK, supabaseData);
+    } catch (error) {
+      console.error("Error saving produksi out stock to Supabase:", error);
+      throw error;
+    }
+  }
+
+  async updateProduksiOutStockInSupabase(id, data) {
+    try {
+      const supabaseData = {
+        jenis_kertas: data.jenisKertas,
+        ukuran: data.ukuran,
+        total_kertas_masuk: parseInt(data.totalMasuk) || 0,
+        total_keluar_ok: parseInt(data.totalKeluarOk) || 0,
+        total_keluar_ng: parseInt(data.totalKeluarNg) || 0,
+        tanggal: data.tanggal,
+      };
+
+      console.log("🔄 Updating Supabase produksi_out_stock:", {
+        id,
+        supabaseData,
+      });
+      return await dbService.update(
+        TABLES.PRODUKSI_OUT_STOCK,
+        id,
+        supabaseData
+      );
+    } catch (error) {
+      console.error("Error updating produksi out stock in Supabase:", error);
+      throw error;
+    }
+  }
+
+  async deleteProduksiOutStockFromSupabase(id) {
+    try {
+      console.log("🗑️ Deleting from Supabase produksi_out_stock:", id);
+      return await dbService.delete(TABLES.PRODUKSI_OUT_STOCK, id);
+    } catch (error) {
+      console.error("Error deleting produksi out stock from Supabase:", error);
+      throw error;
+    }
+  }
+
+  // Banner In Number - sama seperti DailyReportModel.getNextNomor()
+  async getNextBannerInNumber(date) {
+    try {
+      const targetDate = new Date(date);
+      const year = targetDate.getFullYear();
+      const month = targetDate.getMonth(); // 0-based month untuk konsistensi dengan DailyReportModel
+
+      console.log(`🔢 Getting next Banner In number for ${month + 1}/${year}`);
+      console.log(`📅 Input date: ${date}, Target date: ${targetDate}`);
+
+      if (this.useSupabase) {
+        const supabaseRecords = await this.getBannerInStockFromSupabase();
+        console.log(
+          "📊 Total Banner In records in Supabase:",
+          supabaseRecords.length
+        );
+        console.log("📋 All Banner In records:", supabaseRecords);
+
+        // Filter records for current month and year (sama seperti DailyReportModel)
+        const monthRecords = supabaseRecords.filter((record) => {
+          const recordDate = new Date(record.tanggal);
+          const recordYear = recordDate.getFullYear();
+          const recordMonth = recordDate.getMonth();
+          console.log(
+            `🔍 Record: ${record.nomor}, Date: ${
+              record.tanggal
+            }, Year: ${recordYear}, Month: ${recordMonth + 1}`
+          );
+          return recordYear === year && recordMonth === month;
+        });
+
+        console.log(
+          "📈 Banner In records for current month:",
+          monthRecords.length
+        );
+        console.log("📋 Filtered month records:", monthRecords);
+
+        if (monthRecords.length === 0) {
+          console.log("✨ First Banner In record for this month, returning 1");
+          return 1;
+        }
+
+        // Find max nomor and increment by 1 (sama seperti DailyReportModel)
+        const nomors = monthRecords.map((record) => Number(record.nomor) || 0);
+        console.log("🔢 Existing Banner In nomors:", nomors);
+
+        const maxNomor = Math.max(...nomors);
+        const nextNomor = maxNomor + 1;
+
+        console.log(
+          `🎯 Max Banner In nomor: ${maxNomor}, Next nomor: ${nextNomor}`
+        );
+        return nextNomor;
+      }
+
+      // Fallback to IndexedDB logic
+      console.log("📦 Supabase not enabled, returning default 1");
+      return 1; // Default untuk fallback
+    } catch (error) {
+      console.error("❌ Error getting next Banner In number:", error);
+      return 1;
+    }
+  }
+
+  // Banner Out Number
+  async getNextBannerOutNumber(date) {
+    try {
+      const targetDate = new Date(date);
+      const year = targetDate.getFullYear();
+      const month = targetDate.getMonth();
+
+      console.log(`🔢 Getting next Banner Out number for ${month + 1}/${year}`);
+
+      if (this.useSupabase) {
+        const supabaseRecords = await this.getBannerOutStockFromSupabase();
+        console.log(
+          "📊 Total Banner Out records in Supabase:",
+          supabaseRecords.length
+        );
+
+        const monthRecords = supabaseRecords.filter((record) => {
+          const recordDate = new Date(record.tanggal);
+          const recordYear = recordDate.getFullYear();
+          const recordMonth = recordDate.getMonth();
+          return recordYear === year && recordMonth === month;
+        });
+
+        console.log(
+          "📈 Banner Out records for current month:",
+          monthRecords.length
+        );
+
+        if (monthRecords.length === 0) {
+          console.log("✨ First Banner Out record for this month, returning 1");
+          return 1;
+        }
+
+        const nomors = monthRecords.map((record) => Number(record.nomor) || 0);
+        console.log("🔢 Existing Banner Out nomors:", nomors);
+
+        const maxNomor = Math.max(...nomors);
+        const nextNomor = maxNomor + 1;
+
+        console.log(
+          `🎯 Max Banner Out nomor: ${maxNomor}, Next nomor: ${nextNomor}`
+        );
+        return nextNomor;
+      }
+
+      return 1;
+    } catch (error) {
+      console.error("❌ Error getting next Banner Out number:", error);
+      return 1;
+    }
+  }
+
+  // Digital In Number
+  async getNextDigitalInNumber(date) {
+    try {
+      const targetDate = new Date(date);
+      const year = targetDate.getFullYear();
+      const month = targetDate.getMonth();
+
+      console.log(`🔢 Getting next Digital In number for ${month + 1}/${year}`);
+
+      if (this.useSupabase) {
+        const supabaseRecords = await this.getDigitalInStockFromSupabase();
+        console.log(
+          "📊 Total Digital In records in Supabase:",
+          supabaseRecords.length
+        );
+
+        const monthRecords = supabaseRecords.filter((record) => {
+          const recordDate = new Date(record.tanggal);
+          const recordYear = recordDate.getFullYear();
+          const recordMonth = recordDate.getMonth();
+          return recordYear === year && recordMonth === month;
+        });
+
+        console.log(
+          "📈 Digital In records for current month:",
+          monthRecords.length
+        );
+
+        if (monthRecords.length === 0) {
+          console.log("✨ First Digital In record for this month, returning 1");
+          return 1;
+        }
+
+        const nomors = monthRecords.map((record) => Number(record.nomor) || 0);
+        console.log("🔢 Existing Digital In nomors:", nomors);
+
+        const maxNomor = Math.max(...nomors);
+        const nextNomor = maxNomor + 1;
+
+        console.log(
+          `🎯 Max Digital In nomor: ${maxNomor}, Next nomor: ${nextNomor}`
+        );
+        return nextNomor;
+      }
+
+      return 1;
+    } catch (error) {
+      console.error("❌ Error getting next Digital In number:", error);
+      return 1;
+    }
+  }
+
+  // Digital Out Number
+  async getNextDigitalOutNumber(date) {
+    try {
+      const targetDate = new Date(date);
+      const year = targetDate.getFullYear();
+      const month = targetDate.getMonth();
+
+      console.log(
+        `🔢 Getting next Digital Out number for ${month + 1}/${year}`
+      );
+
+      if (this.useSupabase) {
+        const supabaseRecords = await this.getDigitalOutStockFromSupabase();
+        console.log(
+          "📊 Total Digital Out records in Supabase:",
+          supabaseRecords.length
+        );
+
+        const monthRecords = supabaseRecords.filter((record) => {
+          const recordDate = new Date(record.tanggal);
+          const recordYear = recordDate.getFullYear();
+          const recordMonth = recordDate.getMonth();
+          return recordYear === year && recordMonth === month;
+        });
+
+        console.log(
+          "📈 Digital Out records for current month:",
+          monthRecords.length
+        );
+
+        if (monthRecords.length === 0) {
+          console.log(
+            "✨ First Digital Out record for this month, returning 1"
+          );
+          return 1;
+        }
+
+        const nomors = monthRecords.map((record) => Number(record.nomor) || 0);
+        console.log("🔢 Existing Digital Out nomors:", nomors);
+
+        const maxNomor = Math.max(...nomors);
+        const nextNomor = maxNomor + 1;
+
+        console.log(
+          `🎯 Max Digital Out nomor: ${maxNomor}, Next nomor: ${nextNomor}`
+        );
+        return nextNomor;
+      }
+
+      return 1;
+    } catch (error) {
+      console.error("❌ Error getting next Digital Out number:", error);
+      return 1;
+    }
+  }
+
+  // Produksi In Number
+  async getNextProduksiInNumber(date) {
+    try {
+      const targetDate = new Date(date);
+      const year = targetDate.getFullYear();
+      const month = targetDate.getMonth();
+
+      console.log(
+        `🔢 Getting next Produksi In number for ${month + 1}/${year}`
+      );
+
+      if (this.useSupabase) {
+        const supabaseRecords = await this.getProduksiInStockFromSupabase();
+        console.log(
+          "📊 Total Produksi In records in Supabase:",
+          supabaseRecords.length
+        );
+
+        const monthRecords = supabaseRecords.filter((record) => {
+          const recordDate = new Date(record.tanggal);
+          const recordYear = recordDate.getFullYear();
+          const recordMonth = recordDate.getMonth();
+          return recordYear === year && recordMonth === month;
+        });
+
+        console.log(
+          "� Produksi In records for current month:",
+          monthRecords.length
+        );
+
+        if (monthRecords.length === 0) {
+          console.log(
+            "✨ First Produksi In record for this month, returning 1"
+          );
+          return 1;
+        }
+
+        const nomors = monthRecords.map((record) => Number(record.nomor) || 0);
+        console.log("🔢 Existing Produksi In nomors:", nomors);
+
+        const maxNomor = Math.max(...nomors);
+        const nextNomor = maxNomor + 1;
+
+        console.log(
+          `🎯 Max Produksi In nomor: ${maxNomor}, Next nomor: ${nextNomor}`
+        );
+        return nextNomor;
+      }
+
+      return 1;
+    } catch (error) {
+      console.error("❌ Error getting next Produksi In number:", error);
+      return 1;
+    }
+  }
+
+  // Produksi Out Number
+  async getNextProduksiOutNumber(date) {
+    try {
+      const targetDate = new Date(date);
+      const year = targetDate.getFullYear();
+      const month = targetDate.getMonth();
+
+      console.log(
+        `🔢 Getting next Produksi Out number for ${month + 1}/${year}`
+      );
+
+      if (this.useSupabase) {
+        const supabaseRecords = await this.getProduksiOutStockFromSupabase();
+        console.log(
+          "📊 Total Produksi Out records in Supabase:",
+          supabaseRecords.length
+        );
+
+        const monthRecords = supabaseRecords.filter((record) => {
+          const recordDate = new Date(record.tanggal);
+          const recordYear = recordDate.getFullYear();
+          const recordMonth = recordDate.getMonth();
+          return recordYear === year && recordMonth === month;
+        });
+
+        console.log(
+          "📈 Produksi Out records for current month:",
+          monthRecords.length
+        );
+
+        if (monthRecords.length === 0) {
+          console.log(
+            "✨ First Produksi Out record for this month, returning 1"
+          );
+          return 1;
+        }
+
+        const nomors = monthRecords.map((record) => Number(record.nomor) || 0);
+        console.log("🔢 Existing Produksi Out nomors:", nomors);
+
+        const maxNomor = Math.max(...nomors);
+        const nextNomor = maxNomor + 1;
+
+        console.log(
+          `🎯 Max Produksi Out nomor: ${maxNomor}, Next nomor: ${nextNomor}`
+        );
+        return nextNomor;
+      }
+
+      return 1;
+    } catch (error) {
+      console.error("❌ Error getting next Produksi Out number:", error);
+      return 1;
+    }
+  }
+
+  // Get all stock items from Supabase
+  async getSupabaseStock() {
+    try {
+      return await dbService.read(TABLES.BAHAN_BAKU);
+    } catch (error) {
+      console.error("Error getting Supabase stock:", error);
+      return [];
+    }
+  }
+
+  // Add new stock item to Supabase
+  async addSupabaseStock(stockData) {
+    try {
+      const newStock = {
+        nama: stockData.nama,
+        stok: stockData.stok || 0,
+        satuan: stockData.satuan || "pcs",
+        harga_satuan: stockData.harga_satuan || 0,
+        supplier: stockData.supplier || "",
+        kategori: stockData.kategori || "",
+        minimum_stok: stockData.minimum_stok || 0,
+        lokasi_penyimpanan: stockData.lokasi_penyimpanan || "",
+        keterangan: stockData.keterangan || "",
+      };
+
+      return await dbService.create(TABLES.BAHAN_BAKU, newStock);
+    } catch (error) {
+      console.error("Error adding Supabase stock:", error);
+      throw error;
+    }
+  }
+
+  // Update stock item in Supabase
+  async updateSupabaseStock(id, updateData) {
+    try {
+      return await dbService.update(TABLES.BAHAN_BAKU, id, updateData);
+    } catch (error) {
+      console.error("Error updating Supabase stock:", error);
+      throw error;
+    }
+  }
+
+  // Delete stock item from Supabase
+  async deleteSupabaseStock(id) {
+    try {
+      return await dbService.delete(TABLES.BAHAN_BAKU, id);
+    } catch (error) {
+      console.error("Error deleting Supabase stock:", error);
+      throw error;
+    }
+  }
+
+  // Get stock by category from Supabase
+  async getSupabaseStockByCategory(kategori) {
+    try {
+      return await dbService.read(TABLES.BAHAN_BAKU, { kategori });
+    } catch (error) {
+      console.error("Error getting Supabase stock by category:", error);
+      return [];
+    }
+  }
+
+  // Update stock quantity in Supabase
+  async updateSupabaseStockQuantity(id, newQuantity) {
+    try {
+      return await dbService.update(TABLES.BAHAN_BAKU, id, {
+        stok: newQuantity,
+      });
+    } catch (error) {
+      console.error("Error updating Supabase stock quantity:", error);
+      throw error;
+    }
+  }
+
+  // Migration helper: Convert IndexedDB data to Supabase format
+  async migrateToSupabase() {
+    try {
+      console.log("🔄 Starting migration from IndexedDB to Supabase...");
+
+      // Get all stock data from IndexedDB
+      const indexedDBStock = await db.getRecords(this.storeNames.stock);
+      console.log(`📊 Found ${indexedDBStock.length} stock items in IndexedDB`);
+
+      // Convert and upload to Supabase
+      const migrationResults = [];
+      for (const item of indexedDBStock) {
+        try {
+          const supabaseData = {
+            nama: item.nama || item.name,
+            stok: item.stok || item.stock || 0,
+            satuan: item.satuan || item.unit || "pcs",
+            kategori: item.kategori || item.category || "",
+            keterangan: `Migrated from IndexedDB - Original ID: ${item.id}`,
+          };
+
+          const result = await this.addSupabaseStock(supabaseData);
+          migrationResults.push({
+            success: true,
+            item: item.nama,
+            supabaseId: result.id,
+          });
+          console.log(`✅ Migrated: ${item.nama}`);
+        } catch (error) {
+          migrationResults.push({
+            success: false,
+            item: item.nama,
+            error: error.message,
+          });
+          console.error(`❌ Failed to migrate: ${item.nama}`, error);
+        }
+      }
+
+      console.log("🎉 Migration completed!");
+      console.log(
+        `✅ Successful: ${migrationResults.filter((r) => r.success).length}`
+      );
+      console.log(
+        `❌ Failed: ${migrationResults.filter((r) => !r.success).length}`
+      );
+
+      return migrationResults;
+    } catch (error) {
+      console.error("Error during migration:", error);
+      throw error;
+    }
+  }
+
+  // Hybrid method: Use Supabase if enabled, fallback to IndexedDB
+  async getStock() {
+    if (this.useSupabase) {
+      return await this.getSupabaseStock();
+    } else {
+      return await db.getRecords(this.storeNames.stock);
+    }
+  }
+
+  async addStock(stockData) {
+    if (this.useSupabase) {
+      return await this.addSupabaseStock(stockData);
+    } else {
+      return await db.addRecord(this.storeNames.stock, stockData);
+    }
+  }
+
+  async updateStock(id, updateData) {
+    if (this.useSupabase) {
+      return await this.updateSupabaseStock(id, updateData);
+    } else {
+      return await db.updateRecord(this.storeNames.stock, id, updateData);
+    }
+  }
+
+  async deleteStock(id) {
+    if (this.useSupabase) {
+      return await this.deleteSupabaseStock(id);
+    } else {
+      return await db.deleteRecord(this.storeNames.stock, id);
     }
   }
 }

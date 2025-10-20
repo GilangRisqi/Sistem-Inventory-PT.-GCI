@@ -154,20 +154,27 @@ body {
 }
 
 .login-form input {
-  width: 100%;
-  padding: 1rem;
-  border: 2px solid var(--silver);
-  border-radius: 8px;
-  font-size: 1rem;
-  background-color: white;
-  color: var(--charcoal);
-  transition: border-color 0.3s ease;
+  width: 100% !important;
+  padding: 1rem !important;
+  border: 2px solid var(--silver) !important;
+  border-radius: 8px !important;
+  font-size: 1rem !important;
+  background-color: white !important;
+  color: var(--charcoal) !important;
+  transition: border-color 0.3s ease !important;
+  box-sizing: border-box !important;
+  font-family: inherit !important;
+  line-height: 1.5 !important;
+  margin: 0 !important;
+  min-height: auto !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
 }
 
 .login-form input:focus {
-  border-color: var(--sky);
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+  border-color: var(--sky) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1) !important;
 }
 
 .login-form button {
@@ -480,7 +487,7 @@ body {
   border-bottom: 2px solid var(--silver);
 }
 
-/* Form styling */
+/* Form styling - Enhanced specificity for deployment */
 form {
   background: white;
   padding: 2rem;
@@ -504,29 +511,64 @@ form {
   font-size: 0.9rem;
 }
 
+/* Input field styles with high specificity */
 .form-group input[type="text"],
 .form-group input[type="number"],
 .form-group input[type="date"],
 .form-group input[type="time"],
+.form-group input[type="email"],
+.form-group input[type="password"],
 .form-group select,
 .form-group textarea {
-  width: 100%;
-  padding: 0.875rem;
-  border: 2px solid var(--silver);
-  border-radius: 8px;
-  font-size: 1rem;
-  box-sizing: border-box;
-  transition: border-color 0.3s ease;
-  background-color: white;
-  color: var(--charcoal);
+  width: 100% !important;
+  padding: 0.875rem !important;
+  border: 2px solid var(--silver) !important;
+  border-radius: 8px !important;
+  font-size: 1rem !important;
+  box-sizing: border-box !important;
+  transition: border-color 0.3s ease !important;
+  background-color: white !important;
+  color: var(--charcoal) !important;
+  font-family: inherit !important;
+  line-height: 1.5 !important;
+  min-height: auto !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: textfield !important;
+}
+
+/* Universal input styling override */
+input[type="text"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+input[type="email"],
+input[type="password"],
+select,
+textarea {
+  width: 100% !important;
+  padding: 0.875rem !important;
+  border: 2px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  font-size: 1rem !important;
+  box-sizing: border-box !important;
+  transition: border-color 0.3s ease !important;
+  background-color: white !important;
+  color: #1e293b !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  line-height: 1.5 !important;
+  margin: 0 !important;
 }
 
 .form-group input:focus,
 .form-group select:focus,
-.form-group textarea:focus {
-  border-color: var(--sky);
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+.form-group textarea:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--sky) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1) !important;
 }
 
 .form-row {
@@ -1111,6 +1153,149 @@ td {
 /* Results Summary Styling */
 .results-summary {
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  padding: 1rem;
+  border-radius: 8px;
+  margin: 1rem 0;
+  border: 1px solid var(--silver);
+}
+
+/* Bootstrap Override - Force Custom Input Styling */
+/* This section ensures our custom input styling takes precedence over Bootstrap */
+
+/* High specificity input field overrides for deployment */
+body .form-group input,
+body input.form-control,
+body .form-control,
+body input[type="text"],
+body input[type="number"],
+body input[type="date"],
+body input[type="time"],
+body input[type="email"],
+body input[type="password"],
+body select,
+body textarea {
+  width: 100% !important;
+  padding: 0.875rem !important;
+  border: 2px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  font-size: 1rem !important;
+  box-sizing: border-box !important;
+  transition: border-color 0.3s ease !important;
+  background-color: white !important;
+  color: #1e293b !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  line-height: 1.5 !important;
+  margin: 0 !important;
+  min-height: auto !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+/* Focus states with high specificity */
+body .form-group input:focus,
+body input.form-control:focus,
+body .form-control:focus,
+body input[type="text"]:focus,
+body input[type="number"]:focus,
+body input[type="date"]:focus,
+body input[type="time"]:focus,
+body input[type="email"]:focus,
+body input[type="password"]:focus,
+body select:focus,
+body textarea:focus {
+  border-color: #38bdf8 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1) !important;
+  background-color: white !important;
+}
+
+/* Login form specific overrides */
+body .login-form input,
+body .login-container input {
+  width: 100% !important;
+  padding: 1rem !important;
+  border: 2px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  font-size: 1rem !important;
+  background-color: white !important;
+  color: #1e293b !important;
+  transition: border-color 0.3s ease !important;
+  box-sizing: border-box !important;
+  font-family: inherit !important;
+  line-height: 1.5 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Anti-Bootstrap input group styling */
+body .input-group .form-control {
+  border: 2px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  background-color: white !important;
+  box-shadow: none !important;
+}
+
+/* Select dropdown styling */
+body select,
+body .form-select {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 0.75rem center !important;
+  background-size: 16px 12px !important;
+  padding-right: 2.5rem !important;
+}
+
+/* Textarea specific styling */
+body textarea,
+body .form-control[rows] {
+  min-height: 100px !important;
+  resize: vertical !important;
+}
+
+/* Date and time input specific styling */
+body input[type="date"],
+body input[type="time"],
+body input[type="datetime-local"] {
+  cursor: pointer !important;
+}
+
+/* Number input specific styling */
+body input[type="number"] {
+  appearance: textfield !important;
+  -moz-appearance: textfield !important;
+  -webkit-appearance: textfield !important;
+}
+
+body input[type="number"]::-webkit-outer-spin-button,
+body input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+}
+
+/* Final catch-all for any missed inputs */
+*
+  input:not([type="button"]):not([type="submit"]):not([type="reset"]):not(
+    [type="checkbox"]
+  ):not([type="radio"]) {
+  border: 2px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  padding: 0.875rem !important;
+  font-size: 1rem !important;
+  background-color: white !important;
+  color: #1e293b !important;
+}
+
+*
+  input:not([type="button"]):not([type="submit"]):not([type="reset"]):not(
+    [type="checkbox"]
+  ):not([type="radio"]):focus {
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1) !important;
+}
+
+.results-summary {
   padding: 12px 16px;
   border-radius: 6px;
   margin-bottom: 15px;

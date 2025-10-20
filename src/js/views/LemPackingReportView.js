@@ -3,12 +3,33 @@ class LemPackingReportView {
     this.form = document.getElementById("lem-packing-report-form");
     this.section = document.getElementById("lem-packing-report-section");
 
+    console.log(
+      "🚀 LemPackingReportView constructor - form found:",
+      !!this.form
+    );
+
     if (this.form) {
       this.initializeEventListeners();
 
       // Auto-generate nomor when form loads (like banner forms)
       this.initializeAutoNumber();
+    } else {
+      console.warn(
+        "⚠️ LemPackingReportView: Form not found during construction"
+      );
     }
+
+    // Listen for section activation to refresh auto numbering
+    document.addEventListener("section-activated", (event) => {
+      if (event.detail.sectionId === "lem-packing-report") {
+        console.log(
+          "🎯 LemPackingReportView: Section activated, refreshing auto number"
+        );
+        setTimeout(() => {
+          this.initializeAutoNumber();
+        }, 100);
+      }
+    });
   }
 
   initializeEventListeners() {
@@ -52,11 +73,18 @@ class LemPackingReportView {
   // Get form data
   getFormData() {
     const formData = new FormData(this.form);
-    const data = {};
-
-    for (let [key, value] of formData.entries()) {
-      data[key] = value;
-    }
+    const data = {
+      nomor: Number(formData.get("nomor")),
+      tanggal: formData.get("tanggal"),
+      operator: formData.get("operator"),
+      jenisPekerjaan: formData.get("jenisPekerjaan"),
+      timeStart: formData.get("timeStart"),
+      timeFinish: formData.get("timeFinish"),
+      qtyOk: Number(formData.get("qtyOk")),
+      qtyNg: Number(formData.get("qtyNg")),
+      noSpk: formData.get("noSpk"),
+      keterangan: formData.get("keterangan"),
+    };
 
     return data;
   }
@@ -322,6 +350,14 @@ class LemPackingReportView {
   // Show error message
   showError(message) {
     alert("Error: " + message);
+  }
+
+  // Public method to trigger auto numbering from outside
+  refreshAutoNumber() {
+    console.log(
+      "🔄 LemPackingReportView: Manual refresh auto number triggered"
+    );
+    this.initializeAutoNumber();
   }
 }
 

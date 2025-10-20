@@ -205,8 +205,10 @@ export class RekapPresenter {
     }
   }
 
-  async handleSaveInlineEdit(id, type) {
+  async handleSaveInlineEdit(id, type, data) {
     try {
+      console.log(`💾 Saving ${type} with ID: ${id}`, data);
+
       const row = document.querySelector(
         `tr[data-id="${id}"][data-type="${type}"]`
       );
@@ -215,38 +217,52 @@ export class RekapPresenter {
         return;
       }
 
-      const data = {};
+      const updateData = {};
       const inputs = row.querySelectorAll(".editable input, .editable select");
 
       inputs.forEach((input) => {
         const field = input.getAttribute("data-field");
-        data[field] = input.value;
+        updateData[field] = input.value;
       });
+
+      console.log(`📝 Update data collected:`, updateData);
 
       let model;
       if (type === "iridesse-report") {
         model = this.iridesseReportModel;
-        data.totalCetak =
-          (Number(data.jumlahCetak) || 0) - (Number(data.ng) || 0);
+        updateData.totalCetak =
+          (Number(updateData.jumlahCetak) || 0) - (Number(updateData.ng) || 0);
       } else if (type === "strapless-report") {
         model = this.straplessReportModel;
-        data.totalQty = (Number(data.qtyOk) || 0) + (Number(data.qtyNg) || 0);
+        updateData.totalQty =
+          (Number(updateData.qtyOk) || 0) + (Number(updateData.qtyNg) || 0);
       } else if (type === "lipat-report") {
         model = this.lipatReportModel;
-        data.totalQty = (Number(data.qtyOk) || 0) + (Number(data.qtyNg) || 0);
+        updateData.totalQty =
+          (Number(updateData.qtyOk) || 0) + (Number(updateData.qtyNg) || 0);
       } else if (type === "lem-packing-report") {
         model = this.lemPackingReportModel;
-        data.totalQty = (Number(data.qtyOk) || 0) + (Number(data.qtyNg) || 0);
+        updateData.totalQty =
+          (Number(updateData.qtyOk) || 0) + (Number(updateData.qtyNg) || 0);
       } else {
         model = this.dailyReportModel;
-        data.totalQtyCetakAll =
-          (Number(data.qtyCetakOk) || 0) + (Number(data.qtyCetakNg) || 0);
+        updateData.totalQtyCetakAll =
+          (Number(updateData.qtyCetakOk) || 0) +
+          (Number(updateData.qtyCetakNg) || 0);
       }
 
-      await model.update(id, data);
+      console.log(`🔄 Calling model.update() with:`, { id, updateData });
+      await model.update(id, updateData);
+
+      console.log(`✅ Update successful for ${type} ID: ${id}`);
       this.view.showSuccess("Data berhasil diperbarui!");
-      this.refreshCurrentTable();
+
+      // Exit edit mode before refresh
+      this.toggleEditMode(row, false);
+
+      await this.refreshCurrentTable();
     } catch (error) {
+      console.error(`❌ Error saving ${type}:`, error);
       this.view.showError("Gagal menyimpan perubahan: " + error.message);
     }
   }

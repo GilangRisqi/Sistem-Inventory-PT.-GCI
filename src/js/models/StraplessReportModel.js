@@ -1,7 +1,11 @@
+import { dbService } from "../services/SupabaseService.js";
+import { TABLES } from "../config/supabase.js";
+
 export class StraplessReportModel {
   constructor() {
     this.data = [];
     this.nextId = 1;
+    this.useSupabase = true; // Toggle to enable/disable Supabase
     this.loadFromStorage();
   }
 
@@ -13,85 +17,120 @@ export class StraplessReportModel {
     return id;
   }
 
-  // Add new strapless report entry
-  add(reportData) {
-    const id = this.generateId();
-    const newEntry = {
-      id,
-      nomor: reportData.nomor || 0,
-      tanggal: reportData.tanggal,
-      operator: reportData.operator,
-      jenisPekerjaan: reportData.jenisPekerjaan,
-      client: reportData.client || "",
-      timeStart: reportData.timeStart,
-      timeFinish: reportData.timeFinish,
-      qtyOk: Number(reportData.qtyOk) || 0,
-      qtyNg: Number(reportData.qtyNg) || 0,
-      totalQty:
-        (Number(reportData.qtyOk) || 0) + (Number(reportData.qtyNg) || 0),
-      satuan: reportData.satuan,
-      prosesSelanjutnya: reportData.prosesSelanjutnya,
-      keterangan: reportData.keterangan || "",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+  // Hybrid add method
+  async add(reportData) {
+    if (this.useSupabase) {
+      return await this.saveToSupabase(reportData);
+    } else {
+      const id = this.generateId();
+      const newEntry = {
+        id,
+        nomor: reportData.nomor || 0,
+        tanggal: reportData.tanggal,
+        operator: reportData.operator,
+        jenisPekerjaan: reportData.jenisPekerjaan,
+        client: reportData.client || "",
+        timeStart: reportData.timeStart,
+        timeFinish: reportData.timeFinish,
+        qtyOk: Number(reportData.qtyOk) || 0,
+        qtyNg: Number(reportData.qtyNg) || 0,
+        totalQty:
+          (Number(reportData.qtyOk) || 0) + (Number(reportData.qtyNg) || 0),
+        satuan: reportData.satuan,
+        prosesSelanjutnya: reportData.prosesSelanjutnya,
+        keterangan: reportData.keterangan || "",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
 
-    this.data.push(newEntry);
-    this.saveToStorage();
-    return newEntry;
-  }
-
-  // Get all entries
-  getAll() {
-    return [...this.data];
-  }
-
-  // Get entry by ID
-  getById(id) {
-    return this.data.find((item) => item.id === parseInt(id));
-  }
-
-  // Update entry
-  update(id, updateData) {
-    const index = this.data.findIndex((item) => item.id === parseInt(id));
-    if (index === -1) return null;
-
-    // Update only provided fields
-    const updatedEntry = { ...this.data[index] };
-    Object.keys(updateData).forEach((key) => {
-      if (updateData[key] !== undefined && key !== "id") {
-        updatedEntry[key] = updateData[key];
-      }
-    });
-
-    // Recalculate total if qty values change
-    if (updateData.qtyOk !== undefined || updateData.qtyNg !== undefined) {
-      updatedEntry.totalQty =
-        (Number(updatedEntry.qtyOk) || 0) + (Number(updatedEntry.qtyNg) || 0);
+      this.data.push(newEntry);
+      this.saveToStorage();
+      return newEntry;
     }
-
-    updatedEntry.updatedAt = new Date().toISOString();
-    this.data[index] = updatedEntry;
-    this.saveToStorage();
-    return updatedEntry;
   }
 
-  // Delete entry
-  delete(id) {
-    const index = this.data.findIndex((item) => item.id === parseInt(id));
-    if (index === -1) return false;
-
-    this.data.splice(index, 1);
-    this.saveToStorage();
-    return true;
+  // Hybrid getAll method
+  async getAll() {
+    if (this.useSupabase) {
+      return await this.getAllFromSupabase();
+    } else {
+      return [...this.data];
+    }
   }
 
-  // Get entries by date range
-  getByDateRange(startDate, endDate) {
-    return this.data.filter((item) => {
-      const itemDate = new Date(item.tanggal);
-      return itemDate >= startDate && itemDate <= endDate;
-    });
+  // Hybrid getById method
+  async getById(id) {
+    if (this.useSupabase) {
+      try {
+        const allReports = await this.getAllFromSupabase();
+        return allReports.find((report) => report.id === id);
+      } catch (error) {
+        console.error(
+          "Error getting strapless report by ID from Supabase:",
+          error
+        );
+        throw error;
+      }
+    } else {
+      return this.data.find((item) => item.id === parseInt(id));
+    }
+  }
+
+  // Hybrid update method
+  async update(id, updateData) {
+    if (this.useSupabase) {
+      // Transform camelCase data to snake_case for Supabase
+      const supabaseData = this.transformToSupabaseFormat(updateData);
+      return await this.updateSupabaseReport(id, supabaseData);
+    } else {
+      const index = this.data.findIndex((item) => item.id === parseInt(id));
+      if (index === -1) return null;
+
+      // Update only provided fields
+      const updatedEntry = { ...this.data[index] };
+      Object.keys(updateData).forEach((key) => {
+        if (updateData[key] !== undefined && key !== "id") {
+          updatedEntry[key] = updateData[key];
+        }
+      });
+
+      // Recalculate total if qty values change
+      if (updateData.qtyOk !== undefined || updateData.qtyNg !== undefined) {
+        updatedEntry.totalQty =
+          (Number(updatedEntry.qtyOk) || 0) + (Number(updatedEntry.qtyNg) || 0);
+      }
+
+      updatedEntry.updatedAt = new Date().toISOString();
+      this.data[index] = updatedEntry;
+      this.saveToStorage();
+      return updatedEntry;
+    }
+  }
+
+  // Hybrid delete method
+  async delete(id) {
+    if (this.useSupabase) {
+      return await this.deleteSupabaseReport(id);
+    } else {
+      const index = this.data.findIndex((item) => item.id === parseInt(id));
+      if (index === -1) return false;
+
+      this.data.splice(index, 1);
+      this.saveToStorage();
+      return true;
+    }
+  }
+
+  // Hybrid getByDateRange method
+  async getByDateRange(startDate, endDate) {
+    if (this.useSupabase) {
+      return await this.getSupabaseByDateRange(startDate, endDate);
+    } else {
+      return this.data.filter((item) => {
+        const itemDate = new Date(item.tanggal);
+        return itemDate >= startDate && itemDate <= endDate;
+      });
+    }
   }
 
   // Get entries by operator
@@ -145,6 +184,120 @@ export class StraplessReportModel {
     };
   }
 
+  // ===== SUPABASE METHODS =====
+
+  // Transform app data (camelCase) to Supabase format (snake_case)
+  transformToSupabaseFormat(appData) {
+    const supabaseData = {};
+
+    // Direct mappings
+    if (appData.id !== undefined) supabaseData.id = appData.id;
+    if (appData.nomor !== undefined) supabaseData.nomor = appData.nomor;
+    if (appData.tanggal !== undefined) supabaseData.tanggal = appData.tanggal;
+    if (appData.operator !== undefined)
+      supabaseData.operator = appData.operator;
+    if (appData.client !== undefined) supabaseData.client = appData.client;
+    if (appData.satuan !== undefined) supabaseData.satuan = appData.satuan;
+    if (appData.keterangan !== undefined)
+      supabaseData.keterangan = appData.keterangan;
+
+    // camelCase to snake_case transformations
+    if (appData.jenisPekerjaan !== undefined)
+      supabaseData.jenis_pekerjaan = appData.jenisPekerjaan;
+    if (appData.timeStart !== undefined)
+      supabaseData.time_start = appData.timeStart;
+    if (appData.timeFinish !== undefined)
+      supabaseData.time_finish = appData.timeFinish;
+    if (appData.qtyOk !== undefined) supabaseData.qty_ok = appData.qtyOk;
+    if (appData.qtyNg !== undefined) supabaseData.qty_ng = appData.qtyNg;
+    if (appData.prosesSelanjutnya !== undefined)
+      supabaseData.proses_selanjutnya = appData.prosesSelanjutnya;
+
+    return supabaseData;
+  }
+
+  // Transform Supabase data (snake_case) to app format (camelCase)
+  transformSupabaseData(supabaseRecord) {
+    return {
+      id: supabaseRecord.id,
+      nomor: supabaseRecord.nomor,
+      tanggal: supabaseRecord.tanggal,
+      operator: supabaseRecord.operator,
+      jenisPekerjaan: supabaseRecord.jenis_pekerjaan,
+      client: supabaseRecord.client,
+      timeStart: supabaseRecord.time_start,
+      timeFinish: supabaseRecord.time_finish,
+      qtyOk: supabaseRecord.qty_ok,
+      qtyNg: supabaseRecord.qty_ng,
+      satuan: supabaseRecord.satuan,
+      prosesSelanjutnya: supabaseRecord.proses_selanjutnya,
+      keterangan: supabaseRecord.keterangan,
+      // Calculate total for RekapView
+      totalQty: (supabaseRecord.qty_ok || 0) + (supabaseRecord.qty_ng || 0),
+      createdAt: supabaseRecord.created_at,
+      updatedAt: supabaseRecord.updated_at,
+    };
+  }
+
+  // Save strapless report to Supabase
+  async saveToSupabase(data) {
+    try {
+      const supabaseData = this.transformToSupabaseFormat(data);
+      return await dbService.create(TABLES.STRAPLESS_REPORTS, supabaseData);
+    } catch (error) {
+      console.error("Error saving strapless report to Supabase:", error);
+      throw error;
+    }
+  }
+
+  // Get all strapless reports from Supabase
+  async getAllFromSupabase() {
+    try {
+      const rawData = await dbService.read(TABLES.STRAPLESS_REPORTS);
+      return rawData.map((record) => this.transformSupabaseData(record));
+    } catch (error) {
+      console.error("Error getting strapless reports from Supabase:", error);
+      return [];
+    }
+  }
+
+  // Get strapless reports by date range from Supabase
+  async getSupabaseByDateRange(startDate, endDate) {
+    try {
+      const rawData = await dbService.read(TABLES.STRAPLESS_REPORTS);
+      const filteredData = rawData.filter((report) => {
+        const reportDate = new Date(report.tanggal);
+        return (
+          reportDate >= new Date(startDate) && reportDate <= new Date(endDate)
+        );
+      });
+      return filteredData.map((record) => this.transformSupabaseData(record));
+    } catch (error) {
+      console.error("Error getting strapless reports by date range:", error);
+      return [];
+    }
+  }
+
+  // Update strapless report in Supabase
+  async updateSupabaseReport(id, updateData) {
+    try {
+      return await dbService.update(TABLES.STRAPLESS_REPORTS, id, updateData);
+    } catch (error) {
+      console.error("Error updating strapless report:", error);
+      throw error;
+    }
+  }
+
+  // Delete strapless report from Supabase
+  async deleteSupabaseReport(id) {
+    try {
+      return await dbService.delete(TABLES.STRAPLESS_REPORTS, id);
+    } catch (error) {
+      console.error("Error deleting strapless report:", error);
+      throw error;
+    }
+  }
+
   // Save to localStorage
   saveToStorage() {
     try {
@@ -187,7 +340,7 @@ export class StraplessReportModel {
   async getNextNomor() {
     try {
       console.log("🔍 Strapless: Getting next nomor from database...");
-      const allReports = this.getAll();
+      const allReports = await this.getAll();
       console.log(
         "📊 Strapless: Total reports in database:",
         allReports.length
@@ -236,16 +389,14 @@ export class StraplessReportModel {
     }
   }
 
-  // Save data with promise pattern (like DailyReportModel)
+  // Hybrid save method (wrapper for add)
   async save(data) {
-    return new Promise((resolve, reject) => {
-      try {
-        const result = this.add(data);
-        resolve(result);
-      } catch (error) {
-        reject(error);
-      }
-    });
+    try {
+      return await this.add(data);
+    } catch (error) {
+      console.error("Error saving strapless report:", error);
+      throw error;
+    }
   }
 
   // Clear all data

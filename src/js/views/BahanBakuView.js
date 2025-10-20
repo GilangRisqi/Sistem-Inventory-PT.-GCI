@@ -1134,6 +1134,19 @@ export class BahanBakuView {
       return;
     }
 
+    // Sort data by nomor (ascending) - dari yang terlama ke terbaru
+    if (Array.isArray(data) && data.length > 0) {
+      data.sort((a, b) => {
+        const nomorA = Number(a.nomor) || 0;
+        const nomorB = Number(b.nomor) || 0;
+        return nomorA - nomorB; // Ascending order: 1, 2, 3, ...
+      });
+      console.log(
+        "📊 Banner In data sorted by nomor (ascending):",
+        data.map((item) => item.nomor)
+      );
+    }
+
     // Simpan data untuk PDF generation
     this.stockData["banner-in"] = data;
 
@@ -1143,7 +1156,7 @@ export class BahanBakuView {
     let tableHtml = `
       <div class="stock-results">
         <div class="table-header">
-          <h3>� List Stock Bahan Baku Banner In</h3>
+          <h3>📥 List Stock Bahan Baku Banner In</h3>
           <span class="record-count">Total: ${
             Array.isArray(data) ? data.length : 0
           } records</span>
@@ -1234,7 +1247,7 @@ export class BahanBakuView {
         </table>
         <div style="margin-top: 15px; display: flex; gap: 10px;">
           <button id="banner-in-pdf-btn" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">
-            � Generate PDF
+            <i class="bi bi-file-earmark-pdf"></i> Generate PDF
           </button>
         </div>
       </div>
@@ -1265,6 +1278,19 @@ export class BahanBakuView {
       "Data length:",
       Array.isArray(data) ? data.length : "Not array"
     );
+
+    // Sort data by nomor (ascending) - dari yang terlama ke terbaru
+    if (Array.isArray(data) && data.length > 0) {
+      data.sort((a, b) => {
+        const nomorA = Number(a.nomor) || 0;
+        const nomorB = Number(b.nomor) || 0;
+        return nomorA - nomorB; // Ascending order: 1, 2, 3, ...
+      });
+      console.log(
+        "📊 Banner Out data sorted by nomor (ascending):",
+        data.map((item) => item.nomor)
+      );
+    }
 
     // Debug: Log setiap item data secara detail
     if (Array.isArray(data) && data.length > 0) {
@@ -1394,8 +1420,8 @@ export class BahanBakuView {
           </table>
         </div>
         <div class="table-actions">
-          <button id="banner-out-pdf-btn" class="btn btn-success">
-            📄 Generate PDF
+          <button id="banner-out-pdf-btn" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            <i class="bi bi-file-earmark-pdf"></i> Generate PDF
           </button>
         </div>
       </div>
@@ -1419,6 +1445,19 @@ export class BahanBakuView {
   updateStockDigitalInDisplay(data) {
     console.log("=== Updating Digital In Display ===");
     console.log("Digital In data received:", data);
+
+    // Sort data by nomor (ascending) - dari yang terlama ke terbaru
+    if (Array.isArray(data) && data.length > 0) {
+      data.sort((a, b) => {
+        const nomorA = Number(a.nomor) || 0;
+        const nomorB = Number(b.nomor) || 0;
+        return nomorA - nomorB; // Ascending order: 1, 2, 3, ...
+      });
+      console.log(
+        "📊 Digital In data sorted by nomor (ascending):",
+        data.map((item) => item.nomor)
+      );
+    }
 
     const section = document.getElementById("stock-digital-section-in");
     if (!section) {
@@ -1579,6 +1618,19 @@ export class BahanBakuView {
   updateStockDigitalOutDisplay(data) {
     console.log("=== Updating Digital Out Display ===");
     console.log("Digital Out data received:", data);
+
+    // Sort data by nomor (ascending) - dari yang terlama ke terbaru
+    if (Array.isArray(data) && data.length > 0) {
+      data.sort((a, b) => {
+        const nomorA = Number(a.nomor) || 0;
+        const nomorB = Number(b.nomor) || 0;
+        return nomorA - nomorB; // Ascending order: 1, 2, 3, ...
+      });
+      console.log(
+        "📊 Digital Out data sorted by nomor (ascending):",
+        data.map((item) => item.nomor)
+      );
+    }
 
     const section = document.getElementById("stock-digital-section-out");
     if (!section) {
@@ -1742,6 +1794,19 @@ export class BahanBakuView {
   updateStockProduksiInDisplay(data) {
     console.log("=== Updating Produksi In Display ===");
     console.log("Produksi In data received:", data);
+
+    // Sort data by nomor (ascending) - dari yang terlama ke terbaru
+    if (Array.isArray(data) && data.length > 0) {
+      data.sort((a, b) => {
+        const nomorA = Number(a.nomor) || 0;
+        const nomorB = Number(b.nomor) || 0;
+        return nomorA - nomorB; // Ascending order: 1, 2, 3, ...
+      });
+      console.log(
+        "📊 Produksi In data sorted by nomor (ascending):",
+        data.map((item) => item.nomor)
+      );
+    }
 
     const section = document.getElementById("stock-produksi-section-in");
     if (!section) {
@@ -1908,6 +1973,19 @@ export class BahanBakuView {
   updateStockProduksiOutDisplay(data) {
     console.log("=== Updating Produksi Out Display ===");
     console.log("Produksi Out data received:", data);
+
+    // Sort data by nomor (ascending) - dari yang terlama ke terbaru
+    if (Array.isArray(data) && data.length > 0) {
+      data.sort((a, b) => {
+        const nomorA = Number(a.nomor) || 0;
+        const nomorB = Number(b.nomor) || 0;
+        return nomorA - nomorB; // Ascending order: 1, 2, 3, ...
+      });
+      console.log(
+        "📊 Produksi Out data sorted by nomor (ascending):",
+        data.map((item) => item.nomor)
+      );
+    }
 
     const section = document.getElementById("stock-produksi-section-out");
     if (!section) {
@@ -2145,6 +2223,7 @@ export class BahanBakuView {
   }
 
   async initializeAutoNumbers() {
+    console.log("🔄 Initializing auto numbers for all forms...");
     // Set current date as default for date inputs and update auto numbers
     const currentDate = new Date().toISOString().split("T")[0];
 
@@ -2158,12 +2237,21 @@ export class BahanBakuView {
       { id: "out-produksi", category: "produksi", type: "out" },
     ];
 
+    console.log(
+      `📋 Processing ${formSections.length} form sections with date: ${currentDate}`
+    );
+
     for (const section of formSections) {
       try {
+        console.log(
+          `🔢 Processing section: ${section.id} (${section.category}-${section.type})`
+        );
+
         // Set default date
         const dateInput = document.getElementById(`${section.id}-tanggal`);
         if (dateInput && !dateInput.value) {
           dateInput.value = currentDate;
+          console.log(`📅 Set default date for ${section.id}: ${currentDate}`);
         }
 
         // Trigger auto number update
@@ -2173,13 +2261,17 @@ export class BahanBakuView {
           section.type,
           currentDate
         );
+
+        console.log(`✅ Auto number update completed for ${section.id}`);
       } catch (error) {
         console.error(
-          `Error initializing auto number for ${section.id}:`,
+          `❌ Error initializing auto number for ${section.id}:`,
           error
         );
       }
     }
+
+    console.log("✅ Auto numbers initialization completed for all forms");
   }
 
   async updateAutoNumberForSection(sectionId, category, type, date = null) {

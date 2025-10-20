@@ -110,9 +110,12 @@ class LemPackingReportPresenter {
   }
 
   // Handle edit report request
-  handleEditReport(id) {
+  async handleEditReport(id) {
     try {
-      const report = this.model.getById(id);
+      // Get all reports and find by id since getById might not be async
+      const allReports = await this.model.getAll();
+      const report = allReports.find((r) => r.id == id);
+
       if (report) {
         // Switch to lem-packing report section
         document.dispatchEvent(

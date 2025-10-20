@@ -1,0 +1,63 @@
+{
+  "title": "PWA Icon Generation Instructions",
+  "problem": "Install icon tidak muncul karena PNG icons tidak ada",
+  "solution": "Generate PNG icons dari SVG yang ada",
+  "steps": [
+    {
+      "step": 1,
+      "action": "Online Converter (Recommended)",
+      "details": [
+        "1. Buka https://svgtopng.com/ atau https://convertio.co/svg-png/",
+        "2. Upload file src/images/icons/icon.svg",
+        "3. Generate PNG dengan ukuran:",
+        "   - 72x72px → icon-72x72.png",
+        "   - 96x96px → icon-96x96.png",
+        "   - 128x128px → icon-128x128.png",
+        "   - 144x144px → icon-144x144.png",
+        "   - 152x152px → icon-152x152.png",
+        "   - 192x192px → icon-192x192.png",
+        "   - 384x384px → icon-384x384.png",
+        "   - 512x512px → icon-512x512.png",
+        "4. Download dan simpan ke src/images/icons/"
+      ]
+    },
+    {
+      "step": 2,
+      "action": "ImageMagick (If Installed)",
+      "details": [
+        "magick convert src/images/icons/icon.svg -resize 72x72 src/images/icons/icon-72x72.png",
+        "magick convert src/images/icons/icon.svg -resize 96x96 src/images/icons/icon-96x96.png",
+        "magick convert src/images/icons/icon.svg -resize 128x128 src/images/icons/icon-128x128.png",
+        "magick convert src/images/icons/icon.svg -resize 144x144 src/images/icons/icon-144x144.png",
+        "magick convert src/images/icons/icon.svg -resize 152x152 src/images/icons/icon-152x152.png",
+        "magick convert src/images/icons/icon.svg -resize 192x192 src/images/icons/icon-192x192.png",
+        "magick convert src/images/icons/icon.svg -resize 384x384 src/images/icons/icon-384x384.png",
+        "magick convert src/images/icons/icon.svg -resize 512x512 src/images/icons/icon-512x512.png"
+      ]
+    },
+    {
+      "step": 3,
+      "action": "Update Manifest",
+      "details": [
+        "1. Setelah PNG icons ready, update HTML:",
+        "   <link rel='manifest' href='app.webmanifest' />",
+        "2. Update webpack.config.js untuk copy app.webmanifest",
+        "3. Build ulang: npm run build",
+        "4. Test: npm run dev dan cek install icon di browser"
+      ]
+    }
+  ],
+  "temporary_fix": {
+    "description": "Sementara ini bisa pakai SVG-based manifest",
+    "file": "app-fixed.webmanifest",
+    "note": "SVG icons should work untuk modern browsers"
+  },
+  "pwa_requirements": [
+    "✅ HTTPS (already configured)",
+    "✅ Service Worker (already active)",
+    "✅ Web App Manifest (configured)",
+    "❌ Icon files (missing PNG, have SVG)",
+    "✅ Start URL (configured)",
+    "✅ Display mode (standalone)"
+  ]
+}
