@@ -1,3 +1,5 @@
+import { sweetAlert } from "../utils/SweetAlertUtil.js";
+
 class LipatReportPresenter {
   constructor(model, view) {
     this.model = model;
@@ -143,18 +145,30 @@ class LipatReportPresenter {
       }
 
       const confirmMessage = `Apakah Anda yakin ingin menghapus laporan No. ${report.nomor} tanggal ${report.tanggal}?`;
-      if (confirm(confirmMessage)) {
-        const result = this.model.delete(id);
 
-        if (result.success) {
-          this.view.showSuccess("Laporan berhasil dihapus");
+      sweetAlert
+        .confirm(
+          "Data yang dihapus tidak dapat dikembalikan lagi.",
+          confirmMessage,
+          {
+            confirmButtonText: "Ya, Hapus!",
+            cancelButtonText: "Batal",
+          }
+        )
+        .then((result) => {
+          if (result.isConfirmed) {
+            const deleteResult = this.model.delete(id);
 
-          // Refresh rekap
-          document.dispatchEvent(new CustomEvent("refreshRekap"));
-        } else {
-          this.view.showError(result.error);
-        }
-      }
+            if (deleteResult.success) {
+              this.view.showSuccess("Laporan berhasil dihapus");
+
+              // Refresh rekap
+              document.dispatchEvent(new CustomEvent("refreshRekap"));
+            } else {
+              this.view.showError(deleteResult.error);
+            }
+          }
+        });
     } catch (error) {
       console.error("Error deleting lipat report:", error);
       this.view.showError("Terjadi kesalahan saat menghapus laporan");
@@ -221,24 +235,32 @@ class LipatReportPresenter {
     try {
       const confirmMessage =
         "Apakah Anda yakin ingin menghapus SEMUA data laporan mesin lipat? Tindakan ini tidak dapat dibatalkan.";
-      if (confirm(confirmMessage)) {
-        const result = this.model.clearAll();
 
-        if (result.success) {
-          this.view.showSuccess("Semua data berhasil dihapus");
-          this.view.clearForm();
+      return sweetAlert
+        .confirm(confirmMessage, "Hapus Semua Data", {
+          confirmButtonText: "Ya, Hapus Semua!",
+          cancelButtonText: "Batal",
+          icon: "warning",
+        })
+        .then((result) => {
+          if (result.isConfirmed) {
+            const deleteResult = this.model.clearAll();
 
-          // Refresh rekap if showing lipat reports
-          const rekapTipe = document.getElementById("rekap-tipe");
-          if (rekapTipe && rekapTipe.value === "lipat-report") {
-            document.dispatchEvent(new CustomEvent("refreshRekap"));
+            if (deleteResult.success) {
+              this.view.showSuccess("Semua data berhasil dihapus");
+              this.view.clearForm();
+
+              // Refresh rekap if showing lipat reports
+              const rekapTipe = document.getElementById("rekap-tipe");
+              if (rekapTipe && rekapTipe.value === "lipat-report") {
+                document.dispatchEvent(new CustomEvent("refreshRekap"));
+              }
+            }
+
+            return deleteResult;
           }
-        }
-
-        return result;
-      }
-
-      return { success: false, error: "Dibatalkan oleh user" };
+          return { success: false, error: "Dibatalkan oleh user" };
+        });
     } catch (error) {
       console.error("Error clearing lipat reports:", error);
       this.view.showError("Terjadi kesalahan saat menghapus data");

@@ -1,6 +1,7 @@
 // Import jsPDF for PDF generation
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import { sweetAlert } from "../utils/SweetAlertUtil.js";
 
 export class BahanBakuView {
   constructor(model) {
@@ -23,9 +24,6 @@ export class BahanBakuView {
       category === "produksi-in" ||
       category === "produksi-out"
     ) {
-      console.log(
-        `Skipping updateStockDisplay for ${category} - has dedicated methods`
-      );
       return;
     }
 
@@ -230,7 +228,7 @@ export class BahanBakuView {
 
       if (!stockData || !Array.isArray(stockData) || stockData.length === 0) {
         console.warn("No stock data available for PDF generation");
-        alert("Tidak ada data untuk dicetak");
+        sweetAlert.warning("Tidak ada data untuk dicetak", "Data Kosong");
         return;
       }
 
@@ -288,6 +286,7 @@ export class BahanBakuView {
           "Jenis Kertas",
           "Ukuran",
           "Total Masuk",
+          "Satuan",
           "Keluar (OK)",
           "Keluar (NG)",
           "Total Keluar",
@@ -301,6 +300,7 @@ export class BahanBakuView {
           "Ukuran",
           "Qty Last Month",
           "Jumlah Masuk",
+          "Satuan",
           "Total",
           "Tanggal",
         ];
@@ -332,6 +332,7 @@ export class BahanBakuView {
             item.jenisKertas || "",
             item.ukuran || "",
             totalMasuk,
+            item.satuan || "",
             totalKeluarOk,
             totalKeluarNg,
             totalKeluar,
@@ -345,6 +346,7 @@ export class BahanBakuView {
             item.nomor || "",
             item.jenisKertas || "",
             item.ukuran || "",
+            item.satuan || "",
             item.qtyLastMonth || 0,
             item.jumlahMasuk || 0,
             total,
@@ -399,11 +401,10 @@ export class BahanBakuView {
       }.pdf`;
       doc.save(filename);
 
-      console.log(`PDF generated: ${filename}`);
-      alert(`PDF berhasil dibuat: ${filename}`);
+      sweetAlert.pdfSuccess(filename);
     } catch (error) {
       console.error("Error generating PDF:", error);
-      alert("Gagal membuat PDF: " + error.message);
+      sweetAlert.error("Gagal membuat PDF: " + error.message, "Error PDF");
     }
   }
 
@@ -438,12 +439,10 @@ export class BahanBakuView {
       console.error(`Section not found for ${formType}`);
       return null;
     }
-    console.log(`Found section for ${formType}`);
 
     // Remove any existing stock-results containers
     const existingContainers = section.querySelectorAll(".stock-results");
     existingContainers.forEach((container) => {
-      console.log(`Removing existing stock-results container`);
       container.remove();
     });
 
@@ -460,7 +459,6 @@ export class BahanBakuView {
       testBtn.textContent = "🧪 Test Data";
       testBtn.className = "btn btn-warning";
       testBtn.onclick = () => {
-        console.log("🧪 Test data button clicked - showing sample data");
         const sampleData = [
           {
             nomor: "001",
@@ -491,7 +489,6 @@ export class BahanBakuView {
       directBtn.className = "btn btn-danger";
       directBtn.style.marginLeft = "5px";
       directBtn.onclick = () => {
-        console.log("🎯 Direct HTML test - bypassing all logic");
         const tableContainer = container.querySelector(".table-container");
         if (tableContainer) {
           tableContainer.innerHTML = `
@@ -528,7 +525,6 @@ export class BahanBakuView {
             </table>
             <p style="color: blue; font-weight: bold;">Jika tabel ini tampil, berarti masalah BUKAN di HTML/CSS!</p>
           `;
-          console.log("✅ Direct HTML injected successfully");
         } else {
           console.error("❌ Table container not found for direct injection");
         }
@@ -552,7 +548,6 @@ export class BahanBakuView {
       debugBtn.className = "btn btn-warning";
       debugBtn.style.marginLeft = "5px";
       debugBtn.onclick = () => {
-        console.log("🐛 Debug: Force loading Banner Out data...");
         const event = new CustomEvent("force-load-banner-out", {
           detail: { timestamp: Date.now() },
         });
@@ -564,7 +559,6 @@ export class BahanBakuView {
 
       // Auto-trigger loading of Banner Out data when section is created
       setTimeout(() => {
-        console.log("🚀 Auto-triggering Banner Out data load...");
         const autoLoadEvent = new CustomEvent("force-load-banner-out", {
           detail: {
             source: "auto-init",
@@ -589,7 +583,6 @@ export class BahanBakuView {
       </div>
     `;
     container.appendChild(tableContainer);
-    console.log(`✅ Created table container for ${formType}:`, tableContainer);
 
     // Create button container placeholder (will be filled by updateStockDisplay)
     const buttonContainer = document.createElement("div");
@@ -615,10 +608,8 @@ export class BahanBakuView {
       console.error(`Section not found: ${sectionId}-section`);
       return null;
     }
-    console.log(`Found section for ${sectionId}`);
 
     if (!section.querySelector("form")) {
-      console.log(`Creating new form for ${sectionId}`);
       const form = document.createElement("form");
       form.id = sectionId + "-form";
       form.className = "inout-form";
@@ -678,6 +669,10 @@ export class BahanBakuView {
         <input type="number" id="${sectionId}-jumlah-masuk" name="jumlahMasuk" min="0" required />
       </div>
       <div class="form-group">
+        <label for="${sectionId}-satuan">Satuan</label>
+        <input type="text" id="${sectionId}-satuan" name="satuan" required />
+      </div>
+      <div class="form-group">
         <label>Total</label>
         <div class="total-display" id="${sectionId}-total">0</div>
       </div>
@@ -718,6 +713,10 @@ export class BahanBakuView {
       <div class="form-group">
         <label for="${sectionId}-tanggal">Tanggal</label>
         <input type="date" id="${sectionId}-tanggal" name="tanggal" required />
+      </div>
+      <div class="form-group">
+        <label for="${sectionId}-satuan">Satuan</label>
+        <input type="text" id="${sectionId}-satuan" name="satuan" required />
       </div>
       <div class="form-row">
         <div class="form-group half-width">
@@ -861,6 +860,7 @@ export class BahanBakuView {
         qtyLastMonth: form.querySelector('[name="qtyLastMonth"]'),
         tanggal: form.querySelector('[name="tanggal"]'),
         jumlahMasuk: form.querySelector('[name="jumlahMasuk"]'),
+        satuan: form.querySelector('[name="satuan"]'),
         total: form.querySelector("#" + sectionId + "-total"),
       };
     } else if (sectionId === "in-produksi") {
@@ -872,6 +872,7 @@ export class BahanBakuView {
         qtyLastMonth: form.querySelector('[name="qtyLastMonth"]'),
         tanggal: form.querySelector('[name="tanggal"]'),
         jumlahMasuk: form.querySelector('[name="jumlahMasuk"]'),
+        satuan: form.querySelector('[name="satuan"]'),
         total: form.querySelector("#" + sectionId + "-total"),
         remark: form.querySelector('[name="remark"]'),
       };
@@ -887,6 +888,7 @@ export class BahanBakuView {
         ukuran: form.querySelector('[name="ukuran"]'),
         totalMasuk: form.querySelector('[name="totalMasuk"]'),
         tanggal: form.querySelector('[name="tanggal"]'),
+        satuan: form.querySelector('[name="satuan"]'),
         totalKeluarOk: form.querySelector('[name="totalKeluarOk"]'),
         totalKeluarNg: form.querySelector('[name="totalKeluarNg"]'),
         totalKeluar: form.querySelector("#" + sectionId + "-total-keluar"),
@@ -924,17 +926,16 @@ export class BahanBakuView {
       newButton.addEventListener("click", async (e) => {
         e.preventDefault();
         e.stopPropagation();
-        console.log(`=== Submit button clicked for ${formType} ===`);
 
         try {
-          console.log("Checking form elements:", formElements);
           // Validasi input (nomor tidak perlu karena auto-generated)
           if (
             !formElements.jenisKertas?.value ||
             !formElements.ukuran?.value ||
             !formElements.qtyLastMonth?.value ||
             !formElements.tanggal?.value ||
-            !formElements.jumlahMasuk?.value
+            !formElements.jumlahMasuk?.value ||
+            !formElements.satuan?.value
           ) {
             console.error("Missing required fields:", {
               jenisKertas: !!formElements.jenisKertas?.value,
@@ -942,10 +943,10 @@ export class BahanBakuView {
               qtyLastMonth: !!formElements.qtyLastMonth?.value,
               tanggal: !!formElements.tanggal?.value,
               jumlahMasuk: !!formElements.jumlahMasuk?.value,
+              satuan: !!formElements.satuan?.value,
             });
             throw new Error("Semua field harus diisi");
           }
-          console.log("All required fields are filled");
 
           // Validasi angka (nomor akan di-generate otomatis)
           const qtyLastMonth = Number(formElements.qtyLastMonth.value);
@@ -959,7 +960,6 @@ export class BahanBakuView {
             throw new Error("Jumlah Masuk harus lebih dari 0");
           }
 
-          console.log("Preparing form data...");
           const formData = {
             category: category,
             type: formType,
@@ -970,6 +970,7 @@ export class BahanBakuView {
               qtyLastMonth: qtyLastMonth,
               tanggal: formElements.tanggal.value,
               jumlahMasuk: jumlahMasuk,
+              satuan: formElements.satuan.value.trim(),
               total: total,
             },
           };
@@ -978,15 +979,11 @@ export class BahanBakuView {
             formData.data.remark = formElements.remark.value;
           }
 
-          console.log("Form data prepared:", JSON.stringify(formData, null, 2));
-
           // Dispatch event for form submission
-          console.log("Dispatching form-submit event...");
           const formEvent = new CustomEvent("form-submit", {
             detail: formData,
           });
           document.dispatchEvent(formEvent);
-          console.log("Event dispatched successfully");
 
           // Note: Form reset and success message will be handled by presenter after data is saved
         } catch (error) {
@@ -1019,6 +1016,7 @@ export class BahanBakuView {
             !formElements.ukuran.value ||
             !formElements.totalMasuk.value ||
             !formElements.tanggal.value ||
+            !formElements.satuan.value ||
             !formElements.totalKeluarOk.value ||
             !formElements.totalKeluarNg.value
           ) {
@@ -1040,6 +1038,7 @@ export class BahanBakuView {
               ukuran: formElements.ukuran.value.trim(),
               totalMasuk: totalMasuk,
               tanggal: formElements.tanggal.value,
+              satuan: formElements.satuan.value.trim(),
               totalKeluarOk: totalKeluarOk,
               totalKeluarNg: totalKeluarNg,
               totalKeluar: totalKeluar,
@@ -1102,12 +1101,11 @@ export class BahanBakuView {
   }
 
   showSuccess(message) {
-    console.log("showSuccess called with message:", message);
-    alert(message || "Operasi berhasil");
+    sweetAlert.success(message || "Operasi berhasil", "Berhasil!");
   }
 
   showError(message) {
-    alert(message || "Terjadi kesalahan");
+    sweetAlert.error(message || "Terjadi kesalahan", "Error");
   }
 
   // Method to clean up multiple tables if needed
@@ -1141,17 +1139,12 @@ export class BahanBakuView {
         const nomorB = Number(b.nomor) || 0;
         return nomorA - nomorB; // Ascending order: 1, 2, 3, ...
       });
-      console.log(
-        "📊 Banner In data sorted by nomor (ascending):",
-        data.map((item) => item.nomor)
-      );
     }
 
     // Simpan data untuk PDF generation
     this.stockData["banner-in"] = data;
 
     // DIRECT INJECTION - Skip complex initialization
-    console.log("� DIRECT TABLE INJECTION - Bypassing complex logic");
 
     let tableHtml = `
       <div class="stock-results">
@@ -1169,7 +1162,8 @@ export class BahanBakuView {
                 <th>Jenis Kertas</th>
                 <th>Ukuran</th>
                 <th>Qty Last Month</th>
-                <th>Jumlah Masuk</th>
+                <th>Jumlah Kertas Masuk</th>
+                <th>Satuan</th>
                 <th>Total</th>
                 <th>Tanggal</th>
                 <th>Aksi</th>
@@ -1202,6 +1196,9 @@ export class BahanBakuView {
               <td class="editable text-center" data-field="jumlahMasuk" data-type="number" data-value="${
                 item.jumlahMasuk || 0
               }">${item.jumlahMasuk || 0}</td>
+              <td class="editable" data-field="satuan" data-type="text" data-value="${
+                item.satuan || ""
+              }">${item.satuan || ""}</td>
               <td class="text-center"><strong style="color: #007bff;">${total}</strong></td>
               <td class="editable text-center" data-field="tanggal" data-type="date" data-value="${
                 item.tanggal || ""
@@ -1235,7 +1232,7 @@ export class BahanBakuView {
     } else {
       tableHtml += `
         <tr>
-          <td colspan="8" class="text-center">
+          <td colspan="9" class="text-center">
             <em style="color: #666;">Tidak ada data stock banner in</em>
           </td>
         </tr>
@@ -1254,7 +1251,6 @@ export class BahanBakuView {
     `;
 
     // Direct injection to section
-    console.log("� Injecting HTML directly to section");
     section.innerHTML = tableHtml;
 
     // Tambahkan event listener untuk PDF button
@@ -1270,43 +1266,12 @@ export class BahanBakuView {
   }
 
   updateStockBannerOutDisplay(data) {
-    console.log("=== updateStockBannerOutDisplay called ===");
-    console.log("Data received:", data);
-    console.log("Data type:", typeof data);
-    console.log("Is array:", Array.isArray(data));
-    console.log(
-      "Data length:",
-      Array.isArray(data) ? data.length : "Not array"
-    );
-
     // Sort data by nomor (ascending) - dari yang terlama ke terbaru
     if (Array.isArray(data) && data.length > 0) {
       data.sort((a, b) => {
         const nomorA = Number(a.nomor) || 0;
         const nomorB = Number(b.nomor) || 0;
         return nomorA - nomorB; // Ascending order: 1, 2, 3, ...
-      });
-      console.log(
-        "📊 Banner Out data sorted by nomor (ascending):",
-        data.map((item) => item.nomor)
-      );
-    }
-
-    // Debug: Log setiap item data secara detail
-    if (Array.isArray(data) && data.length > 0) {
-      console.log("🔍 Detailed data analysis:");
-      data.forEach((item, index) => {
-        console.log(`  Item ${index}:`, {
-          nomor: item.nomor,
-          jenisKertas: item.jenisKertas,
-          ukuran: item.ukuran,
-          totalMasuk: item.totalMasuk,
-          totalKeluarOk: item.totalKeluarOk,
-          totalKeluarNg: item.totalKeluarNg,
-          tanggal: item.tanggal,
-          id: item.id,
-          timestamp: item.timestamp,
-        });
       });
     }
 
@@ -1315,7 +1280,6 @@ export class BahanBakuView {
       console.error("Section stock-banner-section-out not found!");
       return;
     }
-    console.log("Section found:", section);
 
     // Simpan data untuk PDF generation
     this.stockData["banner-out"] = data;
@@ -1336,6 +1300,7 @@ export class BahanBakuView {
                 <th>Jenis Kertas</th>
                 <th>Ukuran</th>
                 <th>Total Masuk</th>
+                <th>Satuan</th>
                 <th>Keluar (OK)</th>
                 <th>Keluar (NG)</th>
                 <th>Total Keluar</th>
@@ -1369,6 +1334,9 @@ export class BahanBakuView {
                 item.ukuran || ""
               }">${item.ukuran || ""}</td>
               <td class="editable text-center" data-field="totalMasuk" data-type="number" data-value="${totalMasuk}">${totalMasuk}</td>
+              <td class="editable" data-field="satuan" data-type="text" data-value="${
+                item.satuan || ""
+              }">${item.satuan || ""}</td>
               <td class="editable text-center" data-field="totalKeluarOk" data-type="number" data-value="${totalKeluarOk}">${totalKeluarOk}</td>
               <td class="editable text-center" data-field="totalKeluarNg" data-type="number" data-value="${totalKeluarNg}">${totalKeluarNg}</td>
               <td class="text-center"><strong>${totalKeluar}</strong></td>
@@ -1405,10 +1373,9 @@ export class BahanBakuView {
         }
       });
     } else {
-      console.log("No data found - showing empty message");
       tableHtml += `
         <tr>
-          <td colspan="10" class="text-center">
+          <td colspan="11" class="text-center">
             <em style="color: #666;">Tidak ada data stock banner out</em>
           </td>
         </tr>
@@ -1443,9 +1410,6 @@ export class BahanBakuView {
 
   // New methods for Digital In and Out sections
   updateStockDigitalInDisplay(data) {
-    console.log("=== Updating Digital In Display ===");
-    console.log("Digital In data received:", data);
-
     // Sort data by nomor (ascending) - dari yang terlama ke terbaru
     if (Array.isArray(data) && data.length > 0) {
       data.sort((a, b) => {
@@ -1453,10 +1417,6 @@ export class BahanBakuView {
         const nomorB = Number(b.nomor) || 0;
         return nomorA - nomorB; // Ascending order: 1, 2, 3, ...
       });
-      console.log(
-        "📊 Digital In data sorted by nomor (ascending):",
-        data.map((item) => item.nomor)
-      );
     }
 
     const section = document.getElementById("stock-digital-section-in");
@@ -1471,7 +1431,6 @@ export class BahanBakuView {
     // Remove any unwanted stock-results containers
     const unwantedContainers = section.querySelectorAll(".stock-results");
     unwantedContainers.forEach((container) => {
-      console.log("Removing unwanted stock-results container from Digital In");
       container.remove();
     });
 
@@ -1490,6 +1449,7 @@ export class BahanBakuView {
                 <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 80px;">Ukuran</th>
                 <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Qty Last Month</th>
                 <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Jumlah Masuk</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 80px;">Satuan</th>
                 <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 80px;">Total</th>
                 <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Tanggal</th>
                 <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 120px;">Aksi</th>
@@ -1538,6 +1498,11 @@ export class BahanBakuView {
               }" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;">${
             item.jumlahMasuk || 0
           }</td>
+              <td class="editable" data-field="satuan" data-type="text" data-value="${
+                item.satuan || ""
+              }" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;">${
+            item.satuan || ""
+          }</td>
               <td style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;"><strong style="color: #007bff; font-size: 15px;">${total}</strong></td>
               <td class="editable text-center" data-field="tanggal" data-type="date" data-value="${
                 item.tanggal || ""
@@ -1573,7 +1538,7 @@ export class BahanBakuView {
     } else {
       tableHtml += `
         <tr>
-          <td colspan="8" style="border: 1px solid #dee2e6; padding: 30px; text-align: center; background-color: #f8f9fa;">
+          <td colspan="9" style="border: 1px solid #dee2e6; padding: 30px; text-align: center; background-color: #f8f9fa;">
             <em style="color: #6c757d; font-size: 14px;">📋 Tidak ada data stock digital in</em>
           </td>
         </tr>
@@ -1612,13 +1577,9 @@ export class BahanBakuView {
 
     // Attach event listeners untuk action buttons
     this._attachStockActionListeners(section, "digital-in");
-    console.log("✅ Digital In display updated successfully");
   }
 
   updateStockDigitalOutDisplay(data) {
-    console.log("=== Updating Digital Out Display ===");
-    console.log("Digital Out data received:", data);
-
     // Sort data by nomor (ascending) - dari yang terlama ke terbaru
     if (Array.isArray(data) && data.length > 0) {
       data.sort((a, b) => {
@@ -1626,10 +1587,6 @@ export class BahanBakuView {
         const nomorB = Number(b.nomor) || 0;
         return nomorA - nomorB; // Ascending order: 1, 2, 3, ...
       });
-      console.log(
-        "📊 Digital Out data sorted by nomor (ascending):",
-        data.map((item) => item.nomor)
-      );
     }
 
     const section = document.getElementById("stock-digital-section-out");
@@ -1644,7 +1601,6 @@ export class BahanBakuView {
     // Remove any unwanted stock-results containers
     const unwantedContainers = section.querySelectorAll(".stock-results");
     unwantedContainers.forEach((container) => {
-      console.log("Removing unwanted stock-results container from Digital Out");
       container.remove();
     });
 
@@ -1662,6 +1618,7 @@ export class BahanBakuView {
                 <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: left; font-weight: 600; min-width: 120px;">Jenis Kertas</th>
                 <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 80px;">Ukuran</th>
                 <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Total Masuk</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 80px;">Satuan</th>
                 <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Keluar (OK)</th>
                 <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Keluar (NG)</th>
                 <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Total Keluar</th>
@@ -1708,6 +1665,11 @@ export class BahanBakuView {
             item.ukuran || ""
           }</td>
               <td class="editable text-center" data-field="totalMasuk" data-type="number" data-value="${totalMasuk}" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;">${totalMasuk}</td>
+              <td class="editable" data-field="satuan" data-type="text" data-value="${
+                item.satuan || ""
+              }" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;">${
+            item.satuan || ""
+          }</td>
               <td class="editable text-center" data-field="totalKeluarOk" data-type="number" data-value="${totalKeluarOk}" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;">${totalKeluarOk}</td>
               <td class="editable text-center" data-field="totalKeluarNg" data-type="number" data-value="${totalKeluarNg}" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;">${totalKeluarNg}</td>
               <td style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;"><strong style="color: #dc3545; font-size: 15px;">${totalKeluar}</strong></td>
@@ -1748,7 +1710,7 @@ export class BahanBakuView {
     } else {
       tableHtml += `
         <tr>
-          <td colspan="10" style="border: 1px solid #dee2e6; padding: 30px; text-align: center; background-color: #f8f9fa;">
+          <td colspan="11" style="border: 1px solid #dee2e6; padding: 30px; text-align: center; background-color: #f8f9fa;">
             <em style="color: #6c757d; font-size: 14px;">📋 Tidak ada data stock digital out</em>
           </td>
         </tr>
@@ -1839,6 +1801,7 @@ export class BahanBakuView {
                 <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 80px;">Ukuran</th>
                 <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Qty Last Month</th>
                 <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Jumlah Masuk</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 80px;">Satuan</th>
                 <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 80px;">Total</th>
                 <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Tanggal</th>
                 <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Remark</th>
@@ -1888,6 +1851,11 @@ export class BahanBakuView {
               }" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;">${
             item.jumlahMasuk || 0
           }</td>
+              <td class="editable" data-field="satuan" data-type="text" data-value="${
+                item.satuan || ""
+              }" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;">${
+            item.satuan || ""
+          }</td>
               <td style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;"><strong style="color: #007bff; font-size: 15px;">${total}</strong></td>
               <td class="editable text-center" data-field="tanggal" data-type="date" data-value="${
                 item.tanggal || ""
@@ -1928,7 +1896,7 @@ export class BahanBakuView {
     } else {
       tableHtml += `
         <tr>
-          <td colspan="9" style="border: 1px solid #dee2e6; padding: 30px; text-align: center; background-color: #f8f9fa;">
+          <td colspan="10" style="border: 1px solid #dee2e6; padding: 30px; text-align: center; background-color: #f8f9fa;">
             <em style="color: #6c757d; font-size: 14px;">📋 Tidak ada data stock produksi in</em>
           </td>
         </tr>
@@ -2019,6 +1987,7 @@ export class BahanBakuView {
                 <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: left; font-weight: 600; min-width: 120px;">Jenis Kertas</th>
                 <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 80px;">Ukuran</th>
                 <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Total Masuk</th>
+                <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 80px;">Satuan</th>
                 <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Keluar (OK)</th>
                 <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Keluar (NG)</th>
                 <th style="border: 1px solid #dee2e6; padding: 12px 8px; text-align: center; font-weight: 600; min-width: 100px;">Total Keluar</th>
@@ -2065,6 +2034,11 @@ export class BahanBakuView {
             item.ukuran || ""
           }</td>
               <td class="editable text-center" data-field="totalMasuk" data-type="number" data-value="${totalMasuk}" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;">${totalMasuk}</td>
+              <td class="editable" data-field="satuan" data-type="text" data-value="${
+                item.satuan || ""
+              }" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;">${
+            item.satuan || ""
+          }</td>
               <td class="editable text-center" data-field="totalKeluarOk" data-type="number" data-value="${totalKeluarOk}" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;">${totalKeluarOk}</td>
               <td class="editable text-center" data-field="totalKeluarNg" data-type="number" data-value="${totalKeluarNg}" style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;">${totalKeluarNg}</td>
               <td style="border: 1px solid #dee2e6; padding: 10px 8px; text-align: center;"><strong style="color: #dc3545; font-size: 15px;">${totalKeluar}</strong></td>
@@ -2105,7 +2079,7 @@ export class BahanBakuView {
     } else {
       tableHtml += `
         <tr>
-          <td colspan="10" style="border: 1px solid #dee2e6; padding: 30px; text-align: center; background-color: #f8f9fa;">
+          <td colspan="11" style="border: 1px solid #dee2e6; padding: 30px; text-align: center; background-color: #f8f9fa;">
             <em style="color: #6c757d; font-size: 14px;">📋 Tidak ada data stock produksi out</em>
           </td>
         </tr>
@@ -2463,8 +2437,17 @@ export class BahanBakuView {
     this._confirmingDelete = true;
 
     // Small delay to prevent event bubbling issues
-    setTimeout(() => {
-      if (confirm("Apakah Anda yakin ingin menghapus data ini?")) {
+    setTimeout(async () => {
+      const result = await sweetAlert.confirm(
+        "Data yang dihapus tidak dapat dikembalikan lagi.",
+        "Apakah Anda yakin ingin menghapus data ini?",
+        {
+          confirmButtonText: "Ya, Hapus!",
+          cancelButtonText: "Batal",
+        }
+      );
+
+      if (result.isConfirmed) {
         if (this.stockDeleteHandlers && this.stockDeleteHandlers[type]) {
           console.log("🗑️ Calling delete handler for:", { id, type, category });
           this.stockDeleteHandlers[type](id);
@@ -2475,7 +2458,10 @@ export class BahanBakuView {
             "Available handlers:",
             Object.keys(this.stockDeleteHandlers || {})
           );
-          alert("Fitur delete akan diimplementasikan oleh presenter");
+          sweetAlert.info(
+            "Fitur delete akan diimplementasikan oleh presenter",
+            "Info"
+          );
         }
       }
 

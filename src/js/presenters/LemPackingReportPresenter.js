@@ -1,3 +1,5 @@
+import { sweetAlert } from "../utils/SweetAlertUtil.js";
+
 class LemPackingReportPresenter {
   constructor(model, view) {
     this.model = model;
@@ -148,18 +150,30 @@ class LemPackingReportPresenter {
       }
 
       const confirmMessage = `Apakah Anda yakin ingin menghapus laporan No. ${report.nomor} tanggal ${report.tanggal}?`;
-      if (confirm(confirmMessage)) {
-        const result = this.model.delete(id);
 
-        if (result.success) {
-          this.view.showSuccess("Laporan berhasil dihapus");
+      sweetAlert
+        .confirm(
+          "Data yang dihapus tidak dapat dikembalikan lagi.",
+          confirmMessage,
+          {
+            confirmButtonText: "Ya, Hapus!",
+            cancelButtonText: "Batal",
+          }
+        )
+        .then((result) => {
+          if (result.isConfirmed) {
+            const deleteResult = this.model.delete(id);
 
-          // Refresh rekap
-          document.dispatchEvent(new CustomEvent("refreshRekap"));
-        } else {
-          this.view.showError(result.error);
-        }
-      }
+            if (deleteResult.success) {
+              this.view.showSuccess("Laporan berhasil dihapus");
+
+              // Refresh rekap
+              document.dispatchEvent(new CustomEvent("refreshRekap"));
+            } else {
+              this.view.showError(deleteResult.error);
+            }
+          }
+        });
     } catch (error) {
       console.error("Error deleting lem packing report:", error);
       this.view.showError("Terjadi kesalahan saat menghapus laporan");

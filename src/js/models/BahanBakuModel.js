@@ -14,7 +14,6 @@ export class BahanBakuModel {
   async getCurrentBannerStock() {
     try {
       if (this.useSupabase) {
-        console.log("🔄 Loading Banner In from Supabase...");
         const supabaseData = await this.getBannerInStockFromSupabase();
 
         if (supabaseData.length > 0) {
@@ -24,6 +23,7 @@ export class BahanBakuModel {
             nomor: item.nomor,
             jenisKertas: item.jenis_kertas,
             ukuran: item.ukuran,
+            satuan: item.satuan,
             qtyLastMonth: item.qty_last_month,
             jumlahMasuk: item.jumlah_kertas_masuk, // Sesuai field di database
             total: item.total, // calculated field dari database
@@ -32,13 +32,11 @@ export class BahanBakuModel {
             createdAt: item.created_at,
             updatedAt: item.updated_at,
           }));
-          console.log("✅ Transformed Banner In data:", transformedData);
           return transformedData;
         }
       }
 
       // Fallback ke IndexedDB jika Supabase kosong atau error
-      console.log("📦 Fallback to IndexedDB for Banner In...");
       const data = await this.getCurrentStock("banner");
       return data;
     } catch (error) {
@@ -51,7 +49,6 @@ export class BahanBakuModel {
   async getCurrentBannerOutStock() {
     try {
       if (this.useSupabase) {
-        console.log("🔄 Loading Banner Out from Supabase...");
         const supabaseData = await this.getBannerOutStockFromSupabase();
 
         if (supabaseData.length > 0) {
@@ -60,6 +57,7 @@ export class BahanBakuModel {
             nomor: item.nomor,
             jenisKertas: item.jenis_kertas,
             ukuran: item.ukuran,
+            satuan: item.satuan,
             totalMasuk: item.total_kertas_masuk,
             totalKeluarOk: item.total_keluar_ok,
             totalKeluarNg: item.total_keluar_ng,
@@ -70,21 +68,14 @@ export class BahanBakuModel {
             createdAt: item.created_at,
             updatedAt: item.updated_at,
           }));
-          console.log("✅ Transformed Banner Out data:", transformedData);
           return transformedData;
         }
       }
 
       // Fallback ke IndexedDB
-      console.log("📦 Fallback to IndexedDB for Banner Out...");
-      console.log("=== getCurrentBannerOutStock called ===");
-
-      // Force refresh DB connection to ensure fresh data after delete
       await db.forceRefreshDB();
 
       const transactions = await db.getRecords(this.storeNames.transactions);
-
-      console.log("📊 Total transactions in DB:", transactions.length);
 
       // Filter untuk banner out transactions - fix: type is saved as "out-banner"
       const bannerOutTransactions = transactions.filter(
@@ -93,26 +84,7 @@ export class BahanBakuModel {
           (transaction.type === "out" || transaction.type === "out-banner")
       );
 
-      console.log(
-        "🎯 Banner Out transactions found:",
-        bannerOutTransactions.length
-      );
-      console.log(
-        "📋 Banner Out IDs:",
-        bannerOutTransactions.map((t) => t.id || t.timestamp)
-      );
-      console.log("📋 Banner Out detailed records:", bannerOutTransactions);
-
-      // DEBUG: Let's see what types are actually in the database
-      console.log("🔍 DEBUG: All transaction types in DB:");
-      transactions.forEach((t, index) => {
-        console.log(
-          `  Transaction ${index}: category="${t.category}", type="${t.type}"`
-        );
-      });
-
       // CRITICAL: Double-check by direct database query
-      console.log("🔍 DOUBLE-CHECK: Querying database directly...");
       const dbInstance = await db.openDB();
       const directCheck = new Promise((resolve) => {
         const transaction = dbInstance.transaction(
@@ -150,11 +122,6 @@ export class BahanBakuModel {
       // Compare results
       let resultTransactions;
       if (bannerOutTransactions.length !== directResult.length) {
-        console.log(
-          "⚠️ CRITICAL: Mismatch between getRecords and direct query!"
-        );
-        console.log("  getRecords result:", bannerOutTransactions.length);
-        console.log("  Direct query result:", directResult.length);
         resultTransactions = directResult; // Use direct query result
       } else {
         resultTransactions = bannerOutTransactions;
@@ -162,8 +129,6 @@ export class BahanBakuModel {
 
       // Transform transaction format to flat data format for display
       const transformedData = resultTransactions.map((transaction) => {
-        console.log("🔄 Transforming transaction:", transaction);
-
         // Check if transaction has data property (nested structure) or if fields are at root level
         const sourceData = transaction.data || transaction;
 
@@ -179,11 +144,9 @@ export class BahanBakuModel {
           tanggal: sourceData.tanggal,
         };
 
-        console.log("✅ Transformed to:", transformed);
         return transformed;
       });
 
-      console.log("🎯 Final Banner Out data for display:", transformedData);
       return transformedData;
     } catch (error) {
       console.error("Error getting banner out stock:", error);
@@ -194,7 +157,6 @@ export class BahanBakuModel {
   async getCurrentDigitalStock() {
     try {
       if (this.useSupabase) {
-        console.log("🔄 Loading Digital In from Supabase...");
         const supabaseData = await this.getDigitalInStockFromSupabase();
 
         if (supabaseData.length > 0) {
@@ -203,6 +165,7 @@ export class BahanBakuModel {
             nomor: item.nomor,
             jenisKertas: item.jenis_kertas,
             ukuran: item.ukuran,
+            satuan: item.satuan,
             qtyLastMonth: item.qty_last_month,
             jumlahMasuk: item.jumlah_kertas_masuk,
             total: item.total, // calculated field
@@ -211,29 +174,20 @@ export class BahanBakuModel {
             createdAt: item.created_at,
             updatedAt: item.updated_at,
           }));
-          console.log("✅ Transformed Digital In data:", transformedData);
           return transformedData;
         }
       }
 
       // Fallback ke IndexedDB
-      console.log("📦 Fallback to IndexedDB for Digital In...");
-      console.log("=== getCurrentDigitalStock called ===");
-
       // Debug: Check all records in stock store
       const allStockRecords = await db.getRecords(this.storeNames.stock);
-      console.log("🗃️ All stock records in database:", allStockRecords.length);
-      console.log("📋 All stock records:", allStockRecords);
 
       // Check specifically for digital records
       const digitalRecords = allStockRecords.filter(
         (record) => record.category === "digital"
       );
-      console.log("📊 Digital records found:", digitalRecords.length);
-      console.log("🔍 Digital records details:", digitalRecords);
 
       const data = await this.getCurrentStock("digital");
-      console.log("✅ getCurrentStock result:", data);
       return data;
     } catch (error) {
       console.error("Error in getCurrentDigitalStock:", error);
@@ -244,7 +198,6 @@ export class BahanBakuModel {
   async getCurrentDigitalOutStock() {
     try {
       if (this.useSupabase) {
-        console.log("🔄 Loading Digital Out from Supabase...");
         const supabaseData = await this.getDigitalOutStockFromSupabase();
 
         if (supabaseData.length > 0) {
@@ -253,6 +206,7 @@ export class BahanBakuModel {
             nomor: item.nomor,
             jenisKertas: item.jenis_kertas,
             ukuran: item.ukuran,
+            satuan: item.satuan,
             totalMasuk: item.total_kertas_masuk,
             totalKeluarOk: item.total_keluar_ok,
             totalKeluarNg: item.total_keluar_ng,
@@ -263,21 +217,14 @@ export class BahanBakuModel {
             createdAt: item.created_at,
             updatedAt: item.updated_at,
           }));
-          console.log("✅ Transformed Digital Out data:", transformedData);
           return transformedData;
         }
       }
 
       // Fallback ke IndexedDB
-      console.log("📦 Fallback to IndexedDB for Digital Out...");
-      console.log("=== getCurrentDigitalOutStock called ===");
-
-      // Force refresh DB connection to ensure fresh data after delete
       await db.forceRefreshDB();
 
       const transactions = await db.getRecords(this.storeNames.transactions);
-
-      console.log("📊 Total transactions in DB:", transactions.length);
 
       // Filter untuk digital out transactions - fix: type is saved as "out-digital"
       const digitalOutTransactions = transactions.filter(
@@ -286,20 +233,8 @@ export class BahanBakuModel {
           (transaction.type === "out" || transaction.type === "out-digital")
       );
 
-      console.log(
-        "🎯 Digital Out transactions found:",
-        digitalOutTransactions.length
-      );
-      console.log(
-        "📋 Digital Out IDs:",
-        digitalOutTransactions.map((t) => t.id)
-      );
-      console.log("📋 Digital Out detailed records:", digitalOutTransactions);
-
       // Transform transaction format to flat data format for display
       const transformedData = digitalOutTransactions.map((transaction) => {
-        console.log("🔄 Transforming digital out transaction:", transaction);
-
         // Check if transaction has data property (nested structure) or if fields are at root level
         const sourceData = transaction.data || transaction;
 
@@ -315,11 +250,9 @@ export class BahanBakuModel {
           tanggal: sourceData.tanggal,
         };
 
-        console.log("✅ Transformed digital out to:", transformed);
         return transformed;
       });
 
-      console.log("🎯 Final Digital Out data for display:", transformedData);
       return transformedData;
     } catch (error) {
       console.error("Error getting digital out stock:", error);
@@ -339,6 +272,7 @@ export class BahanBakuModel {
             nomor: item.nomor,
             jenisKertas: item.jenis_kertas,
             ukuran: item.ukuran,
+            satuan: item.satuan,
             qtyLastMonth: item.qty_last_month,
             jumlahMasuk: item.jumlah_kertas_masuk,
             total: item.total, // calculated field
@@ -403,6 +337,7 @@ export class BahanBakuModel {
             nomor: item.nomor,
             jenisKertas: item.jenis_kertas,
             ukuran: item.ukuran,
+            satuan: item.satuan,
             totalMasuk: item.total_kertas_masuk,
             totalKeluarOk: item.total_keluar_ok,
             totalKeluarNg: item.total_keluar_ng,
@@ -755,19 +690,13 @@ export class BahanBakuModel {
       const currentMonth = targetDate.getMonth() + 1; // 1-12
       const currentYear = targetDate.getFullYear();
 
-      console.log(`=== Getting next number for ${category}-${type} ===`);
-      console.log(`Current month: ${currentMonth}, year: ${currentYear}`);
-
       // Create a unique key for this category, type, and month
       const key = `${category}-${type}-${currentYear}-${currentMonth}`;
-      console.log("🔢 Generating number for key:", key);
 
       // Get only transaction records for in/out numbering
       const transactionRecords = await db.getRecords(
         this.storeNames.transactions
       );
-
-      console.log(`📝 Total transaction records: ${transactionRecords.length}`);
 
       // Filter records for current category, type, and month
       const relevantRecords = [];
@@ -776,22 +705,7 @@ export class BahanBakuModel {
       // Stock records are completely ignored for this purpose
 
       // Process transaction records - this is where in/out records are stored
-      console.log(
-        `🔍 Filtering from ${transactionRecords.length} transaction records...`
-      );
-
       transactionRecords.forEach((record, index) => {
-        // Debug: show what we're checking
-        if (record.category === category) {
-          console.log(
-            `Record ${index}: category=${record.category}, type=${
-              record.type
-            }, nomor=${record.data?.nomor || record.nomor}, tanggal=${
-              record.data?.tanggal || record.tanggal
-            }`
-          );
-        }
-
         // Check for both new format (type: "in-category") and old format (type: "in")
         const isMatchingType =
           record.type === `${type}-${category}` || record.type === type;
@@ -803,10 +717,6 @@ export class BahanBakuModel {
           const recordMonth = recordDate.getMonth() + 1;
           const recordYear = recordDate.getFullYear();
 
-          console.log(
-            `📅 Record date: ${recordMonth}/${recordYear}, target: ${currentMonth}/${currentYear}`
-          );
-
           if (recordMonth === currentMonth && recordYear === currentYear) {
             relevantRecords.push({
               nomor: recordNomor,
@@ -814,14 +724,9 @@ export class BahanBakuModel {
               date: recordTanggal,
               type: record.type,
             });
-            console.log(
-              `✅ Added record: nomor=${recordNomor}, type=${record.type}`
-            );
           }
         }
       });
-
-      console.log(`🎯 Relevant records for ${key}:`, relevantRecords);
 
       // NEW LOGIC: Gap filling - find the smallest available number
       const existingNumbers = [];
@@ -835,17 +740,12 @@ export class BahanBakuModel {
       // Sort numbers to find gaps
       existingNumbers.sort((a, b) => a - b);
 
-      console.log(
-        `🔢 Existing numbers sorted: [${existingNumbers.join(", ")}]`
-      );
-
       // Find the first gap or next available number
       let nextNumber = 1;
 
       if (existingNumbers.length === 0) {
         // No existing numbers, start from 1
         nextNumber = 1;
-        console.log(`📊 No existing numbers, starting from 1`);
       } else {
         // Look for gaps in sequence
         for (
@@ -855,20 +755,10 @@ export class BahanBakuModel {
         ) {
           if (!existingNumbers.includes(i)) {
             nextNumber = i;
-            console.log(`🔍 Found gap at number: ${nextNumber}`);
             break;
           }
         }
       }
-
-      console.log(
-        `✅ Next available number for ${category}-${type} bulan ${currentMonth}/${currentYear}: ${nextNumber}`
-      );
-      console.log(
-        `📋 Gap analysis: existing [${existingNumbers.join(
-          ", "
-        )}] → next: ${nextNumber}`
-      );
 
       return nextNumber;
     } catch (error) {
@@ -1046,27 +936,18 @@ export class BahanBakuModel {
 
   async getCurrentStock(category) {
     try {
-      console.log(`=== Getting current stock for category: ${category} ===`);
-
       // First, let's verify database connection
       await db.openDB();
-      console.log("Database connection verified");
 
       // Get current stock directly from stock store
-      console.log("Querying stock records from database...");
       const stockRecords = await db.getRecordsByIndex(
         this.storeNames.stock,
         "category",
         category
       );
-      console.log(
-        `Found ${stockRecords.length} stock records for ${category}:`
-      );
-      console.log("Raw stock records:", JSON.stringify(stockRecords, null, 2));
 
       // Map the records to the correct format - include ID for delete functionality
       const formattedStock = stockRecords.map((record) => {
-        console.log("Processing record:", record);
         const formatted = {
           id: record.id, // Include ID for delete functionality
           nomor: record.nomor,
@@ -1080,7 +961,6 @@ export class BahanBakuModel {
           timestamp: record.timestamp, // Include timestamp as fallback
           remark: record.remark, // Include remark field for produksi category
         };
-        console.log("Formatted record:", formatted);
         return formatted;
       });
 
@@ -1089,10 +969,6 @@ export class BahanBakuModel {
         (a, b) => (Number(a.nomor) || 0) - (Number(b.nomor) || 0)
       );
 
-      console.log(
-        "Final formatted and sorted stock data:",
-        JSON.stringify(formattedStock, null, 2)
-      );
       return formattedStock;
     } catch (error) {
       console.error(`Error getting ${category} stock:`, error);
@@ -1202,8 +1078,6 @@ export class BahanBakuModel {
   // Method untuk delete stock record - for Banner In data
   async deleteStockRecord(id) {
     try {
-      console.log("🗑️ Deleting stock record:", id, "type:", typeof id);
-
       const database = await db.openDB();
       return new Promise((resolve, reject) => {
         const transaction = database.transaction(
@@ -1214,16 +1088,13 @@ export class BahanBakuModel {
 
         // Convert id to number like in DailyReportModel
         const numericId = Number(id);
-        console.log("🔢 Using numeric ID for delete from stock:", numericId);
 
         const request = store.delete(numericId);
 
         request.onerror = () => {
-          console.error("❌ Delete failed:", request.error);
           reject(request.error);
         };
         request.onsuccess = () => {
-          console.log("✅ Delete successful from stock store");
           resolve(request.result);
         };
       });
@@ -1236,8 +1107,6 @@ export class BahanBakuModel {
   // Method untuk delete transaction record - simplified like DailyReportModel
   async deleteTransactionRecord(id) {
     try {
-      console.log("🗑️ Deleting transaction record:", id, "type:", typeof id);
-
       const database = await db.openDB();
       return new Promise((resolve, reject) => {
         const transaction = database.transaction(
@@ -1248,20 +1117,14 @@ export class BahanBakuModel {
 
         // Convert id to number like in DailyReportModel
         const numericId = Number(id);
-        console.log("🔢 Using numeric ID for delete:", numericId);
 
         const request = store.delete(numericId);
 
         request.onerror = () => {
-          console.error("❌ Delete operation failed:", request.error);
           reject(request.error);
         };
 
         request.onsuccess = () => {
-          console.log(
-            "✅ Record deleted successfully with numeric ID:",
-            numericId
-          );
           resolve(request.result);
         };
       });
@@ -1388,7 +1251,6 @@ export class BahanBakuModel {
   async getBannerInStockFromSupabase() {
     try {
       const data = await dbService.read(TABLES.BANNER_IN_STOCK);
-      console.log("📊 Banner In data from Supabase:", data);
       return data || [];
     } catch (error) {
       console.error("Error getting banner in stock from Supabase:", error);
@@ -1405,10 +1267,10 @@ export class BahanBakuModel {
         ukuran: data.ukuran,
         qty_last_month: data.qtyLastMonth || 0,
         jumlah_kertas_masuk: data.jumlahMasuk || 0, // Sesuai field di database
+        satuan: data.satuan,
         tanggal: data.tanggal,
       };
 
-      console.log("💾 Saving to Supabase banner_in_stock:", supabaseData);
       return await dbService.create(TABLES.BANNER_IN_STOCK, supabaseData);
     } catch (error) {
       console.error("Error saving banner in stock to Supabase:", error);
@@ -1423,6 +1285,7 @@ export class BahanBakuModel {
         ukuran: data.ukuran,
         qty_last_month: parseInt(data.qtyLastMonth) || 0,
         jumlah_kertas_masuk: parseInt(data.jumlahMasuk) || 0, // Sesuai field di database
+        satuan: data.satuan,
         tanggal: data.tanggal,
       };
 
@@ -1466,6 +1329,7 @@ export class BahanBakuModel {
         jenis_kertas: data.jenisKertas,
         ukuran: data.ukuran,
         total_kertas_masuk: data.totalMasuk || 0,
+        satuan: data.satuan,
         total_keluar_ok: data.totalKeluarOk || 0,
         total_keluar_ng: data.totalKeluarNg || 0,
         tanggal: data.tanggal,
@@ -1485,6 +1349,7 @@ export class BahanBakuModel {
         jenis_kertas: data.jenisKertas,
         ukuran: data.ukuran,
         total_kertas_masuk: parseInt(data.totalMasuk) || 0,
+        satuan: data.satuan,
         total_keluar_ok: parseInt(data.totalKeluarOk) || 0,
         total_keluar_ng: parseInt(data.totalKeluarNg) || 0,
         tanggal: data.tanggal,
@@ -1531,6 +1396,7 @@ export class BahanBakuModel {
         ukuran: data.ukuran,
         qty_last_month: data.qtyLastMonth || 0,
         jumlah_kertas_masuk: data.jumlahMasuk || 0,
+        satuan: data.satuan,
         tanggal: data.tanggal,
       };
 
@@ -1549,6 +1415,7 @@ export class BahanBakuModel {
         ukuran: data.ukuran,
         qty_last_month: parseInt(data.qtyLastMonth) || 0,
         jumlah_kertas_masuk: parseInt(data.jumlahMasuk) || 0,
+        satuan: data.satuan,
         tanggal: data.tanggal,
       };
 
@@ -1592,6 +1459,7 @@ export class BahanBakuModel {
         jenis_kertas: data.jenisKertas,
         ukuran: data.ukuran,
         total_kertas_masuk: data.totalMasuk || 0,
+        satuan: data.satuan,
         total_keluar_ok: data.totalKeluarOk || 0,
         total_keluar_ng: data.totalKeluarNg || 0,
         tanggal: data.tanggal,
@@ -1611,6 +1479,7 @@ export class BahanBakuModel {
         jenis_kertas: data.jenisKertas,
         ukuran: data.ukuran,
         total_kertas_masuk: parseInt(data.totalMasuk) || 0,
+        satuan: data.satuan,
         total_keluar_ok: parseInt(data.totalKeluarOk) || 0,
         total_keluar_ng: parseInt(data.totalKeluarNg) || 0,
         tanggal: data.tanggal,
@@ -1641,10 +1510,8 @@ export class BahanBakuModel {
   async getProduksiInStockFromSupabase() {
     try {
       const data = await dbService.read(TABLES.PRODUKSI_IN_STOCK);
-      console.log("📊 Produksi In data from Supabase:", data);
       return data || [];
     } catch (error) {
-      console.error("Error getting produksi in stock from Supabase:", error);
       return [];
     }
   }
@@ -1657,8 +1524,9 @@ export class BahanBakuModel {
         ukuran: data.ukuran,
         qty_last_month: data.qtyLastMonth || 0,
         jumlah_kertas_masuk: data.jumlahMasuk || 0,
+        satuan: data.satuan,
         tanggal: data.tanggal,
-        remark: data.remark || null, // Produksi In punya field remark
+        remark: data.remark || null,
       };
 
       console.log("💾 Saving to Supabase produksi_in_stock:", supabaseData);
@@ -1676,6 +1544,7 @@ export class BahanBakuModel {
         ukuran: data.ukuran,
         qty_last_month: parseInt(data.qtyLastMonth) || 0,
         jumlah_kertas_masuk: parseInt(data.jumlahMasuk) || 0,
+        satuan: data.satuan,
         tanggal: data.tanggal,
         remark: data.remark || null,
       };
@@ -1720,6 +1589,7 @@ export class BahanBakuModel {
         jenis_kertas: data.jenisKertas,
         ukuran: data.ukuran,
         total_kertas_masuk: data.totalMasuk || 0,
+        satuan: data.satuan,
         total_keluar_ok: data.totalKeluarOk || 0,
         total_keluar_ng: data.totalKeluarNg || 0,
         tanggal: data.tanggal,
@@ -1739,22 +1609,18 @@ export class BahanBakuModel {
         jenis_kertas: data.jenisKertas,
         ukuran: data.ukuran,
         total_kertas_masuk: parseInt(data.totalMasuk) || 0,
+        satuan: data.satuan,
         total_keluar_ok: parseInt(data.totalKeluarOk) || 0,
         total_keluar_ng: parseInt(data.totalKeluarNg) || 0,
         tanggal: data.tanggal,
       };
 
-      console.log("🔄 Updating Supabase produksi_out_stock:", {
-        id,
-        supabaseData,
-      });
       return await dbService.update(
         TABLES.PRODUKSI_OUT_STOCK,
         id,
         supabaseData
       );
     } catch (error) {
-      console.error("Error updating produksi out stock in Supabase:", error);
       throw error;
     }
   }
@@ -1776,56 +1642,31 @@ export class BahanBakuModel {
       const year = targetDate.getFullYear();
       const month = targetDate.getMonth(); // 0-based month untuk konsistensi dengan DailyReportModel
 
-      console.log(`🔢 Getting next Banner In number for ${month + 1}/${year}`);
-      console.log(`📅 Input date: ${date}, Target date: ${targetDate}`);
-
       if (this.useSupabase) {
         const supabaseRecords = await this.getBannerInStockFromSupabase();
-        console.log(
-          "📊 Total Banner In records in Supabase:",
-          supabaseRecords.length
-        );
-        console.log("📋 All Banner In records:", supabaseRecords);
 
         // Filter records for current month and year (sama seperti DailyReportModel)
         const monthRecords = supabaseRecords.filter((record) => {
           const recordDate = new Date(record.tanggal);
           const recordYear = recordDate.getFullYear();
           const recordMonth = recordDate.getMonth();
-          console.log(
-            `🔍 Record: ${record.nomor}, Date: ${
-              record.tanggal
-            }, Year: ${recordYear}, Month: ${recordMonth + 1}`
-          );
           return recordYear === year && recordMonth === month;
         });
 
-        console.log(
-          "📈 Banner In records for current month:",
-          monthRecords.length
-        );
-        console.log("📋 Filtered month records:", monthRecords);
-
         if (monthRecords.length === 0) {
-          console.log("✨ First Banner In record for this month, returning 1");
           return 1;
         }
 
         // Find max nomor and increment by 1 (sama seperti DailyReportModel)
         const nomors = monthRecords.map((record) => Number(record.nomor) || 0);
-        console.log("🔢 Existing Banner In nomors:", nomors);
 
         const maxNomor = Math.max(...nomors);
         const nextNomor = maxNomor + 1;
 
-        console.log(
-          `🎯 Max Banner In nomor: ${maxNomor}, Next nomor: ${nextNomor}`
-        );
         return nextNomor;
       }
 
       // Fallback to IndexedDB logic
-      console.log("📦 Supabase not enabled, returning default 1");
       return 1; // Default untuk fallback
     } catch (error) {
       console.error("❌ Error getting next Banner In number:", error);
@@ -1840,14 +1681,8 @@ export class BahanBakuModel {
       const year = targetDate.getFullYear();
       const month = targetDate.getMonth();
 
-      console.log(`🔢 Getting next Banner Out number for ${month + 1}/${year}`);
-
       if (this.useSupabase) {
         const supabaseRecords = await this.getBannerOutStockFromSupabase();
-        console.log(
-          "📊 Total Banner Out records in Supabase:",
-          supabaseRecords.length
-        );
 
         const monthRecords = supabaseRecords.filter((record) => {
           const recordDate = new Date(record.tanggal);
@@ -1856,25 +1691,15 @@ export class BahanBakuModel {
           return recordYear === year && recordMonth === month;
         });
 
-        console.log(
-          "📈 Banner Out records for current month:",
-          monthRecords.length
-        );
-
         if (monthRecords.length === 0) {
-          console.log("✨ First Banner Out record for this month, returning 1");
           return 1;
         }
 
         const nomors = monthRecords.map((record) => Number(record.nomor) || 0);
-        console.log("🔢 Existing Banner Out nomors:", nomors);
 
         const maxNomor = Math.max(...nomors);
         const nextNomor = maxNomor + 1;
 
-        console.log(
-          `🎯 Max Banner Out nomor: ${maxNomor}, Next nomor: ${nextNomor}`
-        );
         return nextNomor;
       }
 
@@ -1892,14 +1717,8 @@ export class BahanBakuModel {
       const year = targetDate.getFullYear();
       const month = targetDate.getMonth();
 
-      console.log(`🔢 Getting next Digital In number for ${month + 1}/${year}`);
-
       if (this.useSupabase) {
         const supabaseRecords = await this.getDigitalInStockFromSupabase();
-        console.log(
-          "📊 Total Digital In records in Supabase:",
-          supabaseRecords.length
-        );
 
         const monthRecords = supabaseRecords.filter((record) => {
           const recordDate = new Date(record.tanggal);
@@ -1908,25 +1727,15 @@ export class BahanBakuModel {
           return recordYear === year && recordMonth === month;
         });
 
-        console.log(
-          "📈 Digital In records for current month:",
-          monthRecords.length
-        );
-
         if (monthRecords.length === 0) {
-          console.log("✨ First Digital In record for this month, returning 1");
           return 1;
         }
 
         const nomors = monthRecords.map((record) => Number(record.nomor) || 0);
-        console.log("🔢 Existing Digital In nomors:", nomors);
 
         const maxNomor = Math.max(...nomors);
         const nextNomor = maxNomor + 1;
 
-        console.log(
-          `🎯 Max Digital In nomor: ${maxNomor}, Next nomor: ${nextNomor}`
-        );
         return nextNomor;
       }
 
@@ -1944,16 +1753,8 @@ export class BahanBakuModel {
       const year = targetDate.getFullYear();
       const month = targetDate.getMonth();
 
-      console.log(
-        `🔢 Getting next Digital Out number for ${month + 1}/${year}`
-      );
-
       if (this.useSupabase) {
         const supabaseRecords = await this.getDigitalOutStockFromSupabase();
-        console.log(
-          "📊 Total Digital Out records in Supabase:",
-          supabaseRecords.length
-        );
 
         const monthRecords = supabaseRecords.filter((record) => {
           const recordDate = new Date(record.tanggal);
@@ -1962,27 +1763,15 @@ export class BahanBakuModel {
           return recordYear === year && recordMonth === month;
         });
 
-        console.log(
-          "📈 Digital Out records for current month:",
-          monthRecords.length
-        );
-
         if (monthRecords.length === 0) {
-          console.log(
-            "✨ First Digital Out record for this month, returning 1"
-          );
           return 1;
         }
 
         const nomors = monthRecords.map((record) => Number(record.nomor) || 0);
-        console.log("🔢 Existing Digital Out nomors:", nomors);
 
         const maxNomor = Math.max(...nomors);
         const nextNomor = maxNomor + 1;
 
-        console.log(
-          `🎯 Max Digital Out nomor: ${maxNomor}, Next nomor: ${nextNomor}`
-        );
         return nextNomor;
       }
 
@@ -2000,16 +1789,8 @@ export class BahanBakuModel {
       const year = targetDate.getFullYear();
       const month = targetDate.getMonth();
 
-      console.log(
-        `🔢 Getting next Produksi In number for ${month + 1}/${year}`
-      );
-
       if (this.useSupabase) {
         const supabaseRecords = await this.getProduksiInStockFromSupabase();
-        console.log(
-          "📊 Total Produksi In records in Supabase:",
-          supabaseRecords.length
-        );
 
         const monthRecords = supabaseRecords.filter((record) => {
           const recordDate = new Date(record.tanggal);
@@ -2018,27 +1799,15 @@ export class BahanBakuModel {
           return recordYear === year && recordMonth === month;
         });
 
-        console.log(
-          "� Produksi In records for current month:",
-          monthRecords.length
-        );
-
         if (monthRecords.length === 0) {
-          console.log(
-            "✨ First Produksi In record for this month, returning 1"
-          );
           return 1;
         }
 
         const nomors = monthRecords.map((record) => Number(record.nomor) || 0);
-        console.log("🔢 Existing Produksi In nomors:", nomors);
 
         const maxNomor = Math.max(...nomors);
         const nextNomor = maxNomor + 1;
 
-        console.log(
-          `🎯 Max Produksi In nomor: ${maxNomor}, Next nomor: ${nextNomor}`
-        );
         return nextNomor;
       }
 
@@ -2056,16 +1825,8 @@ export class BahanBakuModel {
       const year = targetDate.getFullYear();
       const month = targetDate.getMonth();
 
-      console.log(
-        `🔢 Getting next Produksi Out number for ${month + 1}/${year}`
-      );
-
       if (this.useSupabase) {
         const supabaseRecords = await this.getProduksiOutStockFromSupabase();
-        console.log(
-          "📊 Total Produksi Out records in Supabase:",
-          supabaseRecords.length
-        );
 
         const monthRecords = supabaseRecords.filter((record) => {
           const recordDate = new Date(record.tanggal);
@@ -2074,27 +1835,15 @@ export class BahanBakuModel {
           return recordYear === year && recordMonth === month;
         });
 
-        console.log(
-          "📈 Produksi Out records for current month:",
-          monthRecords.length
-        );
-
         if (monthRecords.length === 0) {
-          console.log(
-            "✨ First Produksi Out record for this month, returning 1"
-          );
           return 1;
         }
 
         const nomors = monthRecords.map((record) => Number(record.nomor) || 0);
-        console.log("🔢 Existing Produksi Out nomors:", nomors);
 
         const maxNomor = Math.max(...nomors);
         const nextNomor = maxNomor + 1;
 
-        console.log(
-          `🎯 Max Produksi Out nomor: ${maxNomor}, Next nomor: ${nextNomor}`
-        );
         return nextNomor;
       }
 

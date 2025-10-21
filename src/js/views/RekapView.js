@@ -2,6 +2,7 @@
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { AccessControl } from "../utils/AccessControl.js";
+import { sweetAlert } from "../utils/SweetAlertUtil.js";
 
 export class RekapView {
   constructor() {
@@ -111,9 +112,6 @@ export class RekapView {
     if (totalRow) {
       // Try different approaches to find the strong elements
       const strongElements = totalRow.querySelectorAll("strong");
-      console.log(
-        `Found total row with ${strongElements.length} strong elements`
-      );
 
       if (strongElements.length >= 3) {
         // Approach 1: Use the strong elements directly (assuming they're in order)
@@ -124,22 +122,16 @@ export class RekapView {
         if (qtyCetakOkStrong) {
           const formattedOk = this.formatNumber(totalQtyCetakOk);
           qtyCetakOkStrong.textContent = formattedOk;
-          console.log(`Updated OK strong to: ${formattedOk}`);
         }
         if (qtyCetakNgStrong) {
           const formattedNg = this.formatNumber(totalQtyCetakNg);
           qtyCetakNgStrong.textContent = formattedNg;
-          console.log(`Updated NG strong to: ${formattedNg}`);
         }
         if (totalQtyStrong) {
           const formattedAll = this.formatNumber(totalQtyCetakAll);
           totalQtyStrong.textContent = formattedAll;
-          console.log(`Updated Total strong to: ${formattedAll}`);
         }
       } else {
-        console.log(
-          `Not enough strong elements found: ${strongElements.length}`
-        );
         // Fallback to original approach
         const allTdElements = totalRow.querySelectorAll("td");
         if (allTdElements.length >= 10) {
@@ -163,9 +155,6 @@ export class RekapView {
     const averageRow = table.querySelector("tr.table-info");
     if (averageRow) {
       const avgStrongElements = averageRow.querySelectorAll("strong");
-      console.log(
-        `Found average row with ${avgStrongElements.length} strong elements`
-      );
 
       if (avgStrongElements.length >= 3) {
         const avgQtyCetakOkStrong = avgStrongElements[0];
@@ -175,22 +164,16 @@ export class RekapView {
         if (avgQtyCetakOkStrong) {
           const formattedAvgOk = this.formatNumber(Math.round(avgQtyCetakOk));
           avgQtyCetakOkStrong.textContent = formattedAvgOk;
-          console.log(`Updated Average OK strong to: ${formattedAvgOk}`);
         }
         if (avgQtyCetakNgStrong) {
           const formattedAvgNg = this.formatNumber(Math.round(avgQtyCetakNg));
           avgQtyCetakNgStrong.textContent = formattedAvgNg;
-          console.log(`Updated Average NG strong to: ${formattedAvgNg}`);
         }
         if (avgTotalQtyStrong) {
           const formattedAvgAll = this.formatNumber(Math.round(avgQtyCetakAll));
           avgTotalQtyStrong.textContent = formattedAvgAll;
-          console.log(`Updated Average Total strong to: ${formattedAvgAll}`);
         }
       } else {
-        console.log(
-          `Not enough strong elements found in average row: ${avgStrongElements.length}`
-        );
         // Fallback to td-based approach
         const avgTdElements = averageRow.querySelectorAll("td");
         if (avgTdElements.length >= 10) {
@@ -218,22 +201,6 @@ export class RekapView {
 
     // Update filtered data for PDF generation
     this.filteredData = selectedClient ? filteredData : this.currentData;
-
-    console.log(
-      `Filter applied: ${
-        selectedClient || "Semua Client"
-      }, Showing ${visibleRowCount} rows, Total OK: ${this.formatNumber(
-        totalQtyCetakOk
-      )}, Total NG: ${this.formatNumber(
-        totalQtyCetakNg
-      )}, Total All: ${this.formatNumber(
-        totalQtyCetakAll
-      )}, Average OK: ${this.formatNumber(
-        Math.round(avgQtyCetakOk)
-      )}, Average NG: ${this.formatNumber(
-        Math.round(avgQtyCetakNg)
-      )}, Average All: ${this.formatNumber(Math.round(avgQtyCetakAll))}`
-    );
   }
 
   formatDateForInput(dateValue) {
@@ -275,6 +242,11 @@ export class RekapView {
   }
 
   generateBahanBakuTable(data) {
+    // Sort data by tanggal (date) in ascending order
+    const sortedData = [...data].sort((a, b) => {
+      return new Date(a.tanggal) - new Date(b.tanggal);
+    });
+
     return `
             <div class="table-responsive">
               <table class="table table-bordered table-striped table-hover">
@@ -288,7 +260,7 @@ export class RekapView {
                     </tr>
                 </thead>
                 <tbody>
-                    ${data
+                    ${sortedData
                       .map(
                         (item) => `
                         <tr>
@@ -311,10 +283,17 @@ export class RekapView {
 
   generateDailyReportTable(data) {
     try {
-      // Get unique clients from data
+      // Sort data by nomor (number) in ascending order
+      const sortedData = [...data].sort((a, b) => {
+        const nomorA = parseInt(a.nomor) || 0;
+        const nomorB = parseInt(b.nomor) || 0;
+        return nomorA - nomorB;
+      });
+
+      // Get unique clients from sorted data
       const uniqueClients = [
         ...new Set(
-          data
+          sortedData
             .map((item) => item.client)
             .filter((client) => client && client.trim() !== "")
         ),
@@ -364,7 +343,7 @@ export class RekapView {
             </tr>
           </thead>
           <tbody>
-            ${data
+            ${sortedData
               .map(
                 (item) => `
               <tr data-id="${
@@ -563,10 +542,17 @@ export class RekapView {
 
   generateStraplessReportTable(data) {
     try {
-      // Get unique clients from data
+      // Sort data by nomor (number) in ascending order
+      const sortedData = [...data].sort((a, b) => {
+        const nomorA = parseInt(a.nomor) || 0;
+        const nomorB = parseInt(b.nomor) || 0;
+        return nomorA - nomorB;
+      });
+
+      // Get unique clients from sorted data
       const uniqueClients = [
         ...new Set(
-          data
+          sortedData
             .map((item) => item.client)
             .filter((client) => client && client.trim() !== "")
         ),
@@ -614,7 +600,7 @@ export class RekapView {
             </tr>
           </thead>
           <tbody>
-            ${data
+            ${sortedData
               .map(
                 (item) => `
               <tr data-id="${
@@ -795,10 +781,17 @@ export class RekapView {
 
   generateLipatReportTable(data) {
     try {
-      // Get unique clients from data
+      // Sort data by nomor (number) in ascending order
+      const sortedData = [...data].sort((a, b) => {
+        const nomorA = parseInt(a.nomor) || 0;
+        const nomorB = parseInt(b.nomor) || 0;
+        return nomorA - nomorB;
+      });
+
+      // Get unique clients from sorted data
       const uniqueClients = [
         ...new Set(
-          data
+          sortedData
             .map((item) => item.client)
             .filter((client) => client && client.trim() !== "")
         ),
@@ -848,7 +841,7 @@ export class RekapView {
             </tr>
           </thead>
           <tbody>
-            ${data
+            ${sortedData
               .map(
                 (item) => `
               <tr data-id="${
@@ -1039,6 +1032,13 @@ export class RekapView {
 
   generateLemPackingReportTable(data) {
     try {
+      // Sort data by nomor (number) in ascending order
+      const sortedData = [...data].sort((a, b) => {
+        const nomorA = parseInt(a.nomor) || 0;
+        const nomorB = parseInt(b.nomor) || 0;
+        return nomorA - nomorB;
+      });
+
       const tableHtml = `
         <div class="table-responsive">
           <table class="table table-bordered table-striped table-hover" style="width: 100%; max-width: 100%; border-collapse: collapse; table-layout: auto; font-size: 14px;">
@@ -1059,7 +1059,7 @@ export class RekapView {
             </tr>
           </thead>
           <tbody>
-            ${data
+            ${sortedData
               .map(
                 (item) => `
               <tr data-id="${
@@ -1511,9 +1511,21 @@ export class RekapView {
         const btn = e.target.closest(".delete-btn");
         const id = btn.dataset.id;
         const type = btn.dataset.type;
-        if (confirm("Apakah Anda yakin ingin menghapus data ini?")) {
-          if (this.deleteHandler) this.deleteHandler(id, type);
-        }
+
+        sweetAlert
+          .confirm(
+            "Data yang dihapus tidak dapat dikembalikan lagi.",
+            "Apakah Anda yakin ingin menghapus data ini?",
+            {
+              confirmButtonText: "Ya, Hapus!",
+              cancelButtonText: "Batal",
+            }
+          )
+          .then((result) => {
+            if (result.isConfirmed && this.deleteHandler) {
+              this.deleteHandler(id, type);
+            }
+          });
       }
     };
 
@@ -1524,29 +1536,16 @@ export class RekapView {
     let row; // Declare row variable outside try block
 
     try {
-      console.log(`Starting edit for ${type} with id: ${id}`);
-      console.log(
-        "Available rows in table:",
-        this.tableContainer.querySelectorAll("tr[data-id]").length
-      );
-
       // Find the row being edited
       row = this.tableContainer.querySelector(
         `tr[data-id="${id}"][data-type="${type}"]`
       );
-      console.log("Found row:", !!row);
       if (!row) {
         console.error(`Row not found for id: ${id}, type: ${type}`);
-        console.log(
-          "All rows with data-id:",
-          Array.from(this.tableContainer.querySelectorAll("tr[data-id]")).map(
-            (r) => ({
-              id: r.getAttribute("data-id"),
-              type: r.getAttribute("data-type"),
-            })
-          )
+        sweetAlert.error(
+          `Baris tidak ditemukan untuk ID: ${id}`,
+          "Data Tidak Ditemukan"
         );
-        alert(`Baris tidak ditemukan untuk ID: ${id}`);
         return;
       }
 
@@ -1554,12 +1553,6 @@ export class RekapView {
       const editBtn = row.querySelector(".edit-btn");
       const saveBtn = row.querySelector(".save-btn");
       const cancelBtn = row.querySelector(".cancel-btn");
-
-      console.log("Buttons found:", {
-        editBtn: !!editBtn,
-        saveBtn: !!saveBtn,
-        cancelBtn: !!cancelBtn,
-      });
 
       if (editBtn) {
         editBtn.style.display = "none";
@@ -1588,20 +1581,10 @@ export class RekapView {
         type === "lem-packing-report"
       ) {
         const editableCells = row.querySelectorAll(".editable");
-        console.log("Found editable cells:", editableCells.length);
         editableCells.forEach((cell, index) => {
-          console.log(`Processing cell ${index}:`, {
-            element: cell,
-            dataset: cell.dataset,
-            textContent: cell.textContent.trim(),
-            hasEditableClass: cell.classList.contains("editable"),
-          });
-
           const value = cell.dataset.value || cell.textContent.trim();
           const field = cell.dataset.field;
           const dataType = cell.dataset.type;
-
-          console.log(`Cell ${index} data:`, { value, field, dataType });
 
           let input;
           if (dataType === "select") {
@@ -1641,23 +1624,19 @@ export class RekapView {
 
           input.dataset.originalValue = value;
           input.dataset.field = field;
-          console.log(`Created input for field ${field}:`, input);
 
           cell.innerHTML = "";
           cell.appendChild(input);
-          console.log(`Cell ${field} after input added:`, cell.innerHTML);
         });
       }
     } catch (error) {
       console.error("Error in startEdit:", error);
-      alert(`Gagal masuk mode edit: ${error.message}`);
+      sweetAlert.error(`Gagal masuk mode edit: ${error.message}`, "Error Edit");
       return;
     }
   }
 
   saveEdit(id, type) {
-    console.log(`Saving edit for ${type} with id: ${id}`);
-
     if (
       type === "iridesse-report" ||
       type === "daily-report" ||
@@ -1695,8 +1674,6 @@ export class RekapView {
   }
 
   cancelEdit(id, type) {
-    console.log(`Cancelling edit for ${type} with id: ${id}`);
-
     // Find the row being edited
     const row = this.tableContainer.querySelector(
       `tr[data-id="${id}"][data-type="${type}"]`
@@ -1774,7 +1751,7 @@ export class RekapView {
       const dataForPDF = this.filteredData || this.currentData;
 
       if (!dataForPDF || dataForPDF.length === 0) {
-        alert("Tidak ada data untuk dicetak");
+        sweetAlert.warning("Tidak ada data untuk dicetak", "Data Kosong");
         return;
       }
 
@@ -1855,7 +1832,7 @@ export class RekapView {
       }
     } catch (error) {
       console.error("Error generating PDF:", error);
-      alert("Gagal membuat PDF: " + error.message);
+      sweetAlert.error("Gagal membuat PDF: " + error.message, "Error PDF");
     }
   }
 
@@ -1950,7 +1927,7 @@ export class RekapView {
       new Date().toISOString().split("T")[0]
     }.pdf`;
     doc.save(filename);
-    alert(`PDF berhasil dibuat: ${filename}`);
+    sweetAlert.pdfSuccess(filename);
   }
 
   generateDailyReportPDF(doc, data = null) {
@@ -2134,7 +2111,7 @@ export class RekapView {
       new Date().toISOString().split("T")[0]
     }.pdf`;
     doc.save(filename);
-    alert(`PDF berhasil dibuat: ${filename}`);
+    sweetAlert.pdfSuccess(filename);
   }
 
   generateStraplessReportPDF(doc, data = null) {
@@ -2300,7 +2277,7 @@ export class RekapView {
       new Date().toISOString().split("T")[0]
     }.pdf`;
     doc.save(filename);
-    alert(`PDF berhasil dibuat: ${filename}`);
+    sweetAlert.pdfSuccess(filename);
   }
 
   generateLipatReportPDF(doc, data = null) {
@@ -2471,7 +2448,7 @@ export class RekapView {
       new Date().toISOString().split("T")[0]
     }.pdf`;
     doc.save(filename);
-    alert(`PDF berhasil dibuat: ${filename}`);
+    sweetAlert.pdfSuccess(filename);
   }
 
   generateLemPackingReportPDF(doc, data = null) {
@@ -2664,18 +2641,21 @@ export class RekapView {
         new Date().toISOString().split("T")[0]
       }.pdf`;
       doc.save(filename);
-      alert(`PDF berhasil dibuat: ${filename}`);
+      sweetAlert.pdfSuccess(filename);
     } catch (error) {
       console.error("❌ Error generating Lem Packing Report PDF:", error);
-      alert("Terjadi kesalahan saat membuat PDF: " + error.message);
+      sweetAlert.error(
+        "Terjadi kesalahan saat membuat PDF: " + error.message,
+        "Error PDF"
+      );
     }
   }
 
   showSuccess(message) {
-    alert(message || "Operasi berhasil!");
+    sweetAlert.success(message || "Operasi berhasil!", "Berhasil!");
   }
 
   showError(message) {
-    alert(message);
+    sweetAlert.error(message, "Error");
   }
 }

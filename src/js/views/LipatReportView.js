@@ -1,9 +1,9 @@
+import { sweetAlert } from "../utils/SweetAlertUtil.js";
+
 class LipatReportView {
   constructor() {
     this.form = document.getElementById("lipat-report-form");
     this.section = document.getElementById("lipat-report-section");
-
-    console.log("🚀 LipatReportView constructor - form found:", !!this.form);
 
     if (this.form) {
       this.initializeEventListeners();
@@ -17,9 +17,6 @@ class LipatReportView {
     // Listen for section activation to refresh auto numbering
     document.addEventListener("section-activated", (event) => {
       if (event.detail.sectionId === "lipat-report") {
-        console.log(
-          "🎯 LipatReportView: Section activated, refreshing auto number"
-        );
         setTimeout(() => {
           this.initializeAutoNumber();
         }, 100);
@@ -152,14 +149,11 @@ class LipatReportView {
 
   // Initialize auto number on form load (like banner forms)
   async initializeAutoNumber() {
-    console.log("🔢 Lipat: Initializing auto nomor...");
-
     // Set current date as default
     const tanggalInput = document.getElementById("lipat-tanggal");
     if (tanggalInput && !tanggalInput.value) {
       const today = new Date().toISOString().split("T")[0];
       tanggalInput.value = today;
-      console.log("📅 Lipat: Set default date:", today);
     }
 
     // Generate auto number with a small delay to ensure database is ready
@@ -170,10 +164,8 @@ class LipatReportView {
 
   // Auto-generate nomor based on current month (like banner logic)
   async autoGenerateNomor() {
-    console.log("🔄 Lipat: Auto-generating nomor...");
     try {
       const nextNomor = await this.getNextNomor();
-      console.log("✅ Lipat: Got next nomor from database:", nextNomor);
       this.setAutoNomor(nextNomor);
     } catch (error) {
       console.error("❌ Lipat: Error generating auto nomor:", error);
@@ -196,11 +188,9 @@ class LipatReportView {
 
   // Set auto-generated nomor
   setAutoNomor(nomor) {
-    console.log("🎯 Lipat: Setting auto nomor to:", nomor);
     const nomorInput = document.getElementById("lipat-nomor");
     if (nomorInput) {
       nomorInput.value = nomor;
-      console.log("✅ Lipat: Nomor input updated to:", nomorInput.value);
     } else {
       console.error("❌ Lipat: Nomor input element not found!");
     }
@@ -345,17 +335,16 @@ class LipatReportView {
 
   // Show success message
   showSuccess(message) {
-    alert(message || "Data berhasil disimpan!");
+    sweetAlert.dataSuccess("save", message || "Data berhasil disimpan!");
   }
 
   // Show error message
   showError(message) {
-    alert("Error: " + message);
+    sweetAlert.error("Error: " + message, "Error");
   }
 
   // Public method to trigger auto numbering from outside
   refreshAutoNumber() {
-    console.log("🔄 LipatReportView: Manual refresh auto number triggered");
     this.initializeAutoNumber();
   }
 }

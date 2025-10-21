@@ -457,15 +457,8 @@ class App {
       // Handle offline state
     });
 
-    // Header/Menu functionality
-    const menuToggle = document.getElementById("menu-toggle");
-    const sidebar = document.querySelector(".sidebar");
-
-    if (menuToggle && sidebar) {
-      menuToggle.addEventListener("click", () => {
-        sidebar.classList.toggle("active");
-      });
-    }
+    // Header/Menu functionality managed by HeaderPresenter
+    // Remove duplicate menu toggle event listener
 
     // User info functionality
     const showUserInfo = (username) => {

@@ -1,3 +1,5 @@
+import { sweetAlert } from "../utils/SweetAlertUtil.js";
+
 export class IridesseReportView {
   constructor() {
     this.form = document.getElementById("iridesse-form");
@@ -70,10 +72,10 @@ export class IridesseReportView {
   }
 
   showSuccess(message) {
-    alert(message || "Data berhasil disimpan!");
+    sweetAlert.dataSuccess("save", message || "Data berhasil disimpan!");
   }
 
   showError(message) {
-    alert("Error: " + message);
+    sweetAlert.error("Error: " + message, "Error");
   }
 }

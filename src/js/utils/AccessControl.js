@@ -1,3 +1,5 @@
+import { sweetAlert } from "./SweetAlertUtil.js";
+
 export class AccessControl {
   // Get current user from session
   static getCurrentUser() {
@@ -160,8 +162,9 @@ export class AccessControl {
       if (target) {
         event.preventDefault();
         event.stopPropagation();
-        alert(
-          "Akses ditolak: Anda tidak memiliki izin untuk melakukan aksi ini."
+        sweetAlert.warning(
+          "Anda tidak memiliki izin untuk melakukan aksi ini.",
+          "Akses Ditolak"
         );
         return false;
       }

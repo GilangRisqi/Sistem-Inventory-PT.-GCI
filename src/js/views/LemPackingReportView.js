@@ -1,12 +1,9 @@
+import { sweetAlert } from "../utils/SweetAlertUtil.js";
+
 class LemPackingReportView {
   constructor() {
     this.form = document.getElementById("lem-packing-report-form");
     this.section = document.getElementById("lem-packing-report-section");
-
-    console.log(
-      "🚀 LemPackingReportView constructor - form found:",
-      !!this.form
-    );
 
     if (this.form) {
       this.initializeEventListeners();
@@ -22,9 +19,6 @@ class LemPackingReportView {
     // Listen for section activation to refresh auto numbering
     document.addEventListener("section-activated", (event) => {
       if (event.detail.sectionId === "lem-packing-report") {
-        console.log(
-          "🎯 LemPackingReportView: Section activated, refreshing auto number"
-        );
         setTimeout(() => {
           this.initializeAutoNumber();
         }, 100);
@@ -151,14 +145,11 @@ class LemPackingReportView {
 
   // Initialize auto number on form load (like banner forms)
   async initializeAutoNumber() {
-    console.log("🔢 LemPacking: Initializing auto nomor...");
-
     // Set current date as default
     const tanggalInput = document.getElementById("lem-packing-tanggal");
     if (tanggalInput && !tanggalInput.value) {
       const today = new Date().toISOString().split("T")[0];
       tanggalInput.value = today;
-      console.log("📅 LemPacking: Set default date:", today);
     }
 
     // Generate auto number with a small delay to ensure database is ready
@@ -169,10 +160,8 @@ class LemPackingReportView {
 
   // Auto-generate nomor based on current month (like banner logic)
   async autoGenerateNomor() {
-    console.log("🔄 LemPacking: Auto-generating nomor...");
     try {
       const nextNomor = await this.getNextNomor();
-      console.log("✅ LemPacking: Got next nomor from database:", nextNomor);
       this.setAutoNomor(nextNomor);
     } catch (error) {
       console.error("❌ LemPacking: Error generating auto nomor:", error);
@@ -344,12 +333,12 @@ class LemPackingReportView {
 
   // Show success message
   showSuccess(message) {
-    alert(message || "Data berhasil disimpan!");
+    sweetAlert.dataSuccess("save", message || "Data berhasil disimpan!");
   }
 
   // Show error message
   showError(message) {
-    alert("Error: " + message);
+    sweetAlert.error("Error: " + message, "Error");
   }
 
   // Public method to trigger auto numbering from outside

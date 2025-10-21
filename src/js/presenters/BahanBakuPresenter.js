@@ -1,5 +1,18 @@
+import { sweetAlert } from "../utils/SweetAlertUtil.js";
+
 export class BahanBakuPresenter {
   constructor(model, view) {
+    console.log("=== BahanBakuPresenter: ACCESS BLOCKED ===");
+    console.warn("Inventory Bahan Baku functionality is currently disabled");
+
+    // Block all inventory functionality
+    this.isDisabled = true;
+    this.model = null;
+    this.view = null;
+
+    // Exit constructor early - don't setup any event listeners or functionality
+    return;
+
     console.log("=== Initializing BahanBakuPresenter ===");
     this.model = model;
     this.view = view;
@@ -218,16 +231,22 @@ export class BahanBakuPresenter {
         console.log("🔍 Hidden records debug result:", result);
 
         // Show alert with summary
-        alert(`Debug Results for ${category}-${type}:
+        sweetAlert.info(
+          `Debug Results for ${category}-${type}:
         
 Total Transactions: ${result.totalTransactions}
 Category Records: ${result.categoryRecords}  
 Matching Records: ${result.matchingRecords}
 
-Check console for detailed information.`);
+Check console for detailed information.`,
+          "Debug Results"
+        );
       } catch (error) {
         console.error("Error debugging hidden records:", error);
-        alert("Error debugging records: " + error.message);
+        sweetAlert.error(
+          "Error debugging records: " + error.message,
+          "Debug Error"
+        );
       }
     });
 
@@ -237,13 +256,19 @@ Check console for detailed information.`);
       console.log(`🗑️ Clear category records requested for: ${category}`);
 
       if (
-        confirm(
-          `Are you sure you want to clear ALL records for category "${category}"? This cannot be undone!`
-        )
+        await sweetAlert
+          .confirm(
+            `Are you sure you want to clear ALL records for category "${category}"? This cannot be undone!`,
+            "Clear Category Records"
+          )
+          .then((result) => result.isConfirmed)
       ) {
         try {
           await this.model.clearCategoryRecords(category);
-          alert(`All records for category "${category}" have been cleared.`);
+          sweetAlert.dataSuccess(
+            "delete",
+            `All records for category "${category}" have been cleared.`
+          );
 
           // Refresh displays
           if (category === "produksi") {
@@ -258,7 +283,10 @@ Check console for detailed information.`);
           }
         } catch (error) {
           console.error("Error clearing category records:", error);
-          alert("Error clearing records: " + error.message);
+          sweetAlert.error(
+            "Error clearing records: " + error.message,
+            "Clear Error"
+          );
         }
       }
     });
@@ -296,6 +324,11 @@ Check console for detailed information.`);
   }
 
   async loadBannerInStockData() {
+    if (this.isDisabled) {
+      console.warn("BahanBakuPresenter: Functionality disabled");
+      return;
+    }
+
     try {
       console.log("=== Loading Banner In Stock Data (Simplified) ===");
       const stockData = await this.model.getCurrentBannerStock();
@@ -436,6 +469,10 @@ Check console for detailed information.`);
   }
 
   async handleInSubmit(category, formData) {
+    if (this.isDisabled) {
+      console.warn("BahanBakuPresenter: Functionality disabled");
+      return;
+    }
     try {
       // Validasi data sebelum menyimpan
       if (!formData || !formData.data) {

@@ -1,3 +1,5 @@
+import { sweetAlert } from "../utils/SweetAlertUtil.js";
+
 export class DailyReportView {
   constructor() {
     this.form = document.getElementById("daily-report-form");
@@ -153,10 +155,10 @@ export class DailyReportView {
   }
 
   showSuccess(message) {
-    alert(message || "Data berhasil disimpan!");
+    sweetAlert.dataSuccess("save", message || "Data berhasil disimpan!");
   }
 
   showError(message) {
-    alert("Error: " + message);
+    sweetAlert.error("Error: " + message, "Error");
   }
 }

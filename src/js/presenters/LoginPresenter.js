@@ -26,8 +26,6 @@ export class LoginPresenter {
         })
       );
 
-      console.log(`✅ Login successful: ${username} (${user.role})`);
-
       // Show success message
       this.view.showSuccess(
         `Selamat datang, ${username}! Login berhasil sebagai ${user.role}.`

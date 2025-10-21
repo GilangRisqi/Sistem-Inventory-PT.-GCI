@@ -1,3 +1,5 @@
+import { sweetAlert } from "../utils/SweetAlertUtil.js";
+
 export class NavigationView {
   constructor() {
     this.pages = {
@@ -154,6 +156,32 @@ export class NavigationView {
   }
 
   showPage(pageId) {
+    // Block access to all Inventory Bahan Baku sections
+    const blockedSections = [
+      "stock-banner",
+      "stock-banner-in",
+      "stock-banner-out",
+      "stock-digital",
+      "stock-produksi",
+      "in-banner",
+      "out-banner",
+      "in-digital",
+      "out-digital",
+      "in-produksi",
+      "out-produksi",
+    ];
+
+    if (blockedSections.includes(pageId)) {
+      console.warn(
+        "Access to Inventory Bahan Baku sections is currently disabled"
+      );
+      sweetAlert.warning(
+        "Akses ke menu Inventory Bahan Baku sedang dinonaktifkan untuk sementara waktu.",
+        "Akses Dibatasi"
+      );
+      return;
+    }
+
     // Check if this is actually a section, not a page
     if (this.sections[pageId]) {
       this.showSection(pageId);
@@ -201,6 +229,32 @@ export class NavigationView {
   }
 
   showSection(sectionId) {
+    // Block access to all Inventory Bahan Baku sections
+    const blockedSections = [
+      "stock-banner",
+      "stock-banner-in",
+      "stock-banner-out",
+      "stock-digital",
+      "stock-produksi",
+      "in-banner",
+      "out-banner",
+      "in-digital",
+      "out-digital",
+      "in-produksi",
+      "out-produksi",
+    ];
+
+    if (blockedSections.includes(sectionId)) {
+      console.warn(
+        "Access to Inventory Bahan Baku sections is currently disabled"
+      );
+      sweetAlert.warning(
+        "Akses ke menu Inventory Bahan Baku sedang dinonaktifkan untuk sementara waktu.",
+        "Akses Dibatasi"
+      );
+      return;
+    }
+
     // Hide all sections first
     Object.values(this.sections).forEach((section) => {
       if (section) section.style.display = "none";

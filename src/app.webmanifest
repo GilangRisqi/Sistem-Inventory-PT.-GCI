@@ -1,7 +1,7 @@
 {
-  "name": "Sistem Inventory PT. Grand Central Indonesia",
-  "short_name": "GCI Inventory",
-  "description": "Progressive Web App untuk Sistem Inventory dan Daily Report PT. Grand Central Indonesia. Aplikasi modern dengan dukungan offline untuk manajemen bahan baku dan laporan percetakan.",
+  "name": "Sistem Daily Reports PT. Garasi Creasindo Indonesia",
+  "short_name": "GCI Daily Reports",
+  "description": "Progressive Web App untuk Daily Reports PT. Garasi Creasindo Indonesia. Aplikasi modern dengan dukungan offline untuk manajemen bahan baku dan laporan percetakan.",
   "start_url": "/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
@@ -125,7 +125,7 @@
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "Dashboard utama sistem inventory dengan tampilan desktop"
+      "label": "Dashboard utama sistem daily reports dengan tampilan desktop"
     },
     {
       "src": "images/screenshots/mobile-dashboard.png",

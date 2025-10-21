@@ -1,3 +1,5 @@
+import { sweetAlert } from "../utils/SweetAlertUtil.js";
+
 export class RekapPresenter {
   constructor(
     bahanBakuModel,
@@ -98,7 +100,16 @@ export class RekapPresenter {
 
   async handleDeleteRecord(id, type) {
     try {
-      if (!confirm("Apakah Anda yakin ingin menghapus data ini?")) {
+      const result = await sweetAlert.confirm(
+        "Data yang dihapus tidak dapat dikembalikan lagi.",
+        "Apakah Anda yakin ingin menghapus data ini?",
+        {
+          confirmButtonText: "Ya, Hapus!",
+          cancelButtonText: "Batal",
+        }
+      );
+
+      if (!result.isConfirmed) {
         return;
       }
 
