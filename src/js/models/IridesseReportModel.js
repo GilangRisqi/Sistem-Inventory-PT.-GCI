@@ -80,6 +80,33 @@ export class IridesseReportModel {
     }
   }
 
+  // Force refresh data dari Supabase tanpa cache
+  async forceRefreshByDateRange(startDate, endDate) {
+    try {
+      console.log("🔄 Force refreshing iridesse reports from Supabase...");
+      const rawData = await dbService.read(TABLES.IRIDESSE_REPORTS);
+      console.log(`📊 Raw data retrieved: ${rawData.length} records`);
+
+      const filteredData = rawData.filter((report) => {
+        const reportDate = new Date(report.tanggal);
+        const isInRange =
+          reportDate >= new Date(startDate) && reportDate <= new Date(endDate);
+        if (isInRange) {
+          console.log(
+            `✅ Record in range: ${report.tanggal} - Client: ${report.client}`
+          );
+        }
+        return isInRange;
+      });
+
+      console.log(`🎯 Filtered data: ${filteredData.length} records`);
+      return filteredData.map((record) => this.transformSupabaseData(record));
+    } catch (error) {
+      console.error("❌ Error force refreshing iridesse reports:", error);
+      throw error;
+    }
+  }
+
   // Hybrid getById method
   async getById(id) {
     if (this.useSupabase) {
@@ -237,11 +264,8 @@ export class IridesseReportModel {
       billing: supabaseRecord.billing,
       gap: supabaseRecord.gap,
       status: supabaseRecord.status,
-      // Calculate total for RekapView
-      totalCetak: Math.max(
-        0,
-        (supabaseRecord.jumlah_cetak || 0) - (supabaseRecord.ng || 0)
-      ),
+      // Calculate total for RekapView (perbaikan: harusnya penjumlahan OK + NG)
+      totalCetak: (supabaseRecord.jumlah_cetak || 0) + (supabaseRecord.ng || 0),
       createdAt: supabaseRecord.created_at,
       updatedAt: supabaseRecord.updated_at,
     };

@@ -24,8 +24,8 @@ export class IridesseReportView {
       const jumlahCetak = Number(jumlahCetakInput.value) || 0;
       const ng = Number(ngInput.value) || 0;
 
-      // Hitung total cetak (jumlah cetak - NG) - hanya auto calculate ini saja
-      const totalCetak = Math.max(0, jumlahCetak - ng);
+      // Hitung total cetak (jumlah cetak + NG) - perbaikan: harusnya penjumlahan
+      const totalCetak = jumlahCetak + ng;
       this.totalCetakDisplay.textContent = totalCetak.toLocaleString();
     };
 

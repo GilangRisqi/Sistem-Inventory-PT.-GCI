@@ -58,6 +58,60 @@ export class DailyReportModel {
     }
   }
 
+  // Force refresh data dari Supabase tanpa cache
+  async forceRefreshByDateRange(startDate, endDate) {
+    try {
+      console.log("🔄 Force refreshing daily reports from Supabase...");
+      console.log(
+        `📅 Filter range: ${startDate.toISOString().split("T")[0]} to ${
+          endDate.toISOString().split("T")[0]
+        }`
+      );
+
+      const rawData = await dbService.read(TABLES.DAILY_REPORTS);
+      console.log(`📊 Raw data retrieved: ${rawData.length} records`);
+
+      // Log semua record dengan status filter
+      console.group("📋 All records with filter status:");
+      rawData.forEach((report, index) => {
+        const reportDate = new Date(report.tanggal);
+        const startCompare = new Date(startDate);
+        const endCompare = new Date(endDate);
+        const isInRange =
+          reportDate >= startCompare && reportDate <= endCompare;
+
+        console.log(
+          `${index + 1}. ${report.tanggal} - ${report.client} - ${
+            isInRange ? "✅ INCLUDED" : "❌ EXCLUDED"
+          }`
+        );
+        if (!isInRange) {
+          console.log(
+            `   📅 Date comparison: ${
+              reportDate.toISOString().split("T")[0]
+            } vs range ${startCompare.toISOString().split("T")[0]} to ${
+              endCompare.toISOString().split("T")[0]
+            }`
+          );
+        }
+      });
+      console.groupEnd();
+
+      const filteredData = rawData.filter((report) => {
+        const reportDate = new Date(report.tanggal);
+        return (
+          reportDate >= new Date(startDate) && reportDate <= new Date(endDate)
+        );
+      });
+
+      console.log(`🎯 Filtered data: ${filteredData.length} records`);
+      return filteredData.map((record) => this.transformSupabaseData(record));
+    } catch (error) {
+      console.error("❌ Error force refreshing daily reports:", error);
+      throw error;
+    }
+  }
+
   // Hybrid getById method
   async getById(id) {
     if (this.useSupabase) {

@@ -76,6 +76,33 @@ export class LemPackingReportModel {
     }
   }
 
+  // Force refresh data dari Supabase tanpa cache
+  async forceRefreshByDateRange(startDate, endDate) {
+    try {
+      console.log("🔄 Force refreshing lem packing reports from Supabase...");
+      const rawData = await dbService.read(TABLES.LEM_PACKING_REPORTS);
+      console.log(`📊 Raw data retrieved: ${rawData.length} records`);
+
+      const filteredData = rawData.filter((report) => {
+        const reportDate = new Date(report.tanggal);
+        const isInRange =
+          reportDate >= new Date(startDate) && reportDate <= new Date(endDate);
+        if (isInRange) {
+          console.log(
+            `✅ Record in range: ${report.tanggal} - Client: ${report.client}`
+          );
+        }
+        return isInRange;
+      });
+
+      console.log(`🎯 Filtered data: ${filteredData.length} records`);
+      return filteredData.map((record) => this.transformSupabaseData(record));
+    } catch (error) {
+      console.error("❌ Error force refreshing lem packing reports:", error);
+      throw error;
+    }
+  }
+
   // Hybrid getById method
   async getById(id) {
     if (this.useSupabase) {

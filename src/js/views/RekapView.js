@@ -233,10 +233,21 @@ export class RekapView {
       }
 
       const [year, month] = periode.split("-");
+      const startDate = new Date(year, month - 1, 1); // First day of selected month
+      const endDate = new Date(year, month, 0); // Last day of selected month
+
+      // Set time untuk memastikan perbandingan yang tepat
+      startDate.setHours(0, 0, 0, 0); // Start of day
+      endDate.setHours(23, 59, 59, 999); // End of day
+
+      console.log(`📅 User selected periode: ${periode}`);
+      console.log(`📅 Calculated startDate: ${startDate.toISOString()}`);
+      console.log(`📅 Calculated endDate: ${endDate.toISOString()}`);
+
       handler({
         tipe: this.tipeSelect.value,
-        startDate: new Date(year, month - 1, 1),
-        endDate: new Date(year, month, 0),
+        startDate: startDate,
+        endDate: endDate,
       });
     });
   }
@@ -1229,6 +1240,13 @@ export class RekapView {
   }
 
   generateIridesseReportTable(data) {
+    // Sort data dari terlama ke terbaru berdasarkan tanggal
+    const sortedData = [...data].sort((a, b) => {
+      const dateA = new Date(a.tanggal);
+      const dateB = new Date(b.tanggal);
+      return dateA - dateB; // Ascending order (terlama ke terbaru)
+    });
+
     return `
             <div class="table-responsive">
               <table class="table table-bordered table-striped table-hover">
@@ -1255,10 +1273,10 @@ export class RekapView {
                     </tr>
                 </thead>
                 <tbody>
-                    ${data
+                    ${sortedData
                       .map((item) => {
                         const totalCetak =
-                          (Number(item.jumlahCetak) || 0) -
+                          (Number(item.jumlahCetak) || 0) +
                           (Number(item.ng) || 0);
                         const billing =
                           (Number(item.finishBilling) || 0) -
@@ -1366,6 +1384,95 @@ export class RekapView {
                           `;
                       })
                       .join("")}
+                  
+                  <!-- Baris Total Akumulasi -->
+                  <tr class="table-warning" style="background-color: #fff3cd; font-weight: bold; border: 2px solid #ffc107;">
+                    <td colspan="7" style="padding: 10px 6px; font-size: 13px; text-align: right; font-weight: bold; background-color: #fff3cd;">
+                      <strong>TOTAL AKUMULASI:</strong>
+                    </td>
+                    <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #fff3cd; color: #28a745;">
+                      <strong>${this.formatNumber(
+                        sortedData.reduce(
+                          (total, item) =>
+                            total + (Number(item.jumlahCetak) || 0),
+                          0
+                        )
+                      )}</strong>
+                    </td>
+                    <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #fff3cd; color: #dc3545;">
+                      <strong>${this.formatNumber(
+                        sortedData.reduce(
+                          (total, item) => total + (Number(item.ng) || 0),
+                          0
+                        )
+                      )}</strong>
+                    </td>
+                    <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #fff3cd; color: #007bff;">
+                      <strong>${this.formatNumber(
+                        sortedData.reduce(
+                          (total, item) =>
+                            total +
+                            ((Number(item.jumlahCetak) || 0) +
+                              (Number(item.ng) || 0)),
+                          0
+                        )
+                      )}</strong>
+                    </td>
+                    <td colspan="8" style="padding: 10px 6px; font-size: 13px; text-align: center; background-color: #fff3cd;">
+                      -
+                    </td>
+                  </tr>
+                  
+                  <!-- Baris Rata-rata -->
+                  <tr class="table-info" style="background-color: #d1ecf1; font-weight: bold; border: 2px solid #17a2b8;">
+                    <td colspan="7" style="padding: 10px 6px; font-size: 13px; text-align: right; font-weight: bold; background-color: #d1ecf1;">
+                      <strong>RATA-RATA:</strong>
+                    </td>
+                    <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #d1ecf1; color: #28a745;">
+                      <strong>${this.formatNumber(
+                        Math.round(
+                          sortedData.length > 0
+                            ? sortedData.reduce(
+                                (total, item) =>
+                                  total + (Number(item.jumlahCetak) || 0),
+                                0
+                              ) / sortedData.length
+                            : 0
+                        )
+                      )}</strong>
+                    </td>
+                    <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #d1ecf1; color: #dc3545;">
+                      <strong>${this.formatNumber(
+                        Math.round(
+                          sortedData.length > 0
+                            ? sortedData.reduce(
+                                (total, item) => total + (Number(item.ng) || 0),
+                                0
+                              ) / sortedData.length
+                            : 0
+                        )
+                      )}</strong>
+                    </td>
+                    <td style="padding: 10px 6px; font-size: 13px; text-align: center; font-weight: bold; background-color: #d1ecf1; color: #007bff;">
+                      <strong>${this.formatNumber(
+                        Math.round(
+                          sortedData.length > 0
+                            ? sortedData.reduce(
+                                (total, item) =>
+                                  total +
+                                  ((Number(item.jumlahCetak) || 0) +
+                                    (Number(item.ng) || 0)),
+                                0
+                              ) / sortedData.length
+                            : 0
+                        )
+                      )}</strong>
+                    </td>
+                    <td colspan="8" style="padding: 10px 6px; font-size: 13px; text-align: center; background-color: #d1ecf1;">
+                      -
+                    </td>
+                  </tr>
+                  
                   </tbody>
               </table>
             </div>
@@ -1748,12 +1855,28 @@ export class RekapView {
   downloadPDF() {
     try {
       // Use filtered data if available, otherwise use current data
-      const dataForPDF = this.filteredData || this.currentData;
+      let dataForPDF = this.filteredData || this.currentData;
 
       if (!dataForPDF || dataForPDF.length === 0) {
         sweetAlert.warning("Tidak ada data untuk dicetak", "Data Kosong");
         return;
       }
+
+      // Sort data by nomor (ascending) untuk semua tipe report
+      dataForPDF = [...dataForPDF].sort((a, b) => {
+        const nomA = parseInt(a.nomor) || 0;
+        const nomB = parseInt(b.nomor) || 0;
+        return nomA - nomB;
+      });
+
+      console.log(
+        `📄 PDF: Sorted ${dataForPDF.length} records by nomor (ascending)`
+      );
+      console.log(
+        `📄 PDF: First record nomor: ${
+          dataForPDF[0]?.nomor
+        }, Last record nomor: ${dataForPDF[dataForPDF.length - 1]?.nomor}`
+      );
 
       // Create PDF
       const doc = new window.jspdf.jsPDF({ orientation: "landscape" });
@@ -1837,7 +1960,14 @@ export class RekapView {
   }
 
   generateIridessePDF(doc, data = null) {
-    const pdfData = data || this.currentData;
+    const originalData = data || this.currentData;
+    // Sort data dari terlama ke terbaru berdasarkan tanggal
+    const pdfData = [...originalData].sort((a, b) => {
+      const dateA = new Date(a.tanggal);
+      const dateB = new Date(b.tanggal);
+      return dateA - dateB; // Ascending order (terlama ke terbaru)
+    });
+
     const headers = [
       "Tanggal",
       "No SPK",
@@ -1846,8 +1976,7 @@ export class RekapView {
       "Jenis Kertas",
       "Ukuran Kertas",
       "Jenis Print",
-      "Jumlah Cetak",
-      "Jumlah OK",
+      "Jumlah Cetak OK",
       "Jumlah NG",
       "Total Cetak",
       "Time Start",
@@ -1861,10 +1990,7 @@ export class RekapView {
 
     const tableData = pdfData.map((item) => {
       const totalCetak =
-        (Number(item.jumlahCetak) || 0) - (Number(item.ng) || 0);
-      const billing =
-        (Number(item.finishBilling) || 0) - (Number(item.startBilling) || 0);
-      const gap = totalCetak - billing;
+        (Number(item.jumlahCetak) || 0) + (Number(item.ng) || 0);
 
       return [
         new Date(item.tanggal).toLocaleDateString("id-ID"),
@@ -1874,22 +2000,88 @@ export class RekapView {
         item.jenisKertas || "-",
         item.ukuranKertas || "-",
         item.jenisPrint || "-",
-        this.formatNumber(item.jumlahCetak || 0),
-        this.formatNumber(item.jumlahOk || 0),
+        this.formatNumber(item.jumlahCetak || 0), // Jumlah Cetak OK
         this.formatNumber(item.ng || 0),
         this.formatNumber(totalCetak),
         item.timeStart || "-",
         item.timeFinish || "-",
         this.formatNumber(item.startBilling || 0),
         this.formatNumber(item.finishBilling || 0),
-        this.formatNumber(billing),
-        this.formatNumber(gap),
+        this.formatNumber(item.billing || 0), // Menggunakan nilai billing dari database
+        this.formatNumber(item.gap || 0), // Menggunakan nilai gap dari database
         item.status || "-",
       ];
     });
 
     // Add total records info
     doc.text(`Total Record: ${tableData.length} item`, 20, 64);
+
+    // Calculate totals for summary rows
+    const totalJumlahCetak = pdfData.reduce(
+      (total, item) => total + (Number(item.jumlahCetak) || 0),
+      0
+    );
+    const totalNg = pdfData.reduce(
+      (total, item) => total + (Number(item.ng) || 0),
+      0
+    );
+    const totalAllCetak = pdfData.reduce(
+      (total, item) =>
+        total + ((Number(item.jumlahCetak) || 0) + (Number(item.ng) || 0)),
+      0
+    );
+
+    // Add total summary row
+    const totalRow = [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "TOTAL AKUMULASI:",
+      this.formatNumber(totalJumlahCetak), // Jumlah Cetak OK
+      this.formatNumber(totalNg), // Jumlah NG
+      this.formatNumber(totalAllCetak), // Total Cetak
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+    ];
+
+    // Add average summary row
+    const avgRow = [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "RATA-RATA:",
+      this.formatNumber(
+        Math.round(pdfData.length > 0 ? totalJumlahCetak / pdfData.length : 0)
+      ), // Jumlah Cetak OK
+      this.formatNumber(
+        Math.round(pdfData.length > 0 ? totalNg / pdfData.length : 0)
+      ), // Jumlah NG
+      this.formatNumber(
+        Math.round(pdfData.length > 0 ? totalAllCetak / pdfData.length : 0)
+      ), // Total Cetak
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+    ];
+
+    // Add summary rows to table data
+    tableData.push(totalRow);
+    tableData.push(avgRow);
 
     // Generate table in PDF
     doc.autoTable({
@@ -1908,6 +2100,23 @@ export class RekapView {
       },
       alternateRowStyles: {
         fillColor: [248, 249, 250],
+      },
+      bodyStyles: {
+        fontSize: 7,
+      },
+      didParseCell: function (data) {
+        // Style for total row
+        if (data.row.index === tableData.length - 2) {
+          data.cell.styles.fillColor = [255, 243, 205]; // Light yellow
+          data.cell.styles.fontStyle = "bold";
+          data.cell.styles.textColor = [0, 0, 0];
+        }
+        // Style for average row
+        if (data.row.index === tableData.length - 1) {
+          data.cell.styles.fillColor = [209, 236, 241]; // Light blue
+          data.cell.styles.fontStyle = "bold";
+          data.cell.styles.textColor = [0, 0, 0];
+        }
       },
       margin: { top: 66, left: 10, right: 10 },
       didDrawPage: function (data) {

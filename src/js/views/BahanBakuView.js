@@ -309,8 +309,19 @@ export class BahanBakuView {
         }
       }
 
-      // Convert stored data to table format
-      const tableData = stockData.map((item) => {
+      // Sort data by nomor (ascending) before converting to table format
+      const sortedStockData = [...stockData].sort((a, b) => {
+        const nomA = parseInt(a.nomor) || 0;
+        const nomB = parseInt(b.nomor) || 0;
+        return nomA - nomB;
+      });
+
+      console.log(
+        `📄 PDF BahanBaku: Sorted ${sortedStockData.length} records by nomor (ascending)`
+      );
+
+      // Convert sorted data to table format
+      const tableData = sortedStockData.map((item) => {
         const formattedDate = item.tanggal
           ? new Date(item.tanggal).toLocaleDateString("id-ID")
           : "";

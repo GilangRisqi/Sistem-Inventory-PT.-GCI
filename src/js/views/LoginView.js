@@ -6,6 +6,7 @@ export class LoginView {
 
     if (this.form) {
       this.initializeEventListeners();
+      this.initializePasswordToggle();
     } else {
     }
   }
@@ -44,6 +45,33 @@ export class LoginView {
           module.LoginPresenter.logout();
           this.showLogin();
         });
+      });
+    }
+  }
+
+  initializePasswordToggle() {
+    const passwordInput = document.getElementById("password");
+    const toggleBtn = document.getElementById("password-toggle");
+    const toggleIcon = document.getElementById("password-toggle-icon");
+
+    if (passwordInput && toggleBtn && toggleIcon) {
+      toggleBtn.addEventListener("click", () => {
+        // Toggle password visibility
+        if (passwordInput.type === "password") {
+          passwordInput.type = "text";
+          toggleIcon.className = "bi bi-eye-slash";
+          toggleBtn.setAttribute("aria-label", "Hide password");
+        } else {
+          passwordInput.type = "password";
+          toggleIcon.className = "bi bi-eye";
+          toggleBtn.setAttribute("aria-label", "Show password");
+        }
+      });
+
+      // Prevent form submission when clicking toggle button
+      toggleBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
       });
     }
   }

@@ -617,6 +617,43 @@ export class BahanBakuModel {
     }
   }
 
+  // Alias untuk kompatibilitas dengan RekapPresenter
+  async getByDateRange(startDate, endDate) {
+    return await this.getTransactionsByDateRange(
+      "bahan-baku",
+      startDate,
+      endDate
+    );
+  }
+
+  // Force refresh data dari Supabase tanpa cache untuk bahan baku
+  async forceRefreshByDateRange(startDate, endDate) {
+    try {
+      console.log("🔄 Force refreshing bahan baku data from Supabase...");
+      const rawData = await dbService.read(TABLES.BAHAN_BAKU);
+      console.log(`📊 Raw data retrieved: ${rawData.length} records`);
+
+      const filteredData = rawData.filter((record) => {
+        const recordDate = new Date(record.tanggal);
+        const isInRange =
+          recordDate >= new Date(startDate) && recordDate <= new Date(endDate);
+        if (isInRange) {
+          console.log(
+            `✅ Record in range: ${record.tanggal} - Item: ${record.nama_item}`
+          );
+        }
+        return isInRange;
+      });
+
+      console.log(`🎯 Filtered data: ${filteredData.length} records`);
+      return filteredData;
+    } catch (error) {
+      console.error("❌ Error force refreshing bahan baku data:", error);
+      // Fallback ke method standard
+      return await this.getByDateRange(startDate, endDate);
+    }
+  }
+
   async logTransaction(category, type, data) {
     try {
       const transactionData = {

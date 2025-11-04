@@ -335,9 +335,14 @@ export class NavigationView {
     this.showSection("landing-page");
   }
 
+  // Check if device is using mobile/tablet sidebar layout (≤1024px)
+  isMobileTabletLayout() {
+    return window.innerWidth <= 1024;
+  }
+
   closeSidebarOnMobile() {
-    // Check if we're on mobile (screen width <= 768px)
-    if (window.innerWidth <= 768) {
+    // Check if we're on mobile/tablet (screen width <= 1024px) where sidebar uses mobile layout
+    if (this.isMobileTabletLayout()) {
       if (this.sidebar) {
         this.sidebar.classList.remove("active");
       }
@@ -345,13 +350,13 @@ export class NavigationView {
   }
 
   setupMobileOverlay() {
-    // Add event listener to main content area to close sidebar on mobile
+    // Add event listener to main content area to close sidebar on mobile/tablet
     const mainContent = document.querySelector(".main-content");
     if (mainContent) {
       mainContent.addEventListener("click", (e) => {
-        // Only close sidebar on mobile and if sidebar is currently active
+        // Close sidebar on mobile/tablet (≤1024px) and if sidebar is currently active
         if (
-          window.innerWidth <= 768 &&
+          this.isMobileTabletLayout() &&
           this.sidebar &&
           this.sidebar.classList.contains("active")
         ) {
@@ -360,10 +365,10 @@ export class NavigationView {
       });
     }
 
-    // Close sidebar when clicking outside on mobile
+    // Close sidebar when clicking outside on mobile/tablet
     document.addEventListener("click", (e) => {
-      // Only on mobile devices
-      if (window.innerWidth <= 768) {
+      // Only on mobile/tablet devices (≤1024px where sidebar uses overlay mode)
+      if (this.isMobileTabletLayout()) {
         // If sidebar is active and click is outside sidebar and not on menu toggle button
         if (this.sidebar && this.sidebar.classList.contains("active")) {
           const menuToggleBtn = document.getElementById("menu-toggle");
@@ -375,6 +380,14 @@ export class NavigationView {
             this.closeSidebarOnMobile();
           }
         }
+      }
+    });
+
+    // Handle window resize to close sidebar when switching from mobile to desktop layout
+    window.addEventListener("resize", () => {
+      // If screen becomes large enough for desktop layout, ensure sidebar is closed
+      if (!this.isMobileTabletLayout() && this.sidebar) {
+        this.sidebar.classList.remove("active");
       }
     });
   }

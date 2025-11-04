@@ -195,7 +195,17 @@
             </div>
             <div class="form-group">
               <label for="password">Password</label>
-              <input type="password" id="password" name="password" required />
+              <div class="password-input-wrapper">
+                <input type="password" id="password" name="password" required />
+                <button
+                  type="button"
+                  class="password-toggle-btn"
+                  id="password-toggle"
+                  aria-label="Toggle password visibility"
+                >
+                  <i class="bi bi-eye" id="password-toggle-icon"></i>
+                </button>
+              </div>
             </div>
             <button type="submit">Login</button>
           </form>
@@ -391,11 +401,12 @@
               </div>
               <div class="form-group">
                 <label for="jenis-bahan">JENIS BAHAN</label>
-                <select id="jenis-bahan" name="jenis-bahan" required>
-                  <option value="HVS 60">HVS 60</option>
-                  <option value="HVS 80">HVS 80</option>
-                  <option value="DUPLEX 350 G">DUPLEX 350 G</option>
-                </select>
+                <input
+                  type="text"
+                  id="jenis-bahan"
+                  name="jenis-bahan"
+                  required
+                />
               </div>
               <div class="form-group">
                 <label for="jenis-print">JENIS PRINT</label>

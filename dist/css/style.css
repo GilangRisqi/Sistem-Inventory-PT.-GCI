@@ -178,7 +178,7 @@ body {
 }
 
 .login-form button {
-  width: 100%;
+  width: 10%;
   padding: 1rem;
   background: var(--sky);
   color: white;
@@ -192,6 +192,65 @@ body {
 
 .login-form button:hover {
   background: #2563eb;
+}
+
+/* Password toggle styles */
+.password-input-wrapper {
+  position: relative;
+  display: block;
+}
+
+.password-input-wrapper input {
+  padding-right: 2.8rem !important;
+  width: 100% !important;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  color: var(--silver);
+  transition: color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  z-index: 10;
+}
+
+.password-toggle-btn:hover {
+  color: var(--sky);
+  background-color: rgba(56, 189, 248, 0.1);
+}
+
+.password-toggle-btn:focus {
+  outline: none;
+  color: var(--sky);
+  background-color: rgba(56, 189, 248, 0.15);
+}
+
+.password-toggle-btn i {
+  font-size: 1rem;
+  pointer-events: none;
+}
+
+/* Ensure password input with toggle has consistent height */
+.password-input-wrapper input:focus {
+  border-color: var(--sky) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1) !important;
+}
+
+/* Hover state for password wrapper */
+.password-input-wrapper:hover input {
+  border-color: rgba(56, 189, 248, 0.3) !important;
 }
 
 /* Main Header styles */
@@ -872,6 +931,22 @@ td {
   .content-section {
     padding: 1.5rem;
     border-radius: 8px;
+  }
+
+  /* Mobile password toggle adjustments */
+  .password-toggle-btn {
+    right: 6px;
+    width: 28px;
+    height: 28px;
+    padding: 4px;
+  }
+
+  .password-toggle-btn i {
+    font-size: 0.9rem;
+  }
+
+  .password-input-wrapper input {
+    padding-right: 2.5rem !important;
   }
 }
 

@@ -57,9 +57,25 @@ export class RekapPresenter {
         console.log("📊 Using DailyReportModel");
       }
 
-      console.log("🔄 Calling getByDateRange...");
-      const data = await model.getByDateRange(startDate, endDate);
-      console.log(`✅ Retrieved ${data.length} records`);
+      console.log("🔄 Calling forceRefreshByDateRange for fresh data...");
+      let data;
+      try {
+        // Coba force refresh dulu jika model punya method ini
+        if (typeof model.forceRefreshByDateRange === "function") {
+          data = await model.forceRefreshByDateRange(startDate, endDate);
+          console.log(`✅ Force refresh retrieved ${data.length} records`);
+        } else {
+          data = await model.getByDateRange(startDate, endDate);
+          console.log(`✅ Standard retrieval got ${data.length} records`);
+        }
+      } catch (error) {
+        console.warn(
+          "⚠️ Force refresh failed, trying standard method:",
+          error.message
+        );
+        data = await model.getByDateRange(startDate, endDate);
+        console.log(`✅ Fallback retrieval got ${data.length} records`);
+      }
 
       if (data.length > 0) {
         console.log("📋 Sample record:", data[0]);
@@ -242,7 +258,7 @@ export class RekapPresenter {
       if (type === "iridesse-report") {
         model = this.iridesseReportModel;
         updateData.totalCetak =
-          (Number(updateData.jumlahCetak) || 0) - (Number(updateData.ng) || 0);
+          (Number(updateData.jumlahCetak) || 0) + (Number(updateData.ng) || 0);
       } else if (type === "strapless-report") {
         model = this.straplessReportModel;
         updateData.totalQty =
