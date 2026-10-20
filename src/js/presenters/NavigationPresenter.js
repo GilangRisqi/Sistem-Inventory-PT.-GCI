@@ -15,10 +15,12 @@ export class NavigationPresenter {
   }
 
   showPage(pageId) {
-    this.view.showPage(pageId);
-  }
+        this.view.showPage(pageId);
+      }
 
   showDefaultSection() {
-    this.view.showSection("bahan-baku");
-  }
+        // Show landing page as default section after login
+    // Make sure we're on dashboard page first
+    this.view.showSection("landing-page");
+      }
 }

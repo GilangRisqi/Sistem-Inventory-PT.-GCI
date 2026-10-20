@@ -1,0 +1,92 @@
+{
+  "created": "2025-10-20T07:15:21.880Z",
+  "baseIcon": "icon.svg",
+  "sizes": [
+    {
+      "size": "16x16",
+      "filename": "icon-16x16.png",
+      "purpose": "any"
+    },
+    {
+      "size": "32x32",
+      "filename": "icon-32x32.png",
+      "purpose": "any"
+    },
+    {
+      "size": "48x48",
+      "filename": "icon-48x48.png",
+      "purpose": "any"
+    },
+    {
+      "size": "72x72",
+      "filename": "icon-72x72.png",
+      "purpose": "any"
+    },
+    {
+      "size": "96x96",
+      "filename": "icon-96x96.png",
+      "purpose": "any"
+    },
+    {
+      "size": "128x128",
+      "filename": "icon-128x128.png",
+      "purpose": "any"
+    },
+    {
+      "size": "144x144",
+      "filename": "icon-144x144.png",
+      "purpose": "any"
+    },
+    {
+      "size": "152x152",
+      "filename": "icon-152x152.png",
+      "purpose": "any"
+    },
+    {
+      "size": "192x192",
+      "filename": "icon-192x192.png",
+      "purpose": "any maskable"
+    },
+    {
+      "size": "256x256",
+      "filename": "icon-256x256.png",
+      "purpose": "any maskable"
+    },
+    {
+      "size": "384x384",
+      "filename": "icon-384x384.png",
+      "purpose": "any maskable"
+    },
+    {
+      "size": "512x512",
+      "filename": "icon-512x512.png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Daily Report",
+      "short_name": "Daily",
+      "url": "/#daily-report",
+      "icon": "icon-96x96.png"
+    },
+    {
+      "name": "Inventory",
+      "short_name": "Stock",
+      "url": "/#bahan-baku",
+      "icon": "icon-96x96.png"
+    },
+    {
+      "name": "Reports",
+      "short_name": "Rekap",
+      "url": "/#rekap",
+      "icon": "icon-96x96.png"
+    }
+  ],
+  "instructions": [
+    "1. Convert icon.svg to PNG files for each size",
+    "2. Use online SVG to PNG converter or imagemagick",
+    "3. Place generated PNG files in this directory",
+    "4. Create favicon.ico from multiple PNG sizes"
+  ]
+}

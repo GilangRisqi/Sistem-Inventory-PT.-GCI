@@ -14,17 +14,27 @@ export class HeaderView {
     const header = document.createElement("header");
     header.className = "main-header";
     header.innerHTML = `
-      <div class="d-flex align-items-center">
-        <img src="images/logoheader.png" alt="Logo" style="height:60px; margin-right:10px;">
-        <nav class="d-flex align-items-center">
-          <button id="menu-toggle" class="btn btn-link" aria-label="Toggle menu">
-            <i class="bi bi-list fs-4"></i>
+      <div class="header-content">
+        <div class="logo-section">
+          <button id="menu-toggle" class="menu-toggle-btn" aria-label="Toggle menu">
+            <i class="bi bi-list"></i>
           </button>
-          <div id="sync-status" class="sync-status d-flex align-items-center">
-            <i class="bi bi-cloud-check fs-5 me-2"></i>
-            <span></span>
+          <img src="images/logoheader.png" alt="Logo" class="company-logo">
+          <div class="company-info">
+            <h1>Sistem Daily Reports PT. GCI</h1>
+            <span class="tagline">Gudang Digital Professional</span>
           </div>
-        </nav>
+        </div>
+        <div class="header-actions">
+          <div class="user-info">
+            <span class="welcome-text">Selamat datang, </span>
+            <span id="current-user">-</span>
+          </div>
+          <div id="sync-status" class="sync-status">
+            <i class="bi bi-cloud-check"></i>
+            <span>Online</span>
+          </div>
+        </div>
       </div>
     `;
 

@@ -1,3 +1,5 @@
+import { sweetAlert } from "../utils/SweetAlertUtil.js";
+
 export class NavigationView {
   constructor() {
     this.pages = {
@@ -6,7 +8,10 @@ export class NavigationView {
     };
 
     this.sections = {
-      "stock-banner": document.getElementById("stock-banner-section"),
+      "landing-page": document.getElementById("landing-page-section"),
+      "stock-banner": document.getElementById("stock-banner-section-in"), // Default to In section
+      "stock-banner-in": document.getElementById("stock-banner-section-in"),
+      "stock-banner-out": document.getElementById("stock-banner-section-out"),
       "stock-digital": document.getElementById("stock-digital-section"),
       "stock-produksi": document.getElementById("stock-produksi-section"),
       "in-banner": document.getElementById("in-banner-section"),
@@ -16,6 +21,12 @@ export class NavigationView {
       "in-produksi": document.getElementById("in-produksi-section"),
       "out-produksi": document.getElementById("out-produksi-section"),
       "daily-report": document.getElementById("daily-report-section"),
+      "strapless-report": document.getElementById("strapless-report-section"),
+      "lipat-report": document.getElementById("lipat-report-section"),
+      "lem-packing-report": document.getElementById(
+        "lem-packing-report-section"
+      ),
+      "iridesse-report": document.getElementById("iridesse-report-section"),
       rekap: document.getElementById("rekap-section"),
     };
 
@@ -24,11 +35,32 @@ export class NavigationView {
 
     this.bindEvents();
     this.setupSubmenuToggle();
+    this.setupMobileOverlay();
     this.currentPage = null;
   }
 
+  bindNavigation(handler) {
+    // Method untuk binding navigation handler dari presenter
+    this.navigationHandler = handler;
+  }
+
+  bindLogout(handler) {
+    // Method untuk binding logout handler dari presenter
+    this.logoutHandler = handler;
+
+    // Bind logout button if exists
+    if (this.logoutBtn) {
+      this.logoutBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (this.logoutHandler) {
+          this.logoutHandler();
+        }
+      });
+    }
+  }
+
   bindEvents() {
-    // Handle navigation links
+    // Handle navigation links for pages
     document.querySelectorAll("a[data-page]").forEach((link) => {
       link.addEventListener("click", (e) => {
         e.preventDefault();
@@ -36,9 +68,49 @@ export class NavigationView {
         if (page) {
           this.showPage(page);
           this.updateActiveState(e.target);
+          // Auto-close sidebar on mobile after menu click
+          this.closeSidebarOnMobile();
         }
       });
     });
+
+    // Handle navigation links for sections
+    document.querySelectorAll("a[data-section]").forEach((link) => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        const section = e.target.dataset.section;
+        if (section) {
+          this.showSection(section);
+          this.updateActiveState(e.target);
+          // Call navigation handler if available
+          if (this.navigationHandler) {
+            this.navigationHandler(section);
+          }
+          // Auto-close sidebar on mobile after menu click
+          this.closeSidebarOnMobile();
+        }
+      });
+    });
+
+    // Handle all submenu links (they use data-page attribute)
+    document.querySelectorAll(".submenu a[data-page]").forEach((link) => {
+      link.addEventListener("click", (e) => {
+        // Auto-close sidebar on mobile after submenu click
+        this.closeSidebarOnMobile();
+      });
+    });
+
+    // Handle regular menu links that don't have data attributes
+    document
+      .querySelectorAll(
+        ".main-nav a:not([data-page]):not([data-section]):not(.menu-toggle)"
+      )
+      .forEach((link) => {
+        link.addEventListener("click", (e) => {
+          // Auto-close sidebar on mobile for regular menu clicks
+          this.closeSidebarOnMobile();
+        });
+      });
   }
 
   setupSubmenuToggle() {
@@ -84,16 +156,55 @@ export class NavigationView {
   }
 
   showPage(pageId) {
-    // Hide all sections first
-    document.querySelectorAll(".content-section").forEach((section) => {
-      section.style.display = "none";
+    // Block access to all Inventory Bahan Baku sections
+    const blockedSections = [
+      "stock-banner",
+      "stock-banner-in",
+      "stock-banner-out",
+      "stock-digital",
+      "stock-produksi",
+      "in-banner",
+      "out-banner",
+      "in-digital",
+      "out-digital",
+      "in-produksi",
+      "out-produksi",
+    ];
+
+    if (blockedSections.includes(pageId)) {
+      console.warn(
+        "Access to Inventory Bahan Baku sections is currently disabled"
+      );
+      sweetAlert.warning(
+        "Akses ke menu Inventory Bahan Baku sedang dinonaktifkan untuk sementara waktu.",
+        "Akses Dibatasi"
+      );
+      return;
+    }
+
+    // Check if this is actually a section, not a page
+    if (this.sections[pageId]) {
+      this.showSection(pageId);
+      return;
+    }
+
+    // Hide all pages first
+    Object.values(this.pages).forEach((page) => {
+      if (page) {
+        page.classList.remove("active");
+        page.style.display = "none";
+      }
     });
 
-    // Show the selected section
-    const section = document.getElementById(`${pageId}-section`);
-    if (section) {
-      section.style.display = "block";
+    // Show the selected page
+    const page = this.pages[pageId];
+
+    if (page) {
+      page.classList.add("active");
+      page.style.display = "block";
       this.currentPage = pageId;
+    } else {
+      console.warn("NavigationView: Page not found for pageId:", pageId);
     }
   }
 
@@ -118,17 +229,166 @@ export class NavigationView {
   }
 
   showSection(sectionId) {
+    // Block access to all Inventory Bahan Baku sections
+    const blockedSections = [
+      "stock-banner",
+      "stock-banner-in",
+      "stock-banner-out",
+      "stock-digital",
+      "stock-produksi",
+      "in-banner",
+      "out-banner",
+      "in-digital",
+      "out-digital",
+      "in-produksi",
+      "out-produksi",
+    ];
+
+    if (blockedSections.includes(sectionId)) {
+      console.warn(
+        "Access to Inventory Bahan Baku sections is currently disabled"
+      );
+      sweetAlert.warning(
+        "Akses ke menu Inventory Bahan Baku sedang dinonaktifkan untuk sementara waktu.",
+        "Akses Dibatasi"
+      );
+      return;
+    }
+
     // Hide all sections first
     Object.values(this.sections).forEach((section) => {
       if (section) section.style.display = "none";
     });
 
-    // Show the requested section if it exists
-    const section = this.sections[sectionId];
-    if (section) {
-      section.style.display = "block";
+    // Special handling for stock-banner to show both In and Out sections
+    if (sectionId === "stock-banner") {
+      const bannerInSection = this.sections["stock-banner-in"];
+      const bannerOutSection = this.sections["stock-banner-out"];
+
+      if (bannerInSection) bannerInSection.style.display = "block";
+      if (bannerOutSection) bannerOutSection.style.display = "block";
+
+      // Dispatch events for both sections to load data
+      document.dispatchEvent(
+        new CustomEvent("section-activated", {
+          detail: { sectionId: "stock-banner-in" },
+        })
+      );
+      document.dispatchEvent(
+        new CustomEvent("section-activated", {
+          detail: { sectionId: "stock-banner-out" },
+        })
+      );
     } else {
-      console.warn(`Section ${sectionId} not found`);
+      const section = this.sections[sectionId];
+
+      if (section) {
+        section.style.display = "block";
+
+        // Dispatch section activation event
+        document.dispatchEvent(
+          new CustomEvent("section-activated", {
+            detail: { sectionId },
+          })
+        );
+      } else {
+        console.warn(
+          "NavigationView: Section not found for sectionId:",
+          sectionId
+        );
+      }
     }
+
+    // Dispatch navigation changed event for all cases
+    document.dispatchEvent(
+      new CustomEvent("navigation-changed", {
+        detail: { sectionId },
+      })
+    );
+
+    // Trigger auto numbering untuk form In/Out setelah section ditampilkan
+    setTimeout(() => {
+      const formSections = [
+        "in-banner",
+        "out-banner",
+        "in-digital",
+        "out-digital",
+        "in-produksi",
+        "out-produksi",
+      ];
+
+      if (formSections.includes(sectionId)) {
+        console.log(
+          `📋 Triggering auto number update for section: ${sectionId}`
+        );
+        document.dispatchEvent(
+          new CustomEvent("update-auto-numbers", {
+            detail: { sectionId },
+          })
+        );
+      }
+    }, 300);
+  }
+
+  showLandingPage() {
+    // Show landing page as default after login
+    this.showSection("landing-page");
+  }
+
+  // Check if device is using mobile/tablet sidebar layout (≤1024px)
+  isMobileTabletLayout() {
+    return window.innerWidth <= 1024;
+  }
+
+  closeSidebarOnMobile() {
+    // Check if we're on mobile/tablet (screen width <= 1024px) where sidebar uses mobile layout
+    if (this.isMobileTabletLayout()) {
+      if (this.sidebar) {
+        this.sidebar.classList.remove("active");
+      }
+    }
+  }
+
+  setupMobileOverlay() {
+    // Add event listener to main content area to close sidebar on mobile/tablet
+    const mainContent = document.querySelector(".main-content");
+    if (mainContent) {
+      mainContent.addEventListener("click", (e) => {
+        // Close sidebar on mobile/tablet (≤1024px) and if sidebar is currently active
+        if (
+          this.isMobileTabletLayout() &&
+          this.sidebar &&
+          this.sidebar.classList.contains("active")
+        ) {
+          this.closeSidebarOnMobile();
+        }
+      });
+    }
+
+    // Close sidebar when clicking outside on mobile/tablet
+    document.addEventListener("click", (e) => {
+      // Only on mobile/tablet devices (≤1024px where sidebar uses overlay mode)
+      if (this.isMobileTabletLayout()) {
+        // If sidebar is active and click is outside sidebar and not on menu toggle button
+        if (this.sidebar && this.sidebar.classList.contains("active")) {
+          const menuToggleBtn = document.getElementById("menu-toggle");
+          if (
+            !this.sidebar.contains(e.target) &&
+            e.target !== menuToggleBtn &&
+            !menuToggleBtn.contains(e.target)
+          ) {
+            this.closeSidebarOnMobile();
+          }
+        }
+      }
+    });
+
+    // Handle window resize to close sidebar when switching from mobile to desktop layout
+    window.addEventListener("resize", () => {
+      // If screen becomes large enough for desktop layout, ensure sidebar is closed
+      if (!this.isMobileTabletLayout() && this.sidebar) {
+        this.sidebar.classList.remove("active");
+      }
+    });
   }
 }
